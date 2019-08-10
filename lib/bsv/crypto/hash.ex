@@ -1,22 +1,37 @@
 defmodule BSV.Crypto.Hash do
   @moduledoc """
-  A collection of one-way hashing functions
+  A collection of one-way hashing functions.
   """
   alias BSV.Util
 
-  @type hash_algorithm :: atom()
   @hash_algorithms [:md5, :ripemd160, :sha, :sha224, :sha256, :sha384, :sha512]
 
 
   @doc """
   Returns a list of supported hash algorithms.
   """
-  @spec hash_algorithms() :: [hash_algorithm]
+  @spec hash_algorithms() :: list()
   def hash_algorithms, do: @hash_algorithms
 
 
   @doc """
-  Computes the specified hash type on the given data.
+  Computes a hash of the given data, using the specified hash algorithm.
+
+  ## Options
+
+  The accepted hash algorithms are:
+
+  * `:md5` - MD5 message-digest algorithm (128 bit)
+  * `:ripemd160` - RIPE Message Digest algorithm (160 bit)
+  * `:sha` - Secure Hash Algorithm 1 (SHA-1) (160 bit)
+  * `:sha224` - Secure Hash Algorithm 2 (SHA-2) (224 bit)
+  * `:sha256` - Secure Hash Algorithm 2 (SHA-2) (256 bit)
+  * `:sha384` - Secure Hash Algorithm 2 (SHA-2) (384 bit)
+  * `:sha512` - Secure Hash Algorithm 2 (SHA-2) (512 bit)
+
+  The accepted options are:
+
+  * `:encode` - Optionally encode the returned hash with either the `:base64` or `:hex` encoding schema.
 
   ## Examples
 
@@ -29,7 +44,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.hash("hello world", :sha256, encode: :base64)
       "uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek="
   """
-  @spec hash(binary(), hash_algorithm, keyword()) :: binary()
+  @spec hash(binary(), atom(), keyword()) :: binary()
   def hash(data, algorithm, options \\ []) do
     encoding = Keyword.get(options, :encode)
     :crypto.hash(algorithm, data)
@@ -39,6 +54,8 @@ defmodule BSV.Crypto.Hash do
 
   @doc """
   Computes the RIPEMD hash of a given input, outputting 160 bits.
+
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
 
   ## Examples
 
@@ -55,6 +72,8 @@ defmodule BSV.Crypto.Hash do
   @doc """
   Computes the SHA-1 hash of a given input, outputting 160 bits.
 
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
+
   ## Examples
 
       iex> BSV.Crypto.Hash.sha1("hello world")
@@ -68,7 +87,9 @@ defmodule BSV.Crypto.Hash do
 
 
   @doc """
-  Computes the SHA-2 of a given input, outputting 256 bits.
+  Computes the SHA-2 hash of a given input, outputting 256 bits.
+
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
 
   ## Examples
 
@@ -83,7 +104,9 @@ defmodule BSV.Crypto.Hash do
 
 
   @doc """
-  Computes the SHA-2 of a given input, outputting 512 bits.
+  Computes the SHA-2 hash of a given input, outputting 512 bits.
+
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
 
   ## Examples
 
@@ -100,6 +123,8 @@ defmodule BSV.Crypto.Hash do
   @doc """
   Computes a RIPEMD0160 hash of a SHA256 hash, outputting 160 bits. This is commonly used inside Bitcoin, particularly for Bitcoin addresses.
 
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
+
   ## Examples
 
       iex> BSV.Crypto.Hash.sha256ripemd160("hello world")
@@ -114,6 +139,8 @@ defmodule BSV.Crypto.Hash do
 
   @doc """
   Computes a double SHA256 hash. This hash function is commonly used inside Bitcoin, particularly for the hash of a block and the hash of a transaction.
+
+  See `BSV.Crypto.Hash.hash/3` for the accepted options.
 
   ## Examples
 
