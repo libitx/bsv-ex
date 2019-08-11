@@ -3,14 +3,14 @@ defmodule BSV.Crypto.RSA.PublicKey do
   RSA Public Key module.
   """
 
+  defstruct [:version, :public_exponent, :public_modulus]
+
   @typedoc "RSA Public Key"
   @type t :: %__MODULE__{
-    public_exponent: binary(),
-    public_modulus: binary()
+    version: atom,
+    public_modulus: binary(),
+    public_exponent: binary()
   }
-
-  @enforce_keys [:public_exponent, :public_modulus]
-  defstruct [:public_exponent, :public_modulus]
   
   
   @doc """
@@ -18,15 +18,15 @@ defmodule BSV.Crypto.RSA.PublicKey do
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_erlang(BSV.Test.rsa_public_key)
+      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
       ...> (%BSV.Crypto.RSA.PublicKey{} = public_key) == public_key
       true
   """
-  @spec from_erlang(list()) :: BSV.Crypto.RSA.public_key
-  def from_erlang([e, n]) do
+  @spec from_sequence(list()) :: BSV.Crypto.RSA.PublicKey.t
+  def from_sequence(rsa_key_params) do
     struct(__MODULE__, [
-      public_exponent:  e,
-      public_modulus:   n
+      public_modulus: elem(rsa_key_params, 1),
+      public_exponent: elem(rsa_key_params, 2)
     ])
   end
 
@@ -36,17 +36,19 @@ defmodule BSV.Crypto.RSA.PublicKey do
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_erlang(BSV.Test.rsa_public_key)
+      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
       ...>
-      ...> BSV.Crypto.RSA.PublicKey.to_erlang(public_key)
-      ...> |> length
-      2
+      ...> BSV.Crypto.RSA.PublicKey.as_sequence(public_key)
+      ...> |> is_tuple
+      true
   """
-  def to_erlang(public_key) do
-    [
-      public_key.public_exponent,
-      public_key.public_modulus
-    ]
+  @spec as_sequence(t) :: tuple
+  def as_sequence(public_key) do
+    {
+      :RSAPublicKey,
+      public_key.public_modulus,
+      public_key.public_exponent
+    }
   end
   
 end

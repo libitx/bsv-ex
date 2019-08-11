@@ -22,8 +22,9 @@ defmodule BSV.Crypto.RSA do
   """
   @spec generate_key_pair() :: {BSV.Crypto.RSA.PublicKey.t(), BSV.Crypto.RSA.PrivateKey.t()}
   def generate_key_pair do
-    {public_key, private_key} = :crypto.generate_key(:rsa, {2048, <<1, 0, 1>>})
-    {PublicKey.from_erlang(public_key), PrivateKey.from_erlang(private_key)}
+    private_key = :public_key.generate_key({:rsa, 2048, <<1,0,1>>})
+    |> PrivateKey.from_sequence
+    {PrivateKey.get_public_key(private_key), private_key}
   end
 
 
@@ -54,13 +55,13 @@ defmodule BSV.Crypto.RSA do
 
   def encrypt(data, {:public, public_key}, options) do
     encoding = Keyword.get(options, :encode)
-    :crypto.public_encrypt(:rsa, data, PublicKey.to_erlang(public_key), rsa_oaep_md: :sha256)
+    :public_key.encrypt_public(data, PublicKey.as_sequence(public_key), rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
   def encrypt(data, {:private, private_key}, options) do
     encoding = Keyword.get(options, :encode)
-    :crypto.private_encrypt(:rsa, data, PrivateKey.to_erlang(private_key), rsa_oaep_md: :sha256)
+    :public_key.encrypt_private(data, PrivateKey.as_sequence(private_key), rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
@@ -87,11 +88,11 @@ defmodule BSV.Crypto.RSA do
   def decrypt(data, key, options \\ [])
 
   def decrypt(data, {:public, public_key}, _options) do
-    :crypto.public_decrypt(:rsa, data, PrivateKey.to_erlang(public_key), rsa_oaep_md: :sha256)
+    :public_key.decrypt_public(data, PublicKey.as_sequence(public_key), rsa_oaep_md: :sha256)
   end
 
   def decrypt(data, {:private, private_key}, _options) do
-    :crypto.private_decrypt(:rsa, data, PrivateKey.to_erlang(private_key), rsa_oaep_md: :sha256)
+    :public_key.decrypt_private(data, PrivateKey.as_sequence(private_key), rsa_oaep_md: :sha256)
   end
 
   def decrypt(data, private_key, options), do: decrypt(data, {:private, private_key}, options)
