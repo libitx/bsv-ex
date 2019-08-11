@@ -7,7 +7,6 @@ defmodule BSV.Crypto.RSA.PublicKey do
 
   @typedoc "RSA Public Key"
   @type t :: %__MODULE__{
-    version: atom,
     public_modulus: binary,
     public_exponent: binary
   }
@@ -23,10 +22,10 @@ defmodule BSV.Crypto.RSA.PublicKey do
       true
   """
   @spec from_sequence(tuple) :: BSV.Crypto.RSA.PublicKey.t
-  def from_sequence(rsa_key_params) do
+  def from_sequence(rsa_key_sequence) do
     struct(__MODULE__, [
-      public_modulus: elem(rsa_key_params, 1),
-      public_exponent: elem(rsa_key_params, 2)
+      public_modulus: elem(rsa_key_sequence, 1),
+      public_exponent: elem(rsa_key_sequence, 2)
     ])
   end
 
@@ -42,7 +41,7 @@ defmodule BSV.Crypto.RSA.PublicKey do
       ...> |> is_tuple
       true
   """
-  @spec as_sequence(t) :: tuple
+  @spec as_sequence(BSV.Crypto.RSA.PublicKey.t) :: tuple
   def as_sequence(public_key) do
     {
       :RSAPublicKey,
@@ -50,5 +49,8 @@ defmodule BSV.Crypto.RSA.PublicKey do
       public_key.public_exponent
     }
   end
+
+
+  
   
 end

@@ -2,6 +2,7 @@ defmodule BSV.Crypto.RSA.PrivateKey do
   @moduledoc """
   RSA Private Key module.
   """
+  alias BSV.Crypto.RSA.PublicKey
 
   defstruct [:version, :public_modulus, :public_exponent, :private_exponent,
     :prime_1, :prime_2, :exponent_1, :exponent_2, :crt_coefficient, :other_prime_info]
@@ -31,23 +32,23 @@ defmodule BSV.Crypto.RSA.PrivateKey do
       true
   """
   @spec from_sequence(tuple) :: BSV.Crypto.RSA.PrivateKey.t
-  def from_sequence(rsa_key_params) do
-    version = case elem(rsa_key_params, 1) do
+  def from_sequence(rsa_key_sequence) do
+    version = case elem(rsa_key_sequence, 1) do
       0 -> :"two-prime"
-      _ -> elem(rsa_key_params, 1)
+      _ -> elem(rsa_key_sequence, 1)
     end
 
     struct(__MODULE__, [
       version:          version,
-      public_modulus:   elem(rsa_key_params, 2),
-      public_exponent:  elem(rsa_key_params, 3),
-      private_exponent: elem(rsa_key_params, 4),
-      prime_1:          elem(rsa_key_params, 5),
-      prime_2:          elem(rsa_key_params, 6),
-      exponent_1:       elem(rsa_key_params, 7),
-      exponent_2:       elem(rsa_key_params, 8),
-      crt_coefficient:  elem(rsa_key_params, 9),
-      other_prime_info: elem(rsa_key_params, 10)
+      public_modulus:   elem(rsa_key_sequence, 2),
+      public_exponent:  elem(rsa_key_sequence, 3),
+      private_exponent: elem(rsa_key_sequence, 4),
+      prime_1:          elem(rsa_key_sequence, 5),
+      prime_2:          elem(rsa_key_sequence, 6),
+      exponent_1:       elem(rsa_key_sequence, 7),
+      exponent_2:       elem(rsa_key_sequence, 8),
+      crt_coefficient:  elem(rsa_key_sequence, 9),
+      other_prime_info: elem(rsa_key_sequence, 10)
     ])
   end
 
@@ -63,7 +64,7 @@ defmodule BSV.Crypto.RSA.PrivateKey do
       ...> |> is_tuple
       true
   """
-  @spec as_sequence(t) :: tuple
+  @spec as_sequence(BSV.Crypto.RSA.PrivateKey.t) :: tuple
   def as_sequence(private_key) do
     {
       :RSAPrivateKey,
@@ -85,7 +86,7 @@ defmodule BSV.Crypto.RSA.PrivateKey do
   TODOC
   """
   def get_public_key(private_key) do
-    %BSV.Crypto.RSA.PrivateKey{
+    %PublicKey{
       public_modulus:   private_key.public_modulus,
       public_exponent:  private_key.public_exponent
     }
