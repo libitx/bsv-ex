@@ -67,6 +67,7 @@ defmodule BSV.Crypto.RSA.PrivateKey do
   def as_sequence(private_key) do
     {
       :RSAPrivateKey,
+      private_key.version,
       private_key.public_modulus,
       private_key.public_exponent,
       private_key.private_exponent,

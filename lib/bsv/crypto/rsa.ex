@@ -20,9 +20,9 @@ defmodule BSV.Crypto.RSA do
   @doc """
   Generate a new public and private keypair.
   """
-  @spec generate_key_pair() :: {BSV.Crypto.RSA.PublicKey.t(), BSV.Crypto.RSA.PrivateKey.t()}
-  def generate_key_pair do
-    private_key = :public_key.generate_key({:rsa, 2048, <<1,0,1>>})
+  @spec generate_key_pair(integer) :: {BSV.Crypto.RSA.PublicKey.t, BSV.Crypto.RSA.PrivateKey.t}
+  def generate_key_pair(bits \\ 2048) do
+    private_key = :public_key.generate_key({:rsa, bits, <<1,0,1>>})
     |> PrivateKey.from_sequence
     {PrivateKey.get_public_key(private_key), private_key}
   end
@@ -50,18 +50,18 @@ defmodule BSV.Crypto.RSA do
       BSV.Crypto.RSA.encrypt("hello world", {:private, private_key})
       << encrypted binary >>
   """
-  @spec encrypt(binary(), BSV.Crypto.RSA.PublicKey.t() | {:public, BSV.Crypto.RSA.PublicKey.t()} | {:private, BSV.Crypto.RSA.PrivateKey.t()}, list()) :: binary()
+  @spec encrypt(binary, BSV.Crypto.RSA.PublicKey.t | {:public, BSV.Crypto.RSA.PublicKey.t} | {:private, BSV.Crypto.RSA.PrivateKey.t}, list) :: binary
   def encrypt(data, key, options \\ [])
 
   def encrypt(data, {:public, public_key}, options) do
     encoding = Keyword.get(options, :encode)
-    :public_key.encrypt_public(data, PublicKey.as_sequence(public_key), rsa_oaep_md: :sha256)
+    :public_key.encrypt_public(data, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
   def encrypt(data, {:private, private_key}, options) do
     encoding = Keyword.get(options, :encode)
-    :public_key.encrypt_private(data, PrivateKey.as_sequence(private_key), rsa_oaep_md: :sha256)
+    :public_key.encrypt_private(data, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
@@ -84,15 +84,15 @@ defmodule BSV.Crypto.RSA do
       BSV.Crypto.RSA.decrypt(encrypted_binary, {:public, public_key})
       << decrypted binary >>
   """
-  @spec decrypt(binary(), BSV.Crypto.RSA.PublicKey.t() | {:public, BSV.Crypto.RSA.PublicKey.t()} | {:private, BSV.Crypto.RSA.PrivateKey.t()}, list()) :: binary()
+  @spec decrypt(binary, BSV.Crypto.RSA.PublicKey.t | {:public, BSV.Crypto.RSA.PublicKey.t} | {:private, BSV.Crypto.RSA.PrivateKey.t}, list) :: binary
   def decrypt(data, key, options \\ [])
 
   def decrypt(data, {:public, public_key}, _options) do
-    :public_key.decrypt_public(data, PublicKey.as_sequence(public_key), rsa_oaep_md: :sha256)
+    :public_key.decrypt_public(data, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
   end
 
   def decrypt(data, {:private, private_key}, _options) do
-    :public_key.decrypt_private(data, PrivateKey.as_sequence(private_key), rsa_oaep_md: :sha256)
+    :public_key.decrypt_private(data, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
   end
 
   def decrypt(data, private_key, options), do: decrypt(data, {:private, private_key}, options)
