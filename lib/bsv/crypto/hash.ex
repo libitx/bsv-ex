@@ -31,7 +31,7 @@ defmodule BSV.Crypto.Hash do
 
   The accepted options are:
 
-  * `:encode` - Optionally encode the returned hash with either the `:base64` or `:hex` encoding schema.
+  * `:encode` - Optionally encode the returned hash with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 
