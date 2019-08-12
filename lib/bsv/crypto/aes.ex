@@ -47,7 +47,7 @@ defmodule BSV.Crypto.AES do
   The accepted options are:
 
   * `:aad` - Provide your own Additional Authentication Data (only used in `:gcm` mode). If not provided, defaults to `"BSV.Crypto.AES"`.
-  * `:encode` - Optionally encode the returned cipher text with either the `:base64` or `:hex` encoding schema.
+  * `:encode` - Optionally encode the returned cipher text with either the `:base64` or `:hex` encoding scheme.
   * `:iv` - Provide your own initialization vector. In `:cbc` and `:ctr` mode this is necessary as the same vector is needed to decrypt. In `:gcm` mode it is unnecessary as a random vector is generated and encoded in the returned cipher text.
 
   ## Examples
