@@ -20,7 +20,7 @@ defmodule BSV.Crypto.RSA.PublicKey do
   
   
   @doc """
-  Convert a t:BSV.Crypto.RSA.PublicKey.sequence/0` to a `t:BSV.Crypto.RSA.PublicKey.t/0`.
+  Convert a `t:BSV.Crypto.RSA.PublicKey.sequence/0` to a `t:BSV.Crypto.RSA.PublicKey.t/0`.
 
   ## Examples
 
@@ -38,7 +38,7 @@ defmodule BSV.Crypto.RSA.PublicKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.RSA.PublicKey.t/0` to a t:BSV.Crypto.RSA.PublicKey.sequence/0`.
+  Convert a `t:BSV.Crypto.RSA.PublicKey.t/0` to a `t:BSV.Crypto.RSA.PublicKey.sequence/0`.
 
   ## Examples
 

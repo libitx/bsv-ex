@@ -89,59 +89,6 @@ defmodule BSV.Crypto.RSA do
 
 
   @doc """
-  Decodes the given PEM string into a public or private key.
-
-  ## Examples
-
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
-      ...> pem = BSV.Crypto.RSA.pem_encode(public_key)
-      ...>
-      ...> imported_key = BSV.Crypto.RSA.pem_decode(pem)
-      ...> imported_key == public_key
-      true
-  """
-  @spec pem_decode(binary) :: PublicKey.t | PrivateKey.t
-  def pem_decode(pem) do
-    rsa_key_sequence = :public_key.pem_decode(pem)
-    |> List.first
-    |> :public_key.pem_entry_decode
-
-    case elem(rsa_key_sequence, 0) do
-      :RSAPublicKey -> PublicKey.from_sequence(rsa_key_sequence)
-      :RSAPrivateKey -> PrivateKey.from_sequence(rsa_key_sequence)
-    end
-  end
-
-  @doc """
-  Encodes the given public or private key into a PEM string.
-
-  ## Examples
-
-      iex> BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
-      ...> |> BSV.Crypto.RSA.pem_encode
-      ...> |> String.starts_with?("-----BEGIN RSA PUBLIC KEY-----")
-      true
-
-      iex> BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
-      ...> |> BSV.Crypto.RSA.pem_encode
-      ...> |> String.starts_with?("-----BEGIN RSA PRIVATE KEY-----")
-      true
-  """
-  @spec pem_encode(PublicKey.t | PrivateKey.t) :: binary
-  def pem_encode(key)
-
-  def pem_encode(public_key = %PublicKey{}) do
-    pem_entry = :public_key.pem_entry_encode(:RSAPublicKey, PublicKey.as_sequence(public_key))
-    :public_key.pem_encode([pem_entry])
-  end
-
-  def pem_encode(private_key = %PrivateKey{}) do
-    pem_entry = :public_key.pem_entry_encode(:RSAPrivateKey, PrivateKey.as_sequence(private_key))
-    :public_key.pem_encode([pem_entry])
-  end
-
-
-  @doc """
   Creates a signature for the given message, using the given private key.
 
   ## Options
@@ -176,12 +123,66 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
   
-      BSV.Crypto.RSA.sign(signature, public_key)
+      BSV.Crypto.RSA.verify(signature, public_key)
   """
   @spec verify(binary, PublicKey.t, list) :: boolean
   def verify(message, signature, public_key = %PublicKey{}, options \\ []) do
     salt_len = Keyword.get(options, :salt_length, 20)
     :public_key.verify(message, :sha256, signature, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
+  end
+
+
+  @doc """
+  Decodes the given PEM string into a public or private key.
+
+  ## Examples
+
+      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      ...> pem = BSV.Crypto.RSA.pem_encode(public_key)
+      ...>
+      ...> imported_key = BSV.Crypto.RSA.pem_decode(pem)
+      ...> imported_key == public_key
+      true
+  """
+  @spec pem_decode(binary) :: PublicKey.t | PrivateKey.t
+  def pem_decode(pem) do
+    rsa_key_sequence = :public_key.pem_decode(pem)
+    |> List.first
+    |> :public_key.pem_entry_decode
+
+    case elem(rsa_key_sequence, 0) do
+      :RSAPublicKey -> PublicKey.from_sequence(rsa_key_sequence)
+      :RSAPrivateKey -> PrivateKey.from_sequence(rsa_key_sequence)
+    end
+  end
+  
+
+  @doc """
+  Encodes the given public or private key into a PEM string.
+
+  ## Examples
+
+      iex> BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      ...> |> BSV.Crypto.RSA.pem_encode
+      ...> |> String.starts_with?("-----BEGIN RSA PUBLIC KEY-----")
+      true
+
+      iex> BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
+      ...> |> BSV.Crypto.RSA.pem_encode
+      ...> |> String.starts_with?("-----BEGIN RSA PRIVATE KEY-----")
+      true
+  """
+  @spec pem_encode(PublicKey.t | PrivateKey.t) :: binary
+  def pem_encode(key)
+
+  def pem_encode(public_key = %PublicKey{}) do
+    pem_entry = :public_key.pem_entry_encode(:RSAPublicKey, PublicKey.as_sequence(public_key))
+    :public_key.pem_encode([pem_entry])
+  end
+
+  def pem_encode(private_key = %PrivateKey{}) do
+    pem_entry = :public_key.pem_entry_encode(:RSAPrivateKey, PrivateKey.as_sequence(private_key))
+    :public_key.pem_encode([pem_entry])
   end
   
 end
