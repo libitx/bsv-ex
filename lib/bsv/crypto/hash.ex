@@ -127,14 +127,14 @@ defmodule BSV.Crypto.Hash do
 
   ## Examples
 
-      iex> BSV.Crypto.Hash.sha256ripemd160("hello world")
+      iex> BSV.Crypto.Hash.sha256_ripemd160("hello world")
       <<215, 213, 238, 120, 36, 255, 147, 249, 76, 48, 85, 175, 147, 130, 200, 108, 104, 181, 202, 146>>
 
-      iex> BSV.Crypto.Hash.sha256ripemd160("hello world", encode: :hex)
+      iex> BSV.Crypto.Hash.sha256_ripemd160("hello world", encode: :hex)
       "d7d5ee7824ff93f94c3055af9382c86c68b5ca92"
   """
-  @spec sha256ripemd160(binary(), keyword()) :: binary()
-  def sha256ripemd160(data, options \\ []), do: sha256(data) |> hash(:ripemd160, options)
+  @spec sha256_ripemd160(binary(), keyword()) :: binary()
+  def sha256_ripemd160(data, options \\ []), do: sha256(data) |> hash(:ripemd160, options)
 
 
   @doc """
@@ -144,13 +144,13 @@ defmodule BSV.Crypto.Hash do
 
   ## Examples
 
-      iex> BSV.Crypto.Hash.sha256sha256("hello world")
+      iex> BSV.Crypto.Hash.sha256_sha256("hello world")
       <<188, 98, 212, 184, 13, 158, 54, 218, 41, 193, 108, 93, 77, 159, 17, 115, 31, 54, 5, 44, 114, 64, 26, 118, 194, 60, 15, 181, 169, 183, 68, 35>>
 
-      iex> BSV.Crypto.Hash.sha256sha256("hello world", encode: :hex)
+      iex> BSV.Crypto.Hash.sha256_sha256("hello world", encode: :hex)
       "bc62d4b80d9e36da29c16c5d4d9f11731f36052c72401a76c23c0fb5a9b74423"
   """
-  @spec sha256sha256(binary(), keyword()) :: binary()
-  def sha256sha256(data, options \\ []), do: sha256(data) |> hash(:sha256, options)
+  @spec sha256_sha256(binary(), keyword()) :: binary()
+  def sha256_sha256(data, options \\ []), do: sha256(data) |> hash(:sha256, options)
 
 end
