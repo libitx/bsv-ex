@@ -17,7 +17,7 @@ defmodule BSV.Crypto.ECDSA.PublicKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.ECDSA.PublicKey.t/0` to a `t:BSV.Crypto.ECDSA.PublicKey.sequence/0`.
+  Converts the given ECDSA public key struct to an Erlang EC point sequence.
 
   ## Examples
 

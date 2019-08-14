@@ -20,7 +20,7 @@ defmodule BSV.Crypto.AES do
   @doc """
   Returns a list of supported cypher modes.
   """
-  @spec cipher_modes() :: list()
+  @spec cipher_modes :: list
   def cipher_modes, do: @cipher_modes
 
 
@@ -33,7 +33,7 @@ defmodule BSV.Crypto.AES do
       ...> |> byte_size
       32
   """
-  @spec generate_secret() :: binary()
+  @spec generate_secret :: binary
   def generate_secret do
     Util.random_bytes(32)
   end
@@ -70,7 +70,7 @@ defmodule BSV.Crypto.AES do
       iex> BSV.Crypto.AES.encrypt("hello world", :ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16, encode: :hex)
       "cdf91fda732325cf96de03"
   """
-  @spec encrypt(binary(), atom(), binary(), keyword()) :: binary()
+  @spec encrypt(binary, atom, binary, keyword) :: binary
   def encrypt(data, mode, secret, options \\ [])
 
   def encrypt(data, :gcm, secret, options) do
@@ -133,7 +133,7 @@ defmodule BSV.Crypto.AES do
       ...> |> BSV.Crypto.AES.decrypt(:ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16)
       "hello world"
   """
-  @spec decrypt(binary(), atom(), binary(), keyword()) :: binary()
+  @spec decrypt(binary, atom, binary, keyword) :: binary
   def decrypt(ciphertext, mode, secret, options \\ [])
 
   def decrypt(ciphertext, :gcm, secret, options) do

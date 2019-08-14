@@ -27,7 +27,7 @@ defmodule BSV.Crypto.RSA do
 
 
   @doc """
-  Generate a new RSA private key.
+  Generates a new RSA private key.
 
   ## Options
 
@@ -41,7 +41,7 @@ defmodule BSV.Crypto.RSA do
       ...> (%BSV.Crypto.RSA.PrivateKey{} = private_key) == private_key
       true
   """
-  @spec generate_key(list) :: PrivateKey.t
+  @spec generate_key(keyword) :: PrivateKey.t
   def generate_key(options \\ []) do
     size = Keyword.get(options, :size, 2048)
     :public_key.generate_key({:rsa, size, <<1,0,1>>})
@@ -66,7 +66,7 @@ defmodule BSV.Crypto.RSA do
       BSV.Crypto.RSA.encrypt("hello world", public_or_private_key)
       << encrypted binary >>
   """
-  @spec encrypt(binary, PublicKey.t | {:public, PublicKey.t} | {:private, PrivateKey.t}, list) :: binary
+  @spec encrypt(binary, PublicKey.t | {:public, PublicKey.t} | {:private, PrivateKey.t}, keyword) :: binary
   def encrypt(data, key, options \\ [])
 
   def encrypt(data, public_key = %PublicKey{}, options) do
@@ -90,7 +90,7 @@ defmodule BSV.Crypto.RSA do
       BSV.Crypto.RSA.decrypt(encrypted_binary, public_or_private_key)
       << decrypted binary >>
   """
-  @spec decrypt(binary, PublicKey.t | PrivateKey.t, list) :: binary
+  @spec decrypt(binary, PublicKey.t | PrivateKey.t, keyword) :: binary
   def decrypt(data, key, options \\ [])
 
   def decrypt(data, public_key = %PublicKey{}, _options) do
@@ -117,7 +117,7 @@ defmodule BSV.Crypto.RSA do
       BSV.Crypto.RSA.sign("hello world", private_key, encode: :base64)
       << signature >>
   """
-  @spec sign(binary, PrivateKey.t, list) :: binary
+  @spec sign(binary, PrivateKey.t, keyword) :: binary
   def sign(message, private_key = %PrivateKey{}, options \\ []) do
     salt_len = Keyword.get(options, :salt_length, 20)
     encoding = Keyword.get(options, :encode)
@@ -127,7 +127,7 @@ defmodule BSV.Crypto.RSA do
 
 
   @doc """
-  Verify the given message and signature, using the given private key.
+  Verifies the given message and signature, using the given private key.
 
   ## Options
 
@@ -139,7 +139,7 @@ defmodule BSV.Crypto.RSA do
   
       BSV.Crypto.RSA.verify(signature, public_key)
   """
-  @spec verify(binary, PublicKey.t, list) :: boolean
+  @spec verify(binary, PublicKey.t, keyword) :: boolean
   def verify(message, signature, public_key = %PublicKey{}, options \\ []) do
     salt_len = Keyword.get(options, :salt_length, 20)
     :public_key.verify(message, :sha256, signature, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
@@ -151,7 +151,8 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      iex> public_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
+      ...> |> BSV.Crypto.RSA.PrivateKey.get_public_key
       ...> pem = BSV.Crypto.RSA.pem_encode(public_key)
       ...>
       ...> imported_key = BSV.Crypto.RSA.pem_decode(pem)
@@ -176,12 +177,13 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
 
-      iex> BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      iex> BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
+      ...> |> BSV.Crypto.RSA.PrivateKey.get_public_key
       ...> |> BSV.Crypto.RSA.pem_encode
       ...> |> String.starts_with?("-----BEGIN RSA PUBLIC KEY-----")
       true
 
-      iex> BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
+      iex> BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
       ...> |> BSV.Crypto.RSA.pem_encode
       ...> |> String.starts_with?("-----BEGIN RSA PRIVATE KEY-----")
       true

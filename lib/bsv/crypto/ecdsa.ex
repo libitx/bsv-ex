@@ -20,7 +20,7 @@ defmodule BSV.Crypto.ECDSA do
 
 
   @doc """
-  Generate a new ECDSA private key.
+  Generates a new ECDSA private key.
 
   ## Options
 
@@ -34,7 +34,7 @@ defmodule BSV.Crypto.ECDSA do
       ...> (%BSV.Crypto.ECDSA.PrivateKey{} = private_key) == private_key
       true
   """
-  @spec generate_key(list) :: PrivateKey.t
+  @spec generate_key(keyword) :: PrivateKey.t
   def generate_key(options \\ []) do
     named_curve = Keyword.get(options, :named_curve, @named_curve)
     :public_key.generate_key({:namedCurve, named_curve})
@@ -43,7 +43,7 @@ defmodule BSV.Crypto.ECDSA do
 
 
   @doc """
-  Generate a new ECDSA public and private key pair, returned as a tuple containing two binaries.
+  Generates a new ECDSA public and private key pair, returned as a tuple containing two binaries.
 
   ## Options
 
@@ -65,7 +65,7 @@ defmodule BSV.Crypto.ECDSA do
       ...> public_key == ecdsa_key.public_key
       true
   """
-  @spec generate_key_pair(list) :: {binary, binary}
+  @spec generate_key_pair(keyword) :: {binary, binary}
   def generate_key_pair(options \\ []) do
     named_curve = Keyword.get(options, :named_curve, @named_curve)
     private_key = Keyword.get(options, :private_key)
@@ -91,7 +91,7 @@ defmodule BSV.Crypto.ECDSA do
       BSV.Crypto.ECDSA.sign("hello world", private_key, encode: :base64)
       << signature >>
   """
-  @spec sign(binary, PrivateKey.t | binary, list) :: binary
+  @spec sign(binary, PrivateKey.t | binary, keyword) :: binary
   def sign(message, private_key, options \\ [])
 
   def sign(message, ecdsa_key = %PrivateKey{}, options) do
@@ -121,7 +121,7 @@ defmodule BSV.Crypto.ECDSA do
   
       BSV.Crypto.RSA.verify(signature, public_key)
   """
-  @spec verify(binary, PrivateKey.t | binary, list) :: boolean
+  @spec verify(binary, PrivateKey.t | binary, keyword) :: boolean
   def verify(message, signature, public_key, options \\ [])
 
   def verify(message, signature, public_key = %PublicKey{}, options) do

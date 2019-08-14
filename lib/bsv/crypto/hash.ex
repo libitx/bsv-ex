@@ -10,7 +10,7 @@ defmodule BSV.Crypto.Hash do
   @doc """
   Returns a list of supported hash algorithms.
   """
-  @spec hash_algorithms() :: list()
+  @spec hash_algorithms :: list
   def hash_algorithms, do: @hash_algorithms
 
 
@@ -44,7 +44,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.hash("hello world", :sha256, encode: :base64)
       "uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek="
   """
-  @spec hash(binary(), atom(), keyword()) :: binary()
+  @spec hash(binary, atom, keyword) :: binary
   def hash(data, algorithm, options \\ []) do
     encoding = Keyword.get(options, :encode)
     :crypto.hash(algorithm, data)
@@ -65,7 +65,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.ripemd160("hello world", encode: :hex)
       "98c615784ccb5fe5936fbc0cbe9dfdb408d92f0f"
   """
-  @spec ripemd160(binary(), keyword()) :: binary()
+  @spec ripemd160(binary, keyword) :: binary
   def ripemd160(data, options \\ []), do: hash(data, :ripemd160, options)
 
 
@@ -82,7 +82,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.sha1("hello world", encode: :hex)
       "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
   """
-  @spec sha1(binary(), keyword()) :: binary()
+  @spec sha1(binary, keyword) :: binary
   def sha1(data, options \\ []), do: hash(data, :sha, options)
 
 
@@ -99,7 +99,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.sha256("hello world", encode: :hex)
       "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
   """
-  @spec sha256(binary(), keyword()) :: binary()
+  @spec sha256(binary, keyword) :: binary
   def sha256(data, options \\ []), do: hash(data, :sha256, options)
 
 
@@ -116,7 +116,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.sha512("hello world", encode: :base64)
       "MJ7MSJwS1utMxA9QyQLytNDtd+5RGnx6m808qG1M2G+YndNbxf9JlnDaNCVbRbDP2DDoH2Bdz33FVC6TrpzXbw=="
   """
-  @spec sha512(binary(), keyword()) :: binary()
+  @spec sha512(binary, keyword) :: binary
   def sha512(data, options \\ []), do: hash(data, :sha512, options)
 
 
@@ -133,7 +133,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.sha256_ripemd160("hello world", encode: :hex)
       "d7d5ee7824ff93f94c3055af9382c86c68b5ca92"
   """
-  @spec sha256_ripemd160(binary(), keyword()) :: binary()
+  @spec sha256_ripemd160(binary, keyword) :: binary
   def sha256_ripemd160(data, options \\ []), do: sha256(data) |> hash(:ripemd160, options)
 
 
@@ -150,7 +150,7 @@ defmodule BSV.Crypto.Hash do
       iex> BSV.Crypto.Hash.sha256_sha256("hello world", encode: :hex)
       "bc62d4b80d9e36da29c16c5d4d9f11731f36052c72401a76c23c0fb5a9b74423"
   """
-  @spec sha256_sha256(binary(), keyword()) :: binary()
+  @spec sha256_sha256(binary, keyword) :: binary
   def sha256_sha256(data, options \\ []), do: sha256(data) |> hash(:sha256, options)
 
 end
