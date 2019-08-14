@@ -38,11 +38,11 @@ defmodule BSV.Crypto.RSA.PrivateKey do
 
   
   @doc """
-  Convert a `t:BSV.Crypto.RSA.PrivateKey.sequence/0` to a `t:BSV.Crypto.RSA.PrivateKey.t/0`.
+  Converts the given Erlang private key sequence to a RSA private key struct.
 
   ## Examples
 
-      iex> private_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
+      iex> private_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
       ...> (%BSV.Crypto.RSA.PrivateKey{} = private_key) == private_key
       true
   """
@@ -69,11 +69,11 @@ defmodule BSV.Crypto.RSA.PrivateKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.RSA.PrivateKey.t/0` to a `t:BSV.Crypto.RSA.PrivateKey.sequence/0`.
+  Converts the given RSA private key struct to an Erlang private key sequence.
 
   ## Examples
 
-      iex> private_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
+      iex> private_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
       ...>
       ...> BSV.Crypto.RSA.PrivateKey.as_sequence(private_key)
       ...> |> is_tuple
@@ -98,11 +98,11 @@ defmodule BSV.Crypto.RSA.PrivateKey do
 
 
   @doc """
-  Get a `t:BSV.Crypto.RSA.PublicKey.t/0` from the given `t:BSV.Crypto.RSA.PrivateKey.t/0`.
+  Returns the public key from the given RSA private key.
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_private_key)
+      iex> public_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
       ...> |> BSV.Crypto.RSA.PrivateKey.get_public_key
       ...> (%BSV.Crypto.RSA.PublicKey{} = public_key) == public_key
       true

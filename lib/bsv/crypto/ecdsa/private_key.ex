@@ -25,7 +25,7 @@ defmodule BSV.Crypto.ECDSA.PrivateKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.ECDSA.PrivateKey.sequence/0` to a `t:BSV.Crypto.ECDSA.PrivateKey.t/0`.
+  Converts the given Erlang ECDSA key sequence to a ECDSA private key.
 
   ## Examples
 
@@ -45,6 +45,7 @@ defmodule BSV.Crypto.ECDSA.PrivateKey do
 
 
   @doc """
+  Converts the given ECDSA private key to an Erlang ECDSA key sequence.
   Convert a `t:BSV.Crypto.ECDSA.PrivateKey.t/0` to a `t:BSV.Crypto.ECDSA.PrivateKey.sequence/0`.
 
   ## Examples
@@ -68,7 +69,7 @@ defmodule BSV.Crypto.ECDSA.PrivateKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.ECDSA.PrivateKey.t/0` to a `t:BSV.Crypto.ECDSA.PrivateKey.sequence/0`.
+  Returns the public key from the given ECDSA private key.
 
   ## Examples
 

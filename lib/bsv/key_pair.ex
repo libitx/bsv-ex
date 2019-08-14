@@ -38,7 +38,7 @@ defmodule BSV.KeyPair do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.ECDSA.PrivateKey.t/0` to a `t:BSV.KeyPair.t/0`.
+  Converts ECDSA keys to a BSV key pair.
 
   ## Options
 
@@ -48,34 +48,14 @@ defmodule BSV.KeyPair do
 
   ## Examples
 
-      iex> keypair = BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.KeyPair.from_ecdsa_key
+      iex> keypair =BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
       ...> (%BSV.KeyPair{} = keypair) == keypair
       true
   """
-  @spec from_ecdsa_key(BSV.Crypto.ECDSA.PrivateKey.t, keyword) :: BSV.KeyPair.t
-  def from_ecdsa_key(key, options \\ []) do
-    from_tuple({key.public_key, key.private_key}, options)
-  end
+  @spec from_ecdsa_key(BSV.Crypto.ECDSA.PrivateKey.t | {binary, binary}, keyword) :: BSV.KeyPair.t
+  def from_ecdsa_key(key, options \\ [])
 
-
-  @doc """
-  Convert tuple containing ECDSA public and private key pair binaries to a `t:BSV.KeyPair.t/0`.
-
-  ## Options
-
-  The accepted options are:
-
-  * `:compressed` - Specify whether to compress the given public key. Defaults to `true`.
-  
-  ## Examples
-
-      iex> keypair = BSV.KeyPair.from_tuple(BSV.Test.bsv_key_pair)
-      ...> (%BSV.KeyPair{} = keypair) == keypair
-      true
-  """
-  @spec from_ecdsa_key({binary, binary}, keyword) :: BSV.KeyPair.t
-  def from_tuple({public_key, private_key}, options \\ []) do
+  def from_ecdsa_key({public_key, private_key}, options) do
     public_key = case Keyword.get(options, :compressed, true) do
       true -> compress_public_key(public_key)
       false -> public_key
@@ -87,9 +67,13 @@ defmodule BSV.KeyPair do
     ])
   end
 
+  def from_ecdsa_key(key, options) do
+    from_ecdsa_key({key.public_key, key.private_key}, options)
+  end
+
   
   @doc """
-  Get the Bitcoin address from the given key pair or public key.
+  Returns the Bitcoin address from the given key pair or public key.
 
   ## Examples
 
@@ -117,7 +101,7 @@ defmodule BSV.KeyPair do
 
 
   @doc """
-  Decode the given Wallet Import Format (WIF) binary into a BSV key pair.
+  Decodes the given Wallet Import Format (WIF) binary into a BSV key pair.
 
   ## Examples
 
@@ -137,12 +121,12 @@ defmodule BSV.KeyPair do
     end
 
     ECDSA.generate_key_pair(private_key: private_key)
-    |> from_tuple(compressed: compressed)
+    |> from_ecdsa_key(compressed: compressed)
   end
 
 
   @doc """
-  Encode the given BSV key pair into a Wallet Import Format (WIF) binary.
+  Encodes the given BSV key pair into a Wallet Import Format (WIF) binary.
 
   ## Examples
 

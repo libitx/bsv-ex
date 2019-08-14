@@ -20,11 +20,15 @@ defmodule BSV.Crypto.RSA.PublicKey do
   
   
   @doc """
-  Convert a `t:BSV.Crypto.RSA.PublicKey.sequence/0` to a `t:BSV.Crypto.RSA.PublicKey.t/0`.
+  Converts the given Erlang public key sequence to a RSA public key struct.
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      iex> public_key_sequence = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
+      ...> |> BSV.Crypto.RSA.PrivateKey.get_public_key
+      ...> |> BSV.Crypto.RSA.PublicKey.as_sequence
+      ...>
+      ...> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(public_key_sequence)
       ...> (%BSV.Crypto.RSA.PublicKey{} = public_key) == public_key
       true
   """
@@ -38,11 +42,12 @@ defmodule BSV.Crypto.RSA.PublicKey do
 
 
   @doc """
-  Convert a `t:BSV.Crypto.RSA.PublicKey.t/0` to a `t:BSV.Crypto.RSA.PublicKey.sequence/0`.
+  Converts the given RSA public key struct to an Erlang public key sequence.=
 
   ## Examples
 
-      iex> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(BSV.Test.rsa_public_key)
+      iex> public_key = BSV.Crypto.RSA.PrivateKey.from_sequence(BSV.Test.rsa_key)
+      ...> |> BSV.Crypto.RSA.PrivateKey.get_public_key
       ...>
       ...> BSV.Crypto.RSA.PublicKey.as_sequence(public_key)
       ...> |> is_tuple

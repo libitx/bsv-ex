@@ -4,7 +4,7 @@ defmodule BSV.Util do
   """
 
   @doc """
-  Encode the given binary data with the specified encoding scheme.
+  Encodes the given binary data with the specified encoding scheme.
 
   ## Options
 
@@ -21,7 +21,7 @@ defmodule BSV.Util do
       iex> BSV.Util.encode("hello world", :hex)
       "68656c6c6f20776f726c64"
   """
-  @spec encode(binary(), atom()) :: binary()
+  @spec encode(binary, atom) :: binary
   def encode(data, encoding) do
     case encoding do
       :base64 -> Base.encode64(data)
@@ -40,7 +40,7 @@ defmodule BSV.Util do
       ...> bit_size(iv)
       128
   """
-  @spec random_bytes(integer()) :: binary()
+  @spec random_bytes(integer) :: binary
   def random_bytes(bytes) when is_integer(bytes) do
     :crypto.strong_rand_bytes(bytes)
   end
