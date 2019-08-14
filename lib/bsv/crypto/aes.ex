@@ -26,6 +26,12 @@ defmodule BSV.Crypto.AES do
 
   @doc """
   Generate a 256 bit random secret key.
+
+  ## Examples
+
+      iex> BSV.Crypto.AES.generate_secret
+      ...> |> byte_size
+      32
   """
   @spec generate_secret() :: binary()
   def generate_secret do

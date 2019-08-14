@@ -4,14 +4,16 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
 
-      iex> {public_key, private_key} = BSV.Crypto.RSA.generate_key_pair
+      iex> private_key = BSV.Crypto.RSA.generate_key
+      ...> public_key = BSV.Crypto.RSA.PrivateKey.get_public_key(private_key)
       ...>
       ...> "hello world"
       ...> |> BSV.Crypto.RSA.encrypt(public_key)
       ...> |> BSV.Crypto.RSA.decrypt(private_key)
       "hello world"
 
-      iex> {public_key, private_key} = BSV.Crypto.RSA.generate_key_pair
+      iex> private_key = BSV.Crypto.RSA.generate_key
+      ...> public_key = BSV.Crypto.RSA.PrivateKey.get_public_key(private_key)
       ...>
       ...> message = "hello world"
       ...> signature = BSV.Crypto.RSA.sign(message, private_key)
@@ -25,13 +27,25 @@ defmodule BSV.Crypto.RSA do
 
 
   @doc """
-  Generate a new public and private keypair.
+  Generate a new RSA private key.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:size` - Specific the size of the RSA key. Defaults to `2048`.
+
+  ## Examples
+
+      iex> private_key = BSV.Crypto.RSA.generate_key
+      ...> (%BSV.Crypto.RSA.PrivateKey{} = private_key) == private_key
+      true
   """
-  @spec generate_key_pair(integer) :: {PublicKey.t, PrivateKey.t}
-  def generate_key_pair(bits \\ 2048) do
-    private_key = :public_key.generate_key({:rsa, bits, <<1,0,1>>})
+  @spec generate_key(list) :: PrivateKey.t
+  def generate_key(options \\ []) do
+    size = Keyword.get(options, :size, 2048)
+    :public_key.generate_key({:rsa, size, <<1,0,1>>})
     |> PrivateKey.from_sequence
-    {PrivateKey.get_public_key(private_key), private_key}
   end
 
 
