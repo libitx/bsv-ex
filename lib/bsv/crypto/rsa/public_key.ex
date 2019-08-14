@@ -56,8 +56,5 @@ defmodule BSV.Crypto.RSA.PublicKey do
       public_key.public_exponent
     }
   end
-
-
-  
   
 end
