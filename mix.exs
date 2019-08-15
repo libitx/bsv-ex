@@ -12,12 +12,12 @@ defmodule BSV.MixProject do
       description: "Elixir Bitcoin SV library",
       source_url: "https://github.com/libitx/bsv-ex",
       docs: [
-        main: "README",
+        main: "BSV",
         extras: ["README.md"]
       ],
       package: [
         name: "bsv",
-        files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE.md),
+        files: ~w(lib .formatter.exs mix.exs README.md LICENSE.md),
         licenses: ["MIT"],
         links: %{"GitHub" => "https://github.com/libitx/bsv-ex"}
       ]
