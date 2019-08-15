@@ -1,21 +1,31 @@
-# BSV
+# BSV-ex
 
-**TODO: Add description**
+**🚨 This repo is a work in progress. Not production ready yet.**
+
+Elixir Bitcoin SV library. The aim is to create a full-featured library that broadly covers the following:
+
+* [x] General crypto functions (hash, ecdsa, rsa)
+* [ ] Bitcoin specific crypto (Electrum compatible message encrypt/decrypt and sign/verify)
+* [x] Bitcoin key pair generation and related functions
+* [ ] HD seed and key derivation
+* [ ] Transaction parsing, building and encoding
+
+Documentation can be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bsv` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `bsv` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:bsv, "~> 0.1.0"}
+    {:bsv, "~> 0.1.0-dev.1"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
+## License
 
+© Copyright 2019 libitx.
+
+BSV-ex is free software and released under the [MIT license](https://github.com/libitx/bsv-elixir/blob/master/LICENSE.md).
