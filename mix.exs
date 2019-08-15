@@ -4,12 +4,16 @@ defmodule BSV.MixProject do
   def project do
     [
       app: :bsv,
-      version: "0.1.0-dev",
+      version: "0.1.0-dev.1",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-
       name: "BSV",
+      source_url: "https://github.com/libitx/bsv-ex",
+      docs: [
+        main: "README",
+        extras: ["README.md"]
+      ]
     ]
   end
 
