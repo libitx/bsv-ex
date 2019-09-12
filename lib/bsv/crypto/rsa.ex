@@ -126,7 +126,7 @@ defmodule BSV.Crypto.RSA do
 
 
   @doc """
-  Verifies the given message and signature, using the given private key.
+  Verifies the given message and signature, using the given public key.
 
   ## Options
 
@@ -136,7 +136,8 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
   
-      BSV.Crypto.RSA.verify(signature, public_key)
+      BSV.Crypto.RSA.verify(signature, message, public_key)
+      true
   """
   @spec verify(binary, binary, PublicKey.t, keyword) :: boolean
   def verify(signature, message, %PublicKey{} = public_key, options \\ []) do

@@ -109,7 +109,7 @@ defmodule BSV.Crypto.ECDSA do
 
 
   @doc """
-  Verify the given message and signature, using the given private key.
+  Verify the given message and signature, using the given public key.
 
   ## Options
 
@@ -119,9 +119,10 @@ defmodule BSV.Crypto.ECDSA do
 
   ## Examples
   
-      BSV.Crypto.RSA.verify(signature, public_key)
+      BSV.Crypto.ECDSA.verify(signature, message, public_key)
+      true
   """
-  @spec verify(binary, binary, PrivateKey.t | binary, keyword) :: boolean
+  @spec verify(binary, binary, PublicKey.t | binary, keyword) :: boolean
   def verify(signature, message, public_key, options \\ [])
 
   def verify(signature, message, %PublicKey{} = public_key, options) do

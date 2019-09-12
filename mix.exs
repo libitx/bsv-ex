@@ -35,7 +35,8 @@ defmodule BSV.MixProject do
   defp deps do
     [
       {:basefiftyeight, "~> 0.1.0"},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:libsecp256k1, "~> 0.1.10"}
     ]
   end
 end
