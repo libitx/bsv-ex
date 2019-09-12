@@ -30,7 +30,7 @@ defmodule BSV.Crypto.ECDSA.PrivateKey do
   ## Examples
 
       iex> ecdsa_key = BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> (%BSV.Crypto.ECDSA.PrivateKey{} = ecdsa_key) == ecdsa_key
+      ...> ecdsa_key.__struct__ == BSV.Crypto.ECDSA.PrivateKey
       true
   """
   @spec from_sequence(BSV.Crypto.ECDSA.sequence) :: BSV.Crypto.ECDSA.PrivateKey.t
@@ -75,7 +75,7 @@ defmodule BSV.Crypto.ECDSA.PrivateKey do
 
       iex> public_key = BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
       ...> |> BSV.Crypto.ECDSA.PrivateKey.get_public_key
-      ...> (%BSV.Crypto.ECDSA.PublicKey{} = public_key) == public_key
+      ...> public_key.__struct__ == BSV.Crypto.ECDSA.PublicKey
       true
   """
   @spec get_public_key(BSV.Crypto.ECDSA.PrivateKey.t) :: BSV.Crypto.ECDSA.PublicKey.t

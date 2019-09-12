@@ -13,14 +13,14 @@ defmodule BSV.MessageTest do
 
 
   describe "BSV.Message.sign/3 and BSV.Message.verify/4" do
-    test "sign with private key and veryify with public key", ctx do
+    test "sign with private key and verify with public key", ctx do
       result = "hello world"
       |> BSV.Message.sign(ctx.priv_key)
       |> BSV.Message.verify("hello world", ctx.pub_key)
       assert result == true
     end
 
-    test "sign with private key and veryify with address", ctx do
+    test "sign with private key and verify with address", ctx do
       result = "hello world"
       |> BSV.Message.sign(ctx.priv_key)
       |> BSV.Message.verify("hello world", ctx.address)

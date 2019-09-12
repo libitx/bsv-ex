@@ -84,7 +84,7 @@ defmodule BSV.Crypto.ECDSA do
   The accepted options are:
 
   * `:named_curve` - Specific the elliptic curve name. Defaults to `:secp256k1`.
-  * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
+  * `:encoding` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 
@@ -95,14 +95,16 @@ defmodule BSV.Crypto.ECDSA do
   def sign(message, private_key, options \\ [])
 
   def sign(message, %PrivateKey{} = ecdsa_key, options) do
-    encoding = Keyword.get(options, :encode)
+    encoding = Keyword.get(options, :encoding)
+
     :public_key.sign(message, :sha256, PrivateKey.as_sequence(ecdsa_key))
     |> Util.encode(encoding)
   end
 
   def sign(message, private_key, options) when is_binary(private_key) do
+    encoding = Keyword.get(options, :encoding)
     named_curve = Keyword.get(options, :named_curve, @named_curve)
-    encoding = Keyword.get(options, :encode)
+
     :crypto.sign(:ecdsa, :sha256, message, [private_key, named_curve])
     |> Util.encode(encoding)
   end
@@ -115,6 +117,7 @@ defmodule BSV.Crypto.ECDSA do
 
   The accepted options are:
 
+  * `:encoding` - Optionally decode the given signature with either the `:base64` or `:hex` encoding scheme.
   * `:named_curve` - Specific the elliptic curve name. Defaults to `:secp256k1`.
 
   ## Examples
@@ -126,12 +129,16 @@ defmodule BSV.Crypto.ECDSA do
   def verify(signature, message, public_key, options \\ [])
 
   def verify(signature, message, %PublicKey{} = public_key, options) do
+    encoding = Keyword.get(options, :encoding)
     named_curve = Keyword.get(options, :named_curve, @named_curve)
+    signature = Util.decode(signature, encoding)
     :public_key.verify(message, :sha256, signature, {PublicKey.as_sequence(public_key), {:namedCurve, named_curve}})
   end
 
   def verify(signature, message, public_key, options) when is_binary(public_key) do
+    encoding = Keyword.get(options, :encoding)
     named_curve = Keyword.get(options, :named_curve, @named_curve)
+    signature = Util.decode(signature, encoding)
     :crypto.verify(:ecdsa, :sha256, message, signature, [public_key, named_curve])
   end
 

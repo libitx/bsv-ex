@@ -27,7 +27,7 @@ defmodule BSV.KeyPair do
   ## Examples
 
       iex> keypair = BSV.KeyPair.generate
-      ...> (%BSV.KeyPair{} = keypair) == keypair
+      ...> keypair.__struct__ == BSV.KeyPair
       true
   """
   @spec generate(keyword) :: BSV.KeyPair.t
@@ -48,8 +48,8 @@ defmodule BSV.KeyPair do
 
   ## Examples
 
-      iex> keypair =BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
-      ...> (%BSV.KeyPair{} = keypair) == keypair
+      iex> keypair = BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
+      ...> keypair.__struct__ == BSV.KeyPair
       true
   """
   @spec from_ecdsa_key(BSV.Crypto.ECDSA.PrivateKey.t | {binary, binary}, keyword) :: BSV.KeyPair.t

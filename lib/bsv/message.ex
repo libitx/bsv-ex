@@ -17,8 +17,7 @@ defmodule BSV.Message do
 
   The accepted options are:
 
-  * `:encoding` - Encode the returned binary with either the `:base64` (default)
-    or `:hex` encoding scheme. Set to `false` to return binary signature.
+  * `:encoding` - Encode the returned binary with either the `:base64` (default) or `:hex` encoding scheme. Set to `false` to return binary signature.
 
   ## Examples
 
@@ -58,8 +57,7 @@ defmodule BSV.Message do
 
   The accepted options are:
 
-  * `:encoding` - Decode the given signature with either the `:base64` (default)
-    or `:hex` encoding scheme. Set to `false` to accept binary signature.
+  * `:encoding` - Decode the given signature with either the `:base64` (default) or `:hex` encoding scheme. Set to `false` to accept binary signature.
 
   ## Examples
   
