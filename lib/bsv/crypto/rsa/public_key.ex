@@ -17,6 +17,9 @@ defmodule BSV.Crypto.RSA.PublicKey do
     integer,
     integer
   }
+
+  @typedoc "Erlang RSA Public Key raw binary list"
+  @type raw_key :: [binary]
   
   
   @doc """
@@ -29,14 +32,14 @@ defmodule BSV.Crypto.RSA.PublicKey do
       ...> |> BSV.Crypto.RSA.PublicKey.as_sequence
       ...>
       ...> public_key = BSV.Crypto.RSA.PublicKey.from_sequence(public_key_sequence)
-      ...> (%BSV.Crypto.RSA.PublicKey{} = public_key) == public_key
+      ...> public_key.__struct__ == BSV.Crypto.RSA.PublicKey
       true
   """
   @spec from_sequence(BSV.Crypto.RSA.PublicKey.sequence) :: BSV.Crypto.RSA.PublicKey.t
   def from_sequence(rsa_key_sequence) do
     struct(__MODULE__, [
-      modulus: elem(rsa_key_sequence, 1),
-      public_exponent: elem(rsa_key_sequence, 2)
+      modulus: elem(rsa_key_sequence, 1) |> :binary.encode_unsigned,
+      public_exponent: elem(rsa_key_sequence, 2) |> :binary.encode_unsigned
     ])
   end
 
@@ -57,9 +60,33 @@ defmodule BSV.Crypto.RSA.PublicKey do
   def as_sequence(public_key) do
     {
       :RSAPublicKey,
-      public_key.modulus,
-      public_key.public_exponent
+      :binary.decode_unsigned(public_key.modulus),
+      :binary.decode_unsigned(public_key.public_exponent)
     }
+  end
+
+
+  @doc """
+  Converts the given Erlang public key raw list to a RSA public key struct.
+  """
+  @spec from_raw(BSV.Crypto.RSA.PublicKey.raw_key) :: BSV.Crypto.RSA.PublicKey.t
+  def from_raw([e, n]) do
+    struct(__MODULE__, [
+      modulus: n,
+      public_exponent: e
+    ])
+  end
+
+
+  @doc """
+  Converts the given RSA private key struct to an Erlang private key raw list.
+  """
+  @spec as_raw(BSV.Crypto.RSA.PrivateKey.t) :: BSV.Crypto.RSA.PrivateKey.raw_key
+  def as_raw(private_key) do
+    [
+      private_key.public_exponent,
+      private_key.modulus
+    ]
   end
   
 end

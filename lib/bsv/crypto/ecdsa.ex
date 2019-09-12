@@ -7,9 +7,9 @@ defmodule BSV.Crypto.ECDSA do
       iex> private_key = BSV.Crypto.ECDSA.generate_key
       ...> public_key = BSV.Crypto.ECDSA.PrivateKey.get_public_key(private_key)
       ...>
-      ...> message = "hello world"
-      ...> signature = BSV.Crypto.ECDSA.sign(message, private_key)
-      ...> BSV.Crypto.ECDSA.verify(message, signature, public_key)
+      ...> "hello world"
+      ...> |> BSV.Crypto.ECDSA.sign(private_key)
+      ...> |> BSV.Crypto.ECDSA.verify("hello world", public_key)
       true
   """
   alias BSV.Util
@@ -31,7 +31,7 @@ defmodule BSV.Crypto.ECDSA do
   ## Examples
 
       iex> private_key = BSV.Crypto.ECDSA.generate_key
-      ...> (%BSV.Crypto.ECDSA.PrivateKey{} = private_key) == private_key
+      ...> private_key.__struct__ == BSV.Crypto.ECDSA.PrivateKey
       true
   """
   @spec generate_key(keyword) :: PrivateKey.t
@@ -50,7 +50,7 @@ defmodule BSV.Crypto.ECDSA do
   The accepted options are:
 
   * `:named_curve` - Specify the elliptic curve name. Defaults to `:secp256k1`.
-  * `:private_key` - Whena private key binary is given, it will be returned with its public key.
+  * `:private_key` - When a private key binary is given, it will be returned with its public key.
 
   ## Examples
 
@@ -94,7 +94,7 @@ defmodule BSV.Crypto.ECDSA do
   @spec sign(binary, PrivateKey.t | binary, keyword) :: binary
   def sign(message, private_key, options \\ [])
 
-  def sign(message, ecdsa_key = %PrivateKey{}, options) do
+  def sign(message, %PrivateKey{} = ecdsa_key, options) do
     encoding = Keyword.get(options, :encode)
     :public_key.sign(message, :sha256, PrivateKey.as_sequence(ecdsa_key))
     |> Util.encode(encoding)
@@ -121,15 +121,15 @@ defmodule BSV.Crypto.ECDSA do
   
       BSV.Crypto.RSA.verify(signature, public_key)
   """
-  @spec verify(binary, PrivateKey.t | binary, keyword) :: boolean
-  def verify(message, signature, public_key, options \\ [])
+  @spec verify(binary, binary, PrivateKey.t | binary, keyword) :: boolean
+  def verify(signature, message, public_key, options \\ [])
 
-  def verify(message, signature, public_key = %PublicKey{}, options) do
+  def verify(signature, message, %PublicKey{} = public_key, options) do
     named_curve = Keyword.get(options, :named_curve, @named_curve)
     :public_key.verify(message, :sha256, signature, {PublicKey.as_sequence(public_key), {:namedCurve, named_curve}})
   end
 
-  def verify(message, signature, public_key, options) when is_binary(public_key) do
+  def verify(signature, message, public_key, options) when is_binary(public_key) do
     named_curve = Keyword.get(options, :named_curve, @named_curve)
     :crypto.verify(:ecdsa, :sha256, message, signature, [public_key, named_curve])
   end
@@ -167,7 +167,7 @@ defmodule BSV.Crypto.ECDSA do
       true
   """
   @spec pem_encode(PrivateKey.t) :: binary
-  def pem_encode(ecdsa_key = %PrivateKey{}) do
+  def pem_encode(%PrivateKey{} = ecdsa_key) do
     pem_entry = :public_key.pem_entry_encode(:ECPrivateKey, PrivateKey.as_sequence(ecdsa_key))
     :public_key.pem_encode([pem_entry])
   end

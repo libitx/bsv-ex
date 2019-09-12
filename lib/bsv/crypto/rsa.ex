@@ -15,9 +15,9 @@ defmodule BSV.Crypto.RSA do
       iex> private_key = BSV.Crypto.RSA.generate_key
       ...> public_key = BSV.Crypto.RSA.PrivateKey.get_public_key(private_key)
       ...>
-      ...> message = "hello world"
-      ...> signature = BSV.Crypto.RSA.sign(message, private_key)
-      ...> BSV.Crypto.RSA.verify(message, signature, public_key)
+      ...> "hello world"
+      ...> |> BSV.Crypto.RSA.sign(private_key)
+      ...> |> BSV.Crypto.RSA.verify("hello world", public_key)
       true
   
   """
@@ -38,7 +38,7 @@ defmodule BSV.Crypto.RSA do
   ## Examples
 
       iex> private_key = BSV.Crypto.RSA.generate_key
-      ...> (%BSV.Crypto.RSA.PrivateKey{} = private_key) == private_key
+      ...> private_key.__struct__ == BSV.Crypto.RSA.PrivateKey
       true
   """
   @spec generate_key(keyword) :: PrivateKey.t
@@ -59,23 +59,22 @@ defmodule BSV.Crypto.RSA do
   The accepted options are:
 
   * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
-  * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 
       BSV.Crypto.RSA.encrypt("hello world", public_or_private_key)
       << encrypted binary >>
   """
-  @spec encrypt(binary, PublicKey.t | {:public, PublicKey.t} | {:private, PrivateKey.t}, keyword) :: binary
+  @spec encrypt(binary, PublicKey.t | PrivateKey.t, keyword) :: binary
   def encrypt(data, key, options \\ [])
 
-  def encrypt(data, public_key = %PublicKey{}, options) do
+  def encrypt(data, %PublicKey{} = public_key, options) do
     encoding = Keyword.get(options, :encode)
     :public_key.encrypt_public(data, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
-  def encrypt(data, private_key = %PrivateKey{}, options) do
+  def encrypt(data, %PrivateKey{} = private_key, options) do
     encoding = Keyword.get(options, :encode)
     :public_key.encrypt_private(data, PrivateKey.as_sequence(private_key))
     |> Util.encode(encoding)
@@ -93,11 +92,11 @@ defmodule BSV.Crypto.RSA do
   @spec decrypt(binary, PublicKey.t | PrivateKey.t, keyword) :: binary
   def decrypt(data, key, options \\ [])
 
-  def decrypt(data, public_key = %PublicKey{}, _options) do
+  def decrypt(data, %PublicKey{} = public_key, _options) do
     :public_key.decrypt_public(data, PublicKey.as_sequence(public_key))
   end
 
-  def decrypt(data, private_key = %PrivateKey{}, _options) do
+  def decrypt(data, %PrivateKey{} = private_key, _options) do
     :public_key.decrypt_private(data, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
   end
 
@@ -118,7 +117,7 @@ defmodule BSV.Crypto.RSA do
       << signature >>
   """
   @spec sign(binary, PrivateKey.t, keyword) :: binary
-  def sign(message, private_key = %PrivateKey{}, options \\ []) do
+  def sign(message, %PrivateKey{} = private_key, options \\ []) do
     salt_len = Keyword.get(options, :salt_length, 20)
     encoding = Keyword.get(options, :encode)
     :public_key.sign(message, :sha256, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
@@ -139,8 +138,8 @@ defmodule BSV.Crypto.RSA do
   
       BSV.Crypto.RSA.verify(signature, public_key)
   """
-  @spec verify(binary, PublicKey.t, keyword) :: boolean
-  def verify(message, signature, public_key = %PublicKey{}, options \\ []) do
+  @spec verify(binary, binary, PublicKey.t, keyword) :: boolean
+  def verify(signature, message, %PublicKey{} = public_key, options \\ []) do
     salt_len = Keyword.get(options, :salt_length, 20)
     :public_key.verify(message, :sha256, signature, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
   end
@@ -191,12 +190,12 @@ defmodule BSV.Crypto.RSA do
   @spec pem_encode(PublicKey.t | PrivateKey.t) :: binary
   def pem_encode(key)
 
-  def pem_encode(public_key = %PublicKey{}) do
+  def pem_encode(%PublicKey{} = public_key) do
     pem_entry = :public_key.pem_entry_encode(:RSAPublicKey, PublicKey.as_sequence(public_key))
     :public_key.pem_encode([pem_entry])
   end
 
-  def pem_encode(private_key = %PrivateKey{}) do
+  def pem_encode(%PrivateKey{} = private_key) do
     pem_entry = :public_key.pem_entry_encode(:RSAPrivateKey, PrivateKey.as_sequence(private_key))
     :public_key.pem_encode([pem_entry])
   end
