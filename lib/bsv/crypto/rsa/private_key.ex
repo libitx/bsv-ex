@@ -128,7 +128,6 @@ defmodule BSV.Crypto.RSA.PrivateKey do
     [
       private_key.public_exponent,
       private_key.modulus,
-      private_key.public_exponent,
       private_key.private_exponent,
       private_key.prime_1,
       private_key.prime_2,
