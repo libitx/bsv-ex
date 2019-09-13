@@ -4,7 +4,7 @@ defmodule BSV.MixProject do
   def project do
     [
       app: :bsv,
-      version: "0.1.0-dev.1",
+      version: "0.1.0-dev.2",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -34,9 +34,9 @@ defmodule BSV.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:basefiftyeight, "~> 0.1.0"},
+      {:basefiftyeight, "~> 0.1"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:libsecp256k1, "~> 0.1.10"}
+      {:libsecp256k1, "~> 0.1"}
     ]
   end
 end

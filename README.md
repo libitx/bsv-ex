@@ -5,7 +5,7 @@
 Elixir Bitcoin SV library. The aim is to create a full-featured library that broadly covers the following:
 
 * [x] General crypto functions (hash, ecdsa, rsa)
-* [ ] Bitcoin specific crypto (Electrum compatible message encrypt/decrypt and sign/verify)
+* [x] Bitcoin specific crypto (Electrum compatible message encrypt/decrypt and sign/verify)
 * [x] Bitcoin key pair generation and related functions
 * [ ] HD seed and key derivation
 * [ ] Transaction parsing, building and encoding
@@ -19,7 +19,7 @@ The package can be installed by adding `bsv` to your list of dependencies in `mi
 ```elixir
 def deps do
   [
-    {:bsv, "~> 0.1.0-dev.1"}
+    {:bsv, "~> 0.1.0-dev.2"}
   ]
 end
 ```
