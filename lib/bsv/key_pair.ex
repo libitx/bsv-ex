@@ -3,8 +3,9 @@ defmodule BSV.KeyPair do
   Module for generating and using Bitcoin key pairs.
   """
 
-  alias BSV.Crypto.ECDSA
   alias BSV.Crypto.Hash
+  alias BSV.Crypto.ECDSA
+  alias BSV.Crypto.ECDSA.PublicKey
 
   defstruct [:public_key, :private_key]
 
@@ -57,7 +58,7 @@ defmodule BSV.KeyPair do
 
   def from_ecdsa_key({public_key, private_key}, options) do
     public_key = case Keyword.get(options, :compressed, true) do
-      true -> compress_public_key(public_key)
+      true -> PublicKey.compress(public_key)
       false -> public_key
     end
 
@@ -148,15 +149,6 @@ defmodule BSV.KeyPair do
 
     (key.private_key <> suffix)
     |> B58.encode58_check!(<<0x80>>)
-  end
-    
-
-  defp compress_public_key(<< _::size(8), x::size(256), y::size(256) >>) do
-    prefix = case rem(y, 2) do
-      0 -> 0x02
-      _ -> 0x03
-    end
-    << prefix::size(8), x::size(256) >>
   end
   
 end

@@ -85,10 +85,14 @@ defmodule BSV.Crypto.AES do
 
   def encrypt(data, :cbc, secret, options) do
     encoding = Keyword.get(options, :encoding)
-    padding = 16 - rem(byte_size(data), 16)
     iv = Keyword.get(options, :iv, Util.random_bytes(16))
-
-    :crypto.crypto_one_time(:aes_256_cbc, secret, iv, data <> :binary.copy(<<padding>>, padding), true)
+    mode = case byte_size(secret) do
+      16 -> :aes_128_cbc
+      _ -> :aes_256_cbc
+    end
+    padding = 16 - rem(byte_size(data), 16)
+    
+    :crypto.crypto_one_time(mode, secret, iv, data <> :binary.copy(<<padding>>, padding), true)
     |> Util.encode(encoding)
   end
 
@@ -148,9 +152,13 @@ defmodule BSV.Crypto.AES do
   def decrypt(ciphertext, :cbc, secret, options) do
     encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv)
+    mode = case byte_size(secret) do
+      16 -> :aes_128_cbc
+      _ -> :aes_256_cbc
+    end
     ciphertext = Util.decode(ciphertext, encoding)
 
-    data = :crypto.crypto_one_time(:aes_256_cbc, secret, iv, ciphertext, false)
+    data = :crypto.crypto_one_time(mode, secret, iv, ciphertext, false)
     padding = :binary.last(data)
     :binary.part(data, 0, byte_size(data) - padding)
   end

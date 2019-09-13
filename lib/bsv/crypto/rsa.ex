@@ -52,10 +52,6 @@ defmodule BSV.Crypto.RSA do
   @doc """
   Encrypts the given data with the given public or private key.
 
-  The method implicitly assumes the use of a public key, but encryption is
-  possible with a private key by passing the key in a tuple format:
-  `{:private,private_key}`.
-
   ## Options
 
   The accepted options are:

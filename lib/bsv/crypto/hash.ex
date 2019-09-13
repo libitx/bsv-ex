@@ -52,6 +52,13 @@ defmodule BSV.Crypto.Hash do
   end
 
 
+  def hmac(data, algorithm, key, options \\ []) do
+    encoding = Keyword.get(options, :encode)
+    :crypto.hmac(algorithm, key, data, 32)
+    |> Util.encode(encoding)
+  end
+
+
   @doc """
   Computes the RIPEMD hash of a given input, outputting 160 bits.
 
