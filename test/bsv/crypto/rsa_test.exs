@@ -41,7 +41,7 @@ defmodule BSV.Crypto.RSATest do
     end
 
     test "must return specifified encoding", ctx do
-      enc_data = BSV.Crypto.RSA.encrypt("hello world", ctx.pub_key, encode: :hex)
+      enc_data = BSV.Crypto.RSA.encrypt("hello world", ctx.pub_key, encoding: :hex)
       assert String.match?(enc_data, ~r/^[a-f0-9]+$/i)
     end
   end
@@ -68,7 +68,7 @@ defmodule BSV.Crypto.RSATest do
     end
 
     test "must return with specified encoding", ctx do
-      sig = BSV.Crypto.RSA.sign("hello world", ctx.priv_key, encode: :hex)
+      sig = BSV.Crypto.RSA.sign("hello world", ctx.priv_key, encoding: :hex)
       assert String.match?(sig, ~r/^[a-f0-9]+$/i)
     end
   end

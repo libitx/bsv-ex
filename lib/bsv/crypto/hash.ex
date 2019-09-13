@@ -52,6 +52,13 @@ defmodule BSV.Crypto.Hash do
   end
 
 
+  def hmac(data, algorithm, key, options \\ []) do
+    encoding = Keyword.get(options, :encode)
+    :crypto.hmac(algorithm, key, data, 32)
+    |> Util.encode(encoding)
+  end
+
+
   @doc """
   Computes the RIPEMD hash of a given input, outputting 160 bits.
 
@@ -121,7 +128,8 @@ defmodule BSV.Crypto.Hash do
 
 
   @doc """
-  Computes a RIPEMD0160 hash of a SHA256 hash, outputting 160 bits. This is commonly used inside Bitcoin, particularly for Bitcoin addresses.
+  Computes a RIPEMD0160 hash of a SHA256 hash, outputting 160 bits. This is
+  commonly used inside Bitcoin, particularly for Bitcoin addresses.
 
   See `BSV.Crypto.Hash.hash/3` for the accepted options.
 
@@ -138,7 +146,8 @@ defmodule BSV.Crypto.Hash do
 
 
   @doc """
-  Computes a double SHA256 hash. This hash function is commonly used inside Bitcoin, particularly for the hash of a block and the hash of a transaction.
+  Computes a double SHA256 hash. This hash function is commonly used inside
+  Bitcoin, particularly for the hash of a block and the hash of a transaction.
 
   See `BSV.Crypto.Hash.hash/3` for the accepted options.
 

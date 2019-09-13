@@ -52,13 +52,11 @@ defmodule BSV.Crypto.RSA do
   @doc """
   Encrypts the given data with the given public or private key.
 
-  The method implicitly assumes the use of a public key, but encryption is possible with a private key by passing the key in a tuple format: `{:private, private_key}`.
-
   ## Options
 
   The accepted options are:
 
-  * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
+  * `:encoding` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 
@@ -69,13 +67,13 @@ defmodule BSV.Crypto.RSA do
   def encrypt(data, key, options \\ [])
 
   def encrypt(data, %PublicKey{} = public_key, options) do
-    encoding = Keyword.get(options, :encode)
+    encoding = Keyword.get(options, :encoding)
     :public_key.encrypt_public(data, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
     |> Util.encode(encoding)
   end
 
   def encrypt(data, %PrivateKey{} = private_key, options) do
-    encoding = Keyword.get(options, :encode)
+    encoding = Keyword.get(options, :encoding)
     :public_key.encrypt_private(data, PrivateKey.as_sequence(private_key))
     |> Util.encode(encoding)
   end
@@ -83,6 +81,12 @@ defmodule BSV.Crypto.RSA do
   
   @doc """
   Decrypts the encrypted data with the given public or private key.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the given cipher text with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 
@@ -92,12 +96,16 @@ defmodule BSV.Crypto.RSA do
   @spec decrypt(binary, PublicKey.t | PrivateKey.t, keyword) :: binary
   def decrypt(data, key, options \\ [])
 
-  def decrypt(data, %PublicKey{} = public_key, _options) do
-    :public_key.decrypt_public(data, PublicKey.as_sequence(public_key))
+  def decrypt(data, %PublicKey{} = public_key, options) do
+    encoding = Keyword.get(options, :encoding)
+    Util.decode(data, encoding)
+    |> :public_key.decrypt_public(PublicKey.as_sequence(public_key))
   end
 
-  def decrypt(data, %PrivateKey{} = private_key, _options) do
-    :public_key.decrypt_private(data, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
+  def decrypt(data, %PrivateKey{} = private_key, options) do
+    encoding = Keyword.get(options, :encoding)
+    Util.decode(data, encoding)
+    |> :public_key.decrypt_private(PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_oaep_padding, rsa_oaep_md: :sha256)
   end
 
 
@@ -108,7 +116,7 @@ defmodule BSV.Crypto.RSA do
 
   The accepted options are:
 
-  * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
+  * `:encoding` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
   * `:salt_length` - Specify the RSA-PSS salt length (defaults to `20`).
 
   ## Examples
@@ -118,29 +126,33 @@ defmodule BSV.Crypto.RSA do
   """
   @spec sign(binary, PrivateKey.t, keyword) :: binary
   def sign(message, %PrivateKey{} = private_key, options \\ []) do
+    encoding = Keyword.get(options, :encoding)
     salt_len = Keyword.get(options, :salt_length, 20)
-    encoding = Keyword.get(options, :encode)
     :public_key.sign(message, :sha256, PrivateKey.as_sequence(private_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
     |> Util.encode(encoding)
   end
 
 
   @doc """
-  Verifies the given message and signature, using the given private key.
+  Verifies the given message and signature, using the given public key.
 
   ## Options
 
   The accepted options are:
 
+  * `:encoding` - Optionally decode the given signature with either the `:base64` or `:hex` encoding scheme.
   * `:salt_length` - Specify the RSA-PSS salt length (defaults to `20`).
 
   ## Examples
   
-      BSV.Crypto.RSA.verify(signature, public_key)
+      BSV.Crypto.RSA.verify(signature, message, public_key)
+      true
   """
   @spec verify(binary, binary, PublicKey.t, keyword) :: boolean
   def verify(signature, message, %PublicKey{} = public_key, options \\ []) do
+    encoding = Keyword.get(options, :encoding)
     salt_len = Keyword.get(options, :salt_length, 20)
+    signature = Util.decode(signature, encoding)
     :public_key.verify(message, :sha256, signature, PublicKey.as_sequence(public_key), rsa_padding: :rsa_pkcs1_pss_padding, rsa_pss_saltlen: salt_len)
   end
 

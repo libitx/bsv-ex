@@ -40,7 +40,8 @@ defmodule BSV.Crypto.AES do
 
 
   @doc """
-  Encrypts the given data using the specified cipher mode with the given secret key.
+  Encrypts the given data using the specified cipher mode with the given secret
+  key.
 
   ## Options
 
@@ -53,7 +54,7 @@ defmodule BSV.Crypto.AES do
   The accepted options are:
 
   * `:aad` - Provide your own Additional Authentication Data (only used in `:gcm` mode). If not provided, defaults to `"BSV.Crypto.AES"`.
-  * `:encode` - Optionally encode the returned cipher text with either the `:base64` or `:hex` encoding scheme.
+  * `:encoding` - Optionally encode the returned cipher text with either the `:base64` or `:hex` encoding scheme.
   * `:iv` - Provide your own initialization vector. In `:cbc` and `:ctr` mode this is necessary as the same vector is needed to decrypt. In `:gcm` mode it is unnecessary as a random vector is generated and encoded in the returned cipher text.
 
   ## Examples
@@ -61,13 +62,13 @@ defmodule BSV.Crypto.AES do
       iex> BSV.Crypto.AES.encrypt("hello world", :gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD")
       <<50, 75, 191, 85, 4, 124, 185, 253, 212, 34, 64, 169, 95, 107, 218, 187, 235, 55, 176, 107, 70, 58, 27, 219, 127, 230, 238, 103, 160, 2, 228, 189, 104, 109, 9, 75, 62, 1, 42>>
 
-      iex> BSV.Crypto.AES.encrypt("hello world", :gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD", encode: :base64)
+      iex> BSV.Crypto.AES.encrypt("hello world", :gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD", encoding: :base64)
       "Mku/VQR8uf3UIkCpX2vau+s3sGtGOhvbf+buZ6AC5L1obQlLPgEq"
 
-      iex> BSV.Crypto.AES.encrypt("hello world", :cbc, BSV.Test.symetric_key, iv: BSV.Test.iv16, encode: :base64)
+      iex> BSV.Crypto.AES.encrypt("hello world", :cbc, BSV.Test.symetric_key, iv: BSV.Test.iv16, encoding: :base64)
       "quZoaDPv4OXNC5Ze2wmbCA=="
 
-      iex> BSV.Crypto.AES.encrypt("hello world", :ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16, encode: :hex)
+      iex> BSV.Crypto.AES.encrypt("hello world", :ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16, encoding: :hex)
       "cdf91fda732325cf96de03"
   """
   @spec encrypt(binary, atom, binary, keyword) :: binary
@@ -75,7 +76,7 @@ defmodule BSV.Crypto.AES do
 
   def encrypt(data, :gcm, secret, options) do
     aad = Keyword.get(options, :aad, @aad)
-    encoding = Keyword.get(options, :encode)
+    encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv, Util.random_bytes(12))
 
     {ciphertext, tag} = :crypto.crypto_one_time_aead(:aes_256_gcm, secret, iv, data, aad, true)
@@ -83,16 +84,20 @@ defmodule BSV.Crypto.AES do
   end
 
   def encrypt(data, :cbc, secret, options) do
-    encoding = Keyword.get(options, :encode)
-    padding = 16 - rem(byte_size(data), 16)
+    encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv, Util.random_bytes(16))
-
-    :crypto.crypto_one_time(:aes_256_cbc, secret, iv, data <> :binary.copy(<<padding>>, padding), true)
+    mode = case byte_size(secret) do
+      16 -> :aes_128_cbc
+      _ -> :aes_256_cbc
+    end
+    padding = 16 - rem(byte_size(data), 16)
+    
+    :crypto.crypto_one_time(mode, secret, iv, data <> :binary.copy(<<padding>>, padding), true)
     |> Util.encode(encoding)
   end
 
   def encrypt(data, :ctr, secret, options) do
-    encoding = Keyword.get(options, :encode)
+    encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv, Util.random_bytes(16))
 
     :crypto.crypto_one_time(:aes_256_ctr, secret, iv, data, true)
@@ -101,7 +106,8 @@ defmodule BSV.Crypto.AES do
 
 
   @doc """
-  Decrypts the given ciphertext using the specified cipher mode with the given secret key.
+  Decrypts the given ciphertext using the specified cipher mode with the given
+  secret key.
 
   ## Options
 
@@ -114,45 +120,53 @@ defmodule BSV.Crypto.AES do
   The accepted options are:
 
   * `:aad` - If Additional Authentication Data was specified at encryption, it must be used here to successfully decrypt.
+  * `:encoding` - Optionally decode the given cipher text with either the `:base64` or `:hex` encoding scheme.
   * `:iv` - If your own initialization vector was specified at encryption, it must be used here to successfully decrypt.
 
   ## Examples
 
       iex> "Mku/VQR8uf3UIkCpX2vau+s3sGtGOhvbf+buZ6AC5L1obQlLPgEq"
-      ...> |> Base.decode64!
-      ...> |> BSV.Crypto.AES.decrypt(:gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD")
+      ...> |> BSV.Crypto.AES.decrypt(:gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, encoding: :base64, aad: "MyAAD")
       "hello world"
 
       iex> "quZoaDPv4OXNC5Ze2wmbCA=="
-      ...> |> Base.decode64!
-      ...> |> BSV.Crypto.AES.decrypt(:cbc, BSV.Test.symetric_key, iv: BSV.Test.iv16)
+      ...> |> BSV.Crypto.AES.decrypt(:cbc, BSV.Test.symetric_key, iv: BSV.Test.iv16, encoding: :base64)
       "hello world"
 
       iex> "cdf91fda732325cf96de03"
-      ...> |> Base.decode16!(case: :lower)
-      ...> |> BSV.Crypto.AES.decrypt(:ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16)
+      ...> |> BSV.Crypto.AES.decrypt(:ctr, BSV.Test.symetric_key, iv: BSV.Test.iv16, encoding: :hex)
       "hello world"
   """
   @spec decrypt(binary, atom, binary, keyword) :: binary
   def decrypt(ciphertext, mode, secret, options \\ [])
 
   def decrypt(ciphertext, :gcm, secret, options) do
+    encoding = Keyword.get(options, :encoding)
     aad = Keyword.get(options, :aad, @aad)
+    ciphertext = Util.decode(ciphertext, encoding)
     <<iv::binary-12, tag::binary-16, data::binary>> = ciphertext
 
     :crypto.crypto_one_time_aead(:aes_256_gcm, secret, iv, data, aad, tag, false)
   end
 
   def decrypt(ciphertext, :cbc, secret, options) do
+    encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv)
+    mode = case byte_size(secret) do
+      16 -> :aes_128_cbc
+      _ -> :aes_256_cbc
+    end
+    ciphertext = Util.decode(ciphertext, encoding)
 
-    data = :crypto.crypto_one_time(:aes_256_cbc, secret, iv, ciphertext, false)
+    data = :crypto.crypto_one_time(mode, secret, iv, ciphertext, false)
     padding = :binary.last(data)
     :binary.part(data, 0, byte_size(data) - padding)
   end
 
   def decrypt(ciphertext, :ctr, secret, options) do
+    encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv)
+    ciphertext = Util.decode(ciphertext, encoding)
 
     :crypto.crypto_one_time(:aes_256_ctr, secret, iv, ciphertext, false)
   end
