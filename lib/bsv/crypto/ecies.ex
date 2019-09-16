@@ -55,7 +55,7 @@ defmodule BSV.Crypto.ECIES do
     end
 
     # iv and keyE used in AES, keyM used in HMAC
-    <<iv::bytes-size(16), keyE::bytes-size(16), keyM::bytes-size(32)>> = key_hash
+    <<iv::binary-16, keyE::binary-16, keyM::binary-32>> = key_hash
     cyphertext = AES.encrypt(data, :cbc, keyE, iv: iv)
     encrypted = "BIE1" <> PublicKey.compress(ephemeral_pubkey) <> cyphertext
     mac = Hash.hmac(encrypted, :sha256, keyM)
@@ -93,10 +93,10 @@ defmodule BSV.Crypto.ECIES do
     len = byte_size(encrypted) - 69
 
     <<
-      "BIE1",                             # magic bytes
-      ephemeral_pubkey::bytes-size(33),   # ephermeral pubkey
-      ciphertext::bytes-size(len),        # ciphertext
-      mac::bytes-size(32)                 # mac hash
+      "BIE1",                         # magic bytes
+      ephemeral_pubkey::binary-33,    # ephermeral pubkey
+      ciphertext::binary-size(len),   # ciphertext
+      mac::binary-32                  # mac hash
     >> = encrypted
 
     # Derive ECDH key and sha512 hash
@@ -111,7 +111,7 @@ defmodule BSV.Crypto.ECIES do
     end
 
     # iv and keyE used in AES, keyM used in HMAC
-    <<iv::bytes-size(16), keyE::bytes-size(16), keyM::bytes-size(32)>> = key_hash
+    <<iv::binary-16, keyE::binary-16, keyM::binary-32>> = key_hash
 
     cond do
       Hash.hmac(encrypted, :sha256, keyM) == mac ->

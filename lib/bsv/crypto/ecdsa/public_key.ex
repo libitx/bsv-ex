@@ -39,7 +39,7 @@ defmodule BSV.Crypto.ECDSA.PublicKey do
 
   def compress(%__MODULE__{} = key), do: compress(key.point)
 
-  def compress(<<pubkey::bytes-size(33)>>), do: pubkey
+  def compress(<<pubkey::binary-33>>), do: pubkey
 
 
   @doc """

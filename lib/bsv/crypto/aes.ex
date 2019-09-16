@@ -14,7 +14,6 @@ defmodule BSV.Crypto.AES do
   alias BSV.Util
 
   @cipher_modes [:cbc, :ctr, :gcm]
-  @aad "BSV.Crypto.AES"
 
 
   @doc """
@@ -60,10 +59,10 @@ defmodule BSV.Crypto.AES do
   ## Examples
 
       iex> BSV.Crypto.AES.encrypt("hello world", :gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD")
-      <<50, 75, 191, 85, 4, 124, 185, 253, 212, 34, 64, 169, 95, 107, 218, 187, 235, 55, 176, 107, 70, 58, 27, 219, 127, 230, 238, 103, 160, 2, 228, 189, 104, 109, 9, 75, 62, 1, 42>>
+      <<50, 75, 191, 85, 4, 124, 185, 253, 212, 34, 64, 169, 160, 2, 228, 189, 104, 109, 9, 75, 62, 1, 42, 95, 107, 218, 187, 235, 55, 176, 107, 70, 58, 27, 219, 127, 230, 238, 103>>
 
       iex> BSV.Crypto.AES.encrypt("hello world", :gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, aad: "MyAAD", encoding: :base64)
-      "Mku/VQR8uf3UIkCpX2vau+s3sGtGOhvbf+buZ6AC5L1obQlLPgEq"
+      "Mku/VQR8uf3UIkCpoALkvWhtCUs+ASpfa9q76zewa0Y6G9t/5u5n"
 
       iex> BSV.Crypto.AES.encrypt("hello world", :cbc, BSV.Test.symetric_key, iv: BSV.Test.iv16, encoding: :base64)
       "quZoaDPv4OXNC5Ze2wmbCA=="
@@ -75,12 +74,12 @@ defmodule BSV.Crypto.AES do
   def encrypt(data, mode, secret, options \\ [])
 
   def encrypt(data, :gcm, secret, options) do
-    aad = Keyword.get(options, :aad, @aad)
+    aad = Keyword.get(options, :aad, "")
     encoding = Keyword.get(options, :encoding)
     iv = Keyword.get(options, :iv, Util.random_bytes(12))
 
     {ciphertext, tag} = :crypto.crypto_one_time_aead(:aes_256_gcm, secret, iv, data, aad, true)
-    Util.encode(iv <> tag <> ciphertext, encoding)
+    Util.encode(iv <> ciphertext <> tag, encoding)
   end
 
   def encrypt(data, :cbc, secret, options) do
@@ -125,7 +124,7 @@ defmodule BSV.Crypto.AES do
 
   ## Examples
 
-      iex> "Mku/VQR8uf3UIkCpX2vau+s3sGtGOhvbf+buZ6AC5L1obQlLPgEq"
+      iex> "Mku/VQR8uf3UIkCpoALkvWhtCUs+ASpfa9q76zewa0Y6G9t/5u5n"
       ...> |> BSV.Crypto.AES.decrypt(:gcm, BSV.Test.symetric_key, iv: BSV.Test.iv12, encoding: :base64, aad: "MyAAD")
       "hello world"
 
@@ -142,9 +141,10 @@ defmodule BSV.Crypto.AES do
 
   def decrypt(ciphertext, :gcm, secret, options) do
     encoding = Keyword.get(options, :encoding)
-    aad = Keyword.get(options, :aad, @aad)
+    aad = Keyword.get(options, :aad, "")
     ciphertext = Util.decode(ciphertext, encoding)
-    <<iv::binary-12, tag::binary-16, data::binary>> = ciphertext
+    len = byte_size(ciphertext) - 12 - 16
+    <<iv::binary-12, data::binary-size(len), tag::binary-16>> = ciphertext
 
     :crypto.crypto_one_time_aead(:aes_256_gcm, secret, iv, data, aad, tag, false)
   end

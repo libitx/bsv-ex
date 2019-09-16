@@ -117,8 +117,8 @@ defmodule BSV.KeyPair do
   @spec wif_decode(binary) :: BSV.KeyPair.t
   def wif_decode(wif) do
     {private_key, compressed} = case B58.decode58_check!(wif) do
-      {<<private_key::bytes-size(32), 1>>, <<0x80>>} -> {private_key, true}
-      {<<private_key::bytes-size(32)>>, <<0x80>>} -> {private_key, false}
+      {<<private_key::binary-32, 1>>, <<0x80>>} -> {private_key, true}
+      {<<private_key::binary-32>>, <<0x80>>} -> {private_key, false}
     end
 
     ECDSA.generate_key_pair(private_key: private_key)

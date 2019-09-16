@@ -71,11 +71,11 @@ defmodule BSV.Message do
     do_verify(signature, message, key.public_key, options)
   end
 
-  def verify(signature, message, <<public_key::bytes-size(33)>>, options) do
+  def verify(signature, message, <<public_key::binary-33>>, options) do
     do_verify(signature, message, public_key, options)
   end
 
-  def verify(signature, message, <<public_key::bytes-size(65)>>, options) do
+  def verify(signature, message, <<public_key::binary-65>>, options) do
     do_verify(signature, message, public_key, options)
   end
 

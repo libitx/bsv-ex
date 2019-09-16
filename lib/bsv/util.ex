@@ -95,8 +95,8 @@ defmodule BSV.Util do
       <<255, 198, 64, 62, 128, 158, 46, 0, 0>>
   """
   def varint(int) when int < 253, do: <<int::integer>>
-  def varint(int) when int < 0x10000, do: <<253, int::little-size(16)>>
-  def varint(int) when int < 0x100000000, do: <<254, int::little-size(32)>>
-  def varint(int), do: <<255, int::little-size(64)>>
+  def varint(int) when int < 0x10000, do: <<253, int::little-16>>
+  def varint(int) when int < 0x100000000, do: <<254, int::little-32>>
+  def varint(int), do: <<255, int::little-64>>
   
 end
