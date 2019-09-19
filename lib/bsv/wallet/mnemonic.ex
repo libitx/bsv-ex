@@ -1,4 +1,4 @@
-defmodule BSV.Mnemonic do
+defmodule BSV.Wallet.Mnemonic do
   @moduledoc """
   Module for generating and restoring mnemonic phrases, implementing BIP-39.
   """
@@ -37,17 +37,17 @@ defmodule BSV.Mnemonic do
 
   ## Examples
 
-      iex> BSV.Mnemonic.generate
+      iex> BSV.Wallet.Mnemonic.generate
       ...> |> String.split
       ...> |> length
       24
 
-      iex> BSV.Mnemonic.generate(128)
+      iex> BSV.Wallet.Mnemonic.generate(128)
       ...> |> String.split
       ...> |> length
       12
   """
-  @spec generate(integer) :: BSV.Mnemonic.t
+  @spec generate(integer) :: __MODULE__.t
   def generate(entropy_length \\ List.last(@allowed_lengths))
 
   def generate(entropy_length)
@@ -67,10 +67,10 @@ defmodule BSV.Mnemonic do
   ## Examples
 
       iex> BSV.Test.mnemonic_entropy
-      ...> |> BSV.Mnemonic.from_entropy
+      ...> |> BSV.Wallet.Mnemonic.from_entropy
       "organ boring cushion feature wheat juice quality replace concert baby topic scrub"
   """
-  @spec from_entropy(binary) :: BSV.Mnemonic.t
+  @spec from_entropy(binary) :: __MODULE__.t
   def from_entropy(entropy) when is_binary(entropy) do
     <<entropy::bits, checksum(entropy)::bits>>
     |> mnemonic
@@ -83,10 +83,10 @@ defmodule BSV.Mnemonic do
   ## Examples
 
       iex> "organ boring cushion feature wheat juice quality replace concert baby topic scrub"
-      ...> |> BSV.Mnemonic.to_entropy
+      ...> |> BSV.Wallet.Mnemonic.to_entropy
       <<156, 99, 60, 217, 170, 31, 158, 241, 171, 205, 182, 46, 162, 35, 148, 96>>
   """
-  @spec to_entropy(BSV.Mnemonic.t) :: binary
+  @spec to_entropy(__MODULE__.t) :: binary
   def to_entropy(mnemonic) do
     String.split(mnemonic)
     |> Enum.map(&word_index/1)

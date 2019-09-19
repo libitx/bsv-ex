@@ -1,4 +1,4 @@
-defmodule BSV.KeyPair do
+defmodule BSV.Wallet.KeyPair do
   @moduledoc """
   Module for generating and using Bitcoin key pairs.
   """
@@ -6,6 +6,7 @@ defmodule BSV.KeyPair do
   alias BSV.Crypto.Hash
   alias BSV.Crypto.ECDSA
   alias BSV.Crypto.ECDSA.PublicKey
+  alias BSV.Crypto.ECDSA.PrivateKey
 
   defstruct [:public_key, :private_key]
 
@@ -27,11 +28,11 @@ defmodule BSV.KeyPair do
 
   ## Examples
 
-      iex> keypair = BSV.KeyPair.generate
-      ...> keypair.__struct__ == BSV.KeyPair
+      iex> keypair = BSV.Wallet.KeyPair.generate
+      ...> keypair.__struct__ == BSV.Wallet.KeyPair
       true
   """
-  @spec generate(keyword) :: BSV.KeyPair.t
+  @spec generate(keyword) :: __MODULE__.t
   def generate(options \\ []) do
     ECDSA.generate_key
     |> from_ecdsa_key(options)
@@ -49,11 +50,11 @@ defmodule BSV.KeyPair do
 
   ## Examples
 
-      iex> keypair = BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
-      ...> keypair.__struct__ == BSV.KeyPair
+      iex> keypair = BSV.Wallet.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
+      ...> keypair.__struct__ == BSV.Wallet.KeyPair
       true
   """
-  @spec from_ecdsa_key(BSV.Crypto.ECDSA.PrivateKey.t | {binary, binary}, keyword) :: BSV.KeyPair.t
+  @spec from_ecdsa_key(PrivateKey.t | {binary, binary}, keyword) :: __MODULE__.t
   def from_ecdsa_key(key, options \\ [])
 
   def from_ecdsa_key({public_key, private_key}, options) do
@@ -79,16 +80,16 @@ defmodule BSV.KeyPair do
   ## Examples
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.KeyPair.from_ecdsa_key
-      ...> |> BSV.KeyPair.get_address
+      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
+      ...> |> BSV.Wallet.KeyPair.get_address
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.KeyPair.from_ecdsa_key(compressed: false)
-      ...> |> BSV.KeyPair.get_address
+      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key(compressed: false)
+      ...> |> BSV.Wallet.KeyPair.get_address
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
   """
-  @spec get_address(BSV.KeyPair.t() | {binary, binary} | binary) :: binary
+  @spec get_address(__MODULE__.t() | {binary, binary} | binary) :: binary
   def get_address(key)
 
   def get_address(key = %__MODULE__{}), do: get_address(key.public_key)
@@ -106,15 +107,15 @@ defmodule BSV.KeyPair do
 
   ## Examples
 
-      iex> BSV.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
-      ...> |> BSV.KeyPair.get_address
+      iex> BSV.Wallet.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
+      ...> |> BSV.Wallet.KeyPair.get_address
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
-      iex> BSV.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
-      ...> |> BSV.KeyPair.get_address
+      iex> BSV.Wallet.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
+      ...> |> BSV.Wallet.KeyPair.get_address
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
   """
-  @spec wif_decode(binary) :: BSV.KeyPair.t
+  @spec wif_decode(binary) :: __MODULE__.t
   def wif_decode(wif) do
     {private_key, compressed} = case B58.decode58_check!(wif) do
       {<<private_key::binary-32, 1>>, <<0x80>>} -> {private_key, true}
@@ -132,13 +133,13 @@ defmodule BSV.KeyPair do
   ## Examples
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.KeyPair.from_ecdsa_key
-      ...> |> BSV.KeyPair.wif_encode
+      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
+      ...> |> BSV.Wallet.KeyPair.wif_encode
       "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.KeyPair.from_ecdsa_key(compressed: false)
-      ...> |> BSV.KeyPair.wif_encode
+      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key(compressed: false)
+      ...> |> BSV.Wallet.KeyPair.wif_encode
       "5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu"
   """
   def wif_encode(key = %__MODULE__{}) do

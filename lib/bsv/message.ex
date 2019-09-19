@@ -7,6 +7,7 @@ defmodule BSV.Message do
   key recovery from signatures.
   """
   alias BSV.Crypto.Hash
+  alias BSV.Wallet.KeyPair
   alias BSV.Util
 
   
@@ -24,10 +25,10 @@ defmodule BSV.Message do
       BSV.Message.sign("hello world", private_key)
       "Hw9bs6VZ..."
   """
-  @spec sign(binary, BSV.KeyPair.t | binary, keyword) :: binary
+  @spec sign(binary, KeyPair.t | binary, keyword) :: binary
   def sign(message, private_key, options \\ [])
 
-  def sign(message, %BSV.KeyPair{} = key, options) do
+  def sign(message, %KeyPair{} = key, options) do
     compressed = case byte_size(key.public_key) do
       33 -> true
       _ -> false
@@ -64,10 +65,10 @@ defmodule BSV.Message do
       BSV.Crypto.RSA.verify(signature, message, address)
       true
   """
-  @spec verify(binary, binary, BSV.KeyPair.t | binary, keyword) :: boolean
+  @spec verify(binary, binary, KeyPair.t | binary, keyword) :: boolean
   def verify(signature, message, public_key, options \\[])
 
-  def verify(signature, message, %BSV.KeyPair{} = key, options) do
+  def verify(signature, message, %KeyPair{} = key, options) do
     do_verify(signature, message, key.public_key, options)
   end
 
