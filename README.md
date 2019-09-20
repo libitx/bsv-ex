@@ -7,7 +7,7 @@ Elixir Bitcoin SV library. The aim is to create a full-featured library that bro
 * [x] General crypto functions (hash, ecdsa, rsa)
 * [x] Bitcoin specific crypto (Electrum compatible message encrypt/decrypt and sign/verify)
 * [x] Bitcoin key pair generation and related functions
-* [ ] HD seed and key derivation
+* [x] HD seed and key derivation
 * [ ] Transaction parsing, building and encoding
 
 Documentation can be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
