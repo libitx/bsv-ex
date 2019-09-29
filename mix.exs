@@ -8,12 +8,11 @@ defmodule BSV.MixProject do
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      name: "BSV",
+      name: "BSV (elixir)",
       description: "Elixir Bitcoin SV library",
       source_url: "https://github.com/libitx/bsv-ex",
       docs: [
-        main: "BSV",
-        extras: ["README.md"]
+        main: "BSV"
       ],
       package: [
         name: "bsv",

@@ -75,28 +75,18 @@ defmodule BSV.Util do
 
 
   @doc """
-  Encodes the given integer into a variable length binary.
+  Reverses the order of the given binary data.
 
   ## Examples
 
-      iex> BSV.Util.varint(250)
-      <<250>>
-
-      iex> BSV.Util.varint(9128)
-      <<253, 168, 35>>
-
-      iex> BSV.Util.varint(389128)
-      <<254, 8, 240, 5, 0>>
-
-      iex> BSV.Util.varint(389128)
-      <<254, 8, 240, 5, 0>>
-
-      iex> BSV.Util.varint(51258291273926)
-      <<255, 198, 64, 62, 128, 158, 46, 0, 0>>
+      iex> BSV.Util.reverse_bin("abcdefg")
+      "gfedcba"
   """
-  def varint(int) when int < 253, do: <<int::integer>>
-  def varint(int) when int < 0x10000, do: <<253, int::little-16>>
-  def varint(int) when int < 0x100000000, do: <<254, int::little-32>>
-  def varint(int), do: <<255, int::little-64>>
+  @spec reverse_bin(binary) :: binary
+  def reverse_bin(data) do
+    data
+    |> :binary.decode_unsigned(:little)
+    |> :binary.encode_unsigned(:big)
+  end
   
 end

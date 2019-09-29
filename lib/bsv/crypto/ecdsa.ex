@@ -88,7 +88,7 @@ defmodule BSV.Crypto.ECDSA do
 
   ## Examples
 
-      BSV.Crypto.ECDSA.sign("hello world", private_key, encode: :base64)
+      BSV.Crypto.ECDSA.sign("hello world", private_key, encoding: :base64)
       << signature >>
   """
   @spec sign(binary, PrivateKey.t | binary, keyword) :: binary

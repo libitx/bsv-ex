@@ -1,4 +1,4 @@
-# BSV-ex
+# BSV (elixir)
 
 **🚨 This repo is a work in progress. Not production ready yet.**
 
@@ -8,7 +8,7 @@ Elixir Bitcoin SV library. The aim is to create a full-featured library that bro
 * [x] Bitcoin specific crypto (Electrum compatible message encrypt/decrypt and sign/verify)
 * [x] Bitcoin key pair generation and related functions
 * [x] HD seed and key derivation
-* [ ] Transaction parsing, building and encoding
+* [x] Transaction parsing, building and encoding
 
 Documentation can be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
 

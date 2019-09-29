@@ -9,6 +9,7 @@ defmodule BSV.Message do
   alias BSV.Crypto.Hash
   alias BSV.Wallet.KeyPair
   alias BSV.Util
+  alias BSV.Util.VarBin
 
   
   @doc """
@@ -109,8 +110,8 @@ defmodule BSV.Message do
 
   defp message_digest(message) do
     prefix = "Bitcoin Signed Message:\n"
-    b1 = prefix |> byte_size |> Util.varint
-    b2 = message |> byte_size |> Util.varint
+    b1 = prefix |> byte_size |> VarBin.serialize_int
+    b2 = message |> byte_size |> VarBin.serialize_int
     <<b1::binary, prefix::binary, b2::binary, message::binary>>
     |> Hash.sha256_sha256
   end

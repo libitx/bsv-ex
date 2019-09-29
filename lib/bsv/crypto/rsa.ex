@@ -121,7 +121,7 @@ defmodule BSV.Crypto.RSA do
 
   ## Examples
 
-      BSV.Crypto.RSA.sign("hello world", private_key, encode: :base64)
+      BSV.Crypto.RSA.sign("hello world", private_key, encoding: :base64)
       << signature >>
   """
   @spec sign(binary, PrivateKey.t, keyword) :: binary

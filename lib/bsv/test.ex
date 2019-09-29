@@ -1,10 +1,5 @@
 defmodule BSV.Test do
-  @moduledoc """
-  A variety of helper functions to make the tests consistent
-  in their usage of keys, etc.
-
-  Please don't use these keys for anything other than testing.
-  """
+  @moduledoc false
 
   @doc """
   Returns a 12 byte (96 bit) initialization vector.
