@@ -159,8 +159,11 @@ defmodule BSV.Crypto.AES do
     ciphertext = Util.decode(ciphertext, encoding)
 
     data = :crypto.crypto_one_time(mode, secret, iv, ciphertext, false)
-    padding = :binary.last(data)
-    :binary.part(data, 0, byte_size(data) - padding)
+    case :binary.last(data) do
+      padding when padding < 16 ->
+        :binary.part(data, 0, byte_size(data) - max(0, padding))
+      _ -> data
+    end
   end
 
   def decrypt(ciphertext, :ctr, secret, options) do
