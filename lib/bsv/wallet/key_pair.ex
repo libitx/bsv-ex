@@ -8,7 +8,7 @@ defmodule BSV.Wallet.KeyPair do
   alias BSV.Crypto.ECDSA.PublicKey
   alias BSV.Crypto.ECDSA.PrivateKey
 
-  defstruct [:public_key, :private_key]
+  defstruct network: :main, public_key: nil, private_key: nil
 
   @typedoc "BSV Key Pair"
   @type t :: %__MODULE__{
@@ -58,12 +58,14 @@ defmodule BSV.Wallet.KeyPair do
   def from_ecdsa_key(key, options \\ [])
 
   def from_ecdsa_key({public_key, private_key}, options) do
+    network = Keyword.get(options, :network, :main)
     public_key = case Keyword.get(options, :compressed, true) do
       true -> PublicKey.compress(public_key)
       false -> public_key
     end
 
     struct(__MODULE__, [
+      network: network,
       public_key: public_key,
       private_key: private_key
     ])
@@ -73,34 +75,6 @@ defmodule BSV.Wallet.KeyPair do
     from_ecdsa_key({key.public_key, key.private_key}, options)
   end
 
-  
-  @doc """
-  Returns the Bitcoin address from the given key pair or public key.
-
-  ## Examples
-
-      iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
-      ...> |> BSV.Wallet.KeyPair.get_address
-      "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
-
-      iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key(compressed: false)
-      ...> |> BSV.Wallet.KeyPair.get_address
-      "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
-  """
-  @spec get_address(__MODULE__.t() | {binary, binary} | binary) :: binary
-  def get_address(key)
-
-  def get_address(key = %__MODULE__{}), do: get_address(key.public_key)
-
-  def get_address({public_key, _}), do: get_address(public_key)
-
-  def get_address(public_key) when is_binary(public_key) do
-    Hash.sha256_ripemd160(public_key)
-    |> B58.encode58_check!(<<0>>)
-  end
-
 
   @doc """
   Decodes the given Wallet Import Format (WIF) binary into a BSV key pair.
@@ -108,11 +82,11 @@ defmodule BSV.Wallet.KeyPair do
   ## Examples
 
       iex> BSV.Wallet.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
-      ...> |> BSV.Wallet.KeyPair.get_address
+      ...> |> BSV.Address.to_string
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
       iex> BSV.Wallet.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
-      ...> |> BSV.Wallet.KeyPair.get_address
+      ...> |> BSV.Address.to_string
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
   """
   @spec wif_decode(binary) :: __MODULE__.t

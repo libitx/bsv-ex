@@ -142,21 +142,5 @@ defmodule BSV.Extended.PrivateKey do
   def get_public_key(%__MODULE__{} = private_key, options \\ []) do
     PublicKey.from_private_key(private_key, options)
   end
-
-
-  @doc """
-  Returns the Bitcoin address from the given extended private key.
-
-  ## Examples
-
-      iex> BSV.Extended.PrivateKey.from_seed(BSV.Test.bsv_seed)
-      ...> |> BSV.Extended.PrivateKey.get_address
-      "1DXmF4ZjpYUhPwjrt9SzFou2YbAoaNvLxx"
-  """
-  @spec get_address(__MODULE__.t) :: String.t
-  def get_address(%__MODULE__{} = private_key) do
-    get_public_key(private_key)
-    |> PublicKey.get_address
-  end
   
 end

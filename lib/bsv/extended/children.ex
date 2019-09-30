@@ -21,17 +21,17 @@ defmodule BSV.Extended.Children do
 
       iex> BSV.Extended.PrivateKey.from_seed(BSV.Test.bsv_seed)
       ...> |> BSV.Extended.Children.derive("m/44'/0'/0'/0/0")
-      ...> |> BSV.Extended.PrivateKey.get_address
+      ...> |> BSV.Address.to_string
       "1DB7ijqNz91PPTZyv5StZ8DjjMr69chuwH"
 
       iex> BSV.Extended.PrivateKey.from_seed(BSV.Test.bsv_seed)
       ...> |> BSV.Extended.Children.derive("m/44'/0'/0'/0/9")
-      ...> |> BSV.Extended.PrivateKey.get_address
+      ...> |> BSV.Address.to_string
       "12g4iEyKXndS6qwhLkqxzchep4GwVFUUNJ"
 
       iex> BSV.Extended.PrivateKey.from_seed(BSV.Test.bsv_seed)
       ...> |> BSV.Extended.Children.derive("m/44'/0'/1'/0/5")
-      ...> |> BSV.Extended.PrivateKey.get_address
+      ...> |> BSV.Address.to_string
       "15JvhMtjeRLewqn2hNSdty4zmEvTJYCPcq"
   """
   @spec derive(PublicKey.t | PrivateKey.t, String.t) :: PublicKey.t | PrivateKey.t

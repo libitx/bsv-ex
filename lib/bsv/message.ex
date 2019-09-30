@@ -97,7 +97,7 @@ defmodule BSV.Message do
       |> :libsecp256k1.ecdsa_verify_compact(signature, public_key)
     do
       :ok -> true
-      err -> false
+      _err -> false
     end
   end
 

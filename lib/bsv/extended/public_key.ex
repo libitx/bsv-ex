@@ -130,20 +130,4 @@ defmodule BSV.Extended.PublicKey do
     |> B58.encode58_check!(checksum)
   end
 
-
-  @doc """
-  Returns the Bitcoin address from the given extended private key.
-
-  ## Examples
-
-      iex> "xpub661MyMwAqRbcEiqMJB5yEQavJnZ7XSH4VC5HaiWsw6MBym6Pcr7WpUdfFykNbZL2JDFFYVe1NpUhJwvaZN44d7R3SmPHSjmUiT8pkR8Yrkk"
-      ...> |> BSV.Extended.PublicKey.from_string
-      ...> |> BSV.Extended.PublicKey.get_address
-      "1DXmF4ZjpYUhPwjrt9SzFou2YbAoaNvLxx"
-  """
-  @spec get_address(__MODULE__.t) :: String.t
-  def get_address(%__MODULE__{} = public_key) do
-    KeyPair.get_address(public_key.key)
-  end
-
 end

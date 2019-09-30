@@ -7,7 +7,7 @@ defmodule BSV.MessageTest do
     %{
       pub_key: keys.public_key,
       priv_key: keys.private_key,
-      address: BSV.Wallet.KeyPair.get_address(keys)
+      address: BSV.Address.to_string(keys)
     }
   end
 
