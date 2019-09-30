@@ -1,4 +1,4 @@
-# bsv-ex - Elixir Bitcoin SV Library
+# BSV-ex - Elixir Bitcoin SV Library
 
 The intent of this library is to provide a full-featured BSV library that is broadly comparable in scope to [Money Button's BSV Javascript library](https://github.com/moneybutton/bsv).
 
