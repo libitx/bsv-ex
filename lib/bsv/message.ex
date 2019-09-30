@@ -7,7 +7,7 @@ defmodule BSV.Message do
   key recovery from signatures.
   """
   alias BSV.Crypto.Hash
-  alias BSV.Wallet.KeyPair
+  alias BSV.KeyPair
   alias BSV.Util
   alias BSV.Util.VarBin
 

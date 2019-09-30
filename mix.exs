@@ -4,15 +4,28 @@ defmodule BSV.MixProject do
   def project do
     [
       app: :bsv,
-      version: "0.1.0-dev.2",
+      version: "0.1.0",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      name: "BSV (elixir)",
+      name: "bsv-ex",
       description: "Elixir Bitcoin SV library",
       source_url: "https://github.com/libitx/bsv-ex",
       docs: [
-        main: "BSV"
+        main: "BSV",
+        groups_for_modules: [
+          "Crypto": [
+            BSV.Crypto.AES,
+            BSV.Crypto.ECDSA,
+            BSV.Crypto.ECDSA.PrivateKey,
+            BSV.Crypto.ECDSA.PublicKey,
+            BSV.Crypto.ECIES,
+            BSV.Crypto.Hash,
+            BSV.Crypto.RSA,
+            BSV.Crypto.RSA.PrivateKey,
+            BSV.Crypto.RSA.PublicKey
+          ]
+        ]
       ],
       package: [
         name: "bsv",

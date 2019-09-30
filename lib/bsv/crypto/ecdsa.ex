@@ -13,8 +13,7 @@ defmodule BSV.Crypto.ECDSA do
       true
   """
   alias BSV.Util
-  alias BSV.Crypto.ECDSA.PublicKey
-  alias BSV.Crypto.ECDSA.PrivateKey
+  alias BSV.Crypto.ECDSA.{PublicKey, PrivateKey}
 
   @named_curve :secp256k1
 

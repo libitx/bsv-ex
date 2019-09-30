@@ -1,6 +1,11 @@
-defmodule BSV.Wallet.Mnemonic do
+defmodule BSV.Mnemonic do
   @moduledoc """
-  Module for generating and restoring mnemonic phrases, implementing BIP-39.
+  Module for generating and restoring mnemonic phrases, for the generation of
+  deterministic keys. Implements BIP-39.
+
+  A mnemonic phrase is a group of easy to remember words. The phrase can be
+  converted to a binary seed, which in turn is used to generate deterministic
+  keys.
   """
   alias BSV.Crypto.Hash
   alias BSV.Util
@@ -15,6 +20,8 @@ defmodule BSV.Wallet.Mnemonic do
          |> Enum.to_list()
 
   @allowed_lengths [128, 160, 192, 224, 256]
+
+  @rounds 2048
 
   
   @doc """
@@ -37,12 +44,12 @@ defmodule BSV.Wallet.Mnemonic do
 
   ## Examples
 
-      iex> BSV.Wallet.Mnemonic.generate
+      iex> BSV.Mnemonic.generate
       ...> |> String.split
       ...> |> length
       24
 
-      iex> BSV.Wallet.Mnemonic.generate(128)
+      iex> BSV.Mnemonic.generate(128)
       ...> |> String.split
       ...> |> length
       12
@@ -67,7 +74,7 @@ defmodule BSV.Wallet.Mnemonic do
   ## Examples
 
       iex> BSV.Test.mnemonic_entropy
-      ...> |> BSV.Wallet.Mnemonic.from_entropy
+      ...> |> BSV.Mnemonic.from_entropy
       "organ boring cushion feature wheat juice quality replace concert baby topic scrub"
   """
   @spec from_entropy(binary) :: __MODULE__.t
@@ -83,7 +90,7 @@ defmodule BSV.Wallet.Mnemonic do
   ## Examples
 
       iex> "organ boring cushion feature wheat juice quality replace concert baby topic scrub"
-      ...> |> BSV.Wallet.Mnemonic.to_entropy
+      ...> |> BSV.Mnemonic.to_entropy
       <<156, 99, 60, 217, 170, 31, 158, 241, 171, 205, 182, 46, 162, 35, 148, 96>>
   """
   @spec to_entropy(__MODULE__.t) :: binary
@@ -91,6 +98,40 @@ defmodule BSV.Wallet.Mnemonic do
     String.split(mnemonic)
     |> Enum.map(&word_index/1)
     |> entropy
+  end
+
+
+  @doc """
+  Returns a wallet seed derived from the given mnemonic phrase and optionally a
+  passphrase.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:passphrase` - Optionally protect the seed with an additional passphrase
+  * `:encoding` - Optionally encode the seed with either the `:base64` or `:hex` encoding scheme.
+
+  ## Examples
+
+      iex> BSV.Mnemonic.from_entropy(BSV.Test.mnemonic_entropy)
+      ...> |> BSV.Mnemonic.to_seed(encoding: :hex)
+      "380823f725beb7846806d0b88590a0823ea81c0b88cd151f7295772bbe48bbffa9b0f131dce77c4a7168925d466270c12bc0073db917da9f2bb1f4ac59e9fa3b"
+
+      iex> BSV.Mnemonic.from_entropy(BSV.Test.mnemonic_entropy)
+      ...> |> BSV.Mnemonic.to_seed(passphrase: "my wallet")
+      ...> |> byte_size
+      64
+  """
+  @spec to_seed(__MODULE__.t, keyword) :: binary
+  def to_seed(mnemonic, options \\ []) do
+    passphrase = Keyword.get(options, :passphrase, "")
+    encoding = Keyword.get(options, :encoding)
+
+    <<"mnemonic", passphrase::binary, 1::integer-32>>
+    |> Hash.hmac(:sha512, mnemonic)
+    |> pbkdf2(mnemonic)
+    |> Util.encode(encoding)
   end
 
 
@@ -113,5 +154,19 @@ defmodule BSV.Wallet.Mnemonic do
   end
 
   defp word_index(word), do: Enum.find_index(words(), &(&1 == word))
+
+  defp pbkdf2(hmac_block, mnemonic) do
+    iterate(mnemonic, 1, hmac_block, hmac_block)
+  end
+
+  defp iterate(_mnemonic, round_num, _hmac_block, result)
+    when round_num == @rounds,
+    do: result
+
+  defp iterate(mnemonic, round_num, hmac_block, result) do
+    with next_block <- Hash.hmac(hmac_block, :sha512, mnemonic),
+         result <- :crypto.exor(next_block, result),
+         do: iterate(mnemonic, round_num + 1, next_block, result)
+  end
 
 end

@@ -5,7 +5,6 @@ defmodule BSV.Extended.PublicKey do
 
   alias BSV.Crypto.ECDSA
   alias BSV.Extended.PrivateKey
-  alias BSV.Wallet.KeyPair
 
   defstruct network: :main,
             version_number: nil,

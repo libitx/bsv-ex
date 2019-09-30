@@ -1,12 +1,12 @@
-defmodule BSV.Wallet.KeyPair do
+defmodule BSV.KeyPair do
   @moduledoc """
   Module for generating and using Bitcoin key pairs.
-  """
 
-  alias BSV.Crypto.Hash
+  Bitcoin keys are ECDSA keys. Virtually any 256-bit number is a valid private
+  key, and the corresponding point on the `secp256k1` curve is the public key.
+  """
   alias BSV.Crypto.ECDSA
-  alias BSV.Crypto.ECDSA.PublicKey
-  alias BSV.Crypto.ECDSA.PrivateKey
+  alias BSV.Crypto.ECDSA.{PublicKey, PrivateKey}
 
   defstruct network: :main, public_key: nil, private_key: nil
 
@@ -28,8 +28,8 @@ defmodule BSV.Wallet.KeyPair do
 
   ## Examples
 
-      iex> keypair = BSV.Wallet.KeyPair.generate
-      ...> keypair.__struct__ == BSV.Wallet.KeyPair
+      iex> keypair = BSV.KeyPair.generate
+      ...> keypair.__struct__ == BSV.KeyPair
       true
   """
   @spec generate(keyword) :: __MODULE__.t
@@ -50,8 +50,8 @@ defmodule BSV.Wallet.KeyPair do
 
   ## Examples
 
-      iex> keypair = BSV.Wallet.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
-      ...> keypair.__struct__ == BSV.Wallet.KeyPair
+      iex> keypair = BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
+      ...> keypair.__struct__ == BSV.KeyPair
       true
   """
   @spec from_ecdsa_key(PrivateKey.t | {binary, binary}, keyword) :: __MODULE__.t
@@ -81,11 +81,11 @@ defmodule BSV.Wallet.KeyPair do
 
   ## Examples
 
-      iex> BSV.Wallet.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
+      iex> BSV.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
       ...> |> BSV.Address.to_string
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
-      iex> BSV.Wallet.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
+      iex> BSV.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
       ...> |> BSV.Address.to_string
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
   """
@@ -107,13 +107,13 @@ defmodule BSV.Wallet.KeyPair do
   ## Examples
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
-      ...> |> BSV.Wallet.KeyPair.wif_encode
+      ...> |> BSV.KeyPair.from_ecdsa_key
+      ...> |> BSV.KeyPair.wif_encode
       "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key(compressed: false)
-      ...> |> BSV.Wallet.KeyPair.wif_encode
+      ...> |> BSV.KeyPair.from_ecdsa_key(compressed: false)
+      ...> |> BSV.KeyPair.wif_encode
       "5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu"
   """
   def wif_encode(key = %__MODULE__{}) do

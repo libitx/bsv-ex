@@ -3,7 +3,7 @@ defmodule BSV.MessageTest do
   doctest BSV.Message
 
   setup_all do
-    keys = BSV.Wallet.KeyPair.generate
+    keys = BSV.KeyPair.generate
     %{
       pub_key: keys.public_key,
       priv_key: keys.private_key,

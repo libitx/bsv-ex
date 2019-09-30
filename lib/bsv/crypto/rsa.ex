@@ -22,8 +22,7 @@ defmodule BSV.Crypto.RSA do
   
   """
   alias BSV.Util
-  alias BSV.Crypto.RSA.PublicKey
-  alias BSV.Crypto.RSA.PrivateKey
+  alias BSV.Crypto.RSA.{PublicKey, PrivateKey}
 
 
   @doc """

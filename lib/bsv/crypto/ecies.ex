@@ -16,8 +16,7 @@ defmodule BSV.Crypto.ECIES do
   alias BSV.Crypto.Hash
   alias BSV.Crypto.AES
   alias BSV.Crypto.ECDSA
-  alias BSV.Crypto.ECDSA.PublicKey
-  alias BSV.Crypto.ECDSA.PrivateKey
+  alias BSV.Crypto.ECDSA.{PublicKey, PrivateKey}
 
 
   @doc """

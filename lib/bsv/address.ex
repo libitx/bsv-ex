@@ -3,13 +3,12 @@ defmodule BSV.Address do
   Module for calculating any Bitcoin public or private key's address.
 
   A Bitcoin address is calculated by hashing the public key with both the
-  SHA-256 and then RIPEMD alogrithms. The resulting hash is then Base58Check
-  encoded, resulting in the Bitcoin address.
+  SHA-256 and then RIPEMD alogrithms. The hash is then Base58Check encoded,
+  resulting in the Bitcoin address.
   """
   alias BSV.Crypto.Hash
-  alias BSV.Wallet.KeyPair
-  alias BSV.Extended.PublicKey
-  alias BSV.Extended.PrivateKey
+  alias BSV.KeyPair
+  alias BSV.Extended.{PublicKey, PrivateKey}
 
   @version_bytes %{
     main: <<0x00>>,
@@ -23,17 +22,17 @@ defmodule BSV.Address do
   ## Examples
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
+      ...> |> BSV.KeyPair.from_ecdsa_key
       ...> |> BSV.Address.to_string
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key(compressed: false)
+      ...> |> BSV.KeyPair.from_ecdsa_key(compressed: false)
       ...> |> BSV.Address.to_string
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
 
       iex> BSV.Crypto.ECDSA.PrivateKey.from_sequence(BSV.Test.ecdsa_key)
-      ...> |> BSV.Wallet.KeyPair.from_ecdsa_key
+      ...> |> BSV.KeyPair.from_ecdsa_key
       ...> |> BSV.Address.to_string(network: :test)
       "mo8nfeKAmmc9g56B4UFXARutAPDi1sr7tH"
   """
