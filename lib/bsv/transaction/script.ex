@@ -6,7 +6,7 @@ defmodule BSV.Transaction.Script do
   ## Examples
 
       iex> %BSV.Transaction.Script{}
-      ...> |> BSV.Transaction.Script.push(:OP_0)
+      ...> |> BSV.Transaction.Script.push(:OP_FALSE)
       ...> |> BSV.Transaction.Script.push(:OP_RETURN)
       ...> |> BSV.Transaction.Script.push("hello world")
       ...> |> BSV.Transaction.Script.serialize(encoding: :hex)
@@ -15,7 +15,7 @@ defmodule BSV.Transaction.Script do
       iex> "006a0b68656c6c6f20776f726c64"
       ...> |> BSV.Transaction.Script.parse(encoding: :hex)
       %BSV.Transaction.Script{
-        chunks: [:OP_0, :OP_RETURN, "hello world"]
+        chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
       }
   """
   alias BSV.Util
@@ -200,6 +200,8 @@ defmodule BSV.Transaction.Script do
     opnum = @op_codes[val]
     if opnum, do: {val, opnum}, else: nil
   end
+
+  def get_op_code(0), do: {:OP_FALSE, 0}
 
   def get_op_code(val) when is_integer(val),
     do: Enum.find(@op_codes, fn {_k, v} -> v == val end)

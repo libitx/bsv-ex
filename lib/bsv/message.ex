@@ -70,40 +70,34 @@ defmodule BSV.Message do
   def verify(signature, message, public_key, options \\[])
 
   def verify(signature, message, %KeyPair{} = key, options) do
-    do_verify(signature, message, key.public_key, options)
+    verify(signature, message, key.public_key, options)
   end
 
-  def verify(signature, message, <<public_key::binary-33>>, options) do
-    do_verify(signature, message, public_key, options)
-  end
-
-  def verify(signature, message, <<public_key::binary-65>>, options) do
-    do_verify(signature, message, public_key, options)
-  end
-
-  def verify(signature, message, address, options) when is_binary(address) do
+  def verify(signature, message, public_key, options) when is_binary(public_key) do
     encoding = Keyword.get(options, :encoding, :base64)
+
     <<prefix::integer, sig::binary>> = Util.decode(signature, encoding)
     {comp, comp_opt} = if prefix > 30, do: {true, :compressed}, else: {false, :uncompressed}
 
-    case message_digest(message)
-      |> :libsecp256k1.ecdsa_recover_compact(sig, comp_opt, prefix - sig_prefix(comp))
+    with true <- String.valid?(public_key),
+         {:ok, public_key} <- message_digest(message)
+          |> :libsecp256k1.ecdsa_recover_compact(sig, comp_opt, prefix - sig_prefix(comp))
     do
-      {:ok, public_key} -> do_verify(signature, message, public_key, options)
+      do_verify(sig, message, public_key)
+    else
+      false -> do_verify(sig, message, public_key)
       {:error, err} -> raise inspect(err)
     end
   end
 
 
-  defp do_verify(signature, message, public_key, options) do
-    encoding = Keyword.get(options, :encoding, :base64)
-    <<_prefix::integer, sig::binary>> = Util.decode(signature, encoding)
+  defp do_verify(signature, message, public_key) do
 
     case message_digest(message)
-      |> :libsecp256k1.ecdsa_verify_compact(sig, public_key)
+      |> :libsecp256k1.ecdsa_verify_compact(signature, public_key)
     do
       :ok -> true
-      :error -> false  
+      err -> false
     end
   end
 
