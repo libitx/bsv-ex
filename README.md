@@ -95,6 +95,14 @@ iex> tx = %BSV.Transaction{outputs: [output]}
 
 For more examples please refer to the [full documentation](https://hexdocs.pm/bsv).
 
+## Credit
+
+`bsv-ex` is a new project with new objectives and new code, but the following projects have helped me through some of the more nuanced aspects of Bitcoin:
+
+* [KamilLelonek/ex_wallet](https://github.com/KamilLelonek/ex_wallet)
+* [comboy/bitcoin-elixir](https://github.com/comboy/bitcoin-elixir)
+* [moneybutton/bsv](https://github.com/moneybutton/bsv)
+
 ## License
 
 © Copyright 2019 libitx.
