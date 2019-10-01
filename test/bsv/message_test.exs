@@ -7,7 +7,7 @@ defmodule BSV.MessageTest do
     %{
       pub_key: keys.public_key,
       priv_key: keys.private_key,
-      address: BSV.Address.to_string(keys)
+      address: BSV.Address.from_public_key(keys) |> BSV.Address.to_string
     }
   end
 

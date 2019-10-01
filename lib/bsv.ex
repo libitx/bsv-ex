@@ -48,7 +48,8 @@ defmodule BSV do
         public_key: <<3, 173, 251, 14, 108, 217, 224, 80, 133, 244, 200, 33, 191, 137, 80, 62, 141, 133, 166, 201, 224, 141, 101, 152, 144, 92, 237, 54, 220, 131, 58, 26, 4>>
       }
 
-      iex> address = BSV.Address.to_string(keys)
+      iex> address = BSV.Address.from_public_key(keys)
+      ...> |> BSV.Address.to_string
       "1MzYtHPymTjgxx9npR6Pu9ZCUhtU9hHYTL"
 
   ### Mnemonic phrase and deterministic keys
@@ -73,6 +74,7 @@ defmodule BSV do
 
       iex> child_address = master
       ...> |> BSV.Extended.Children.derive("m/44'/0'/0'/0/0")
+      ...> |> BSV.Address.from_public_key
       ...> |> BSV.Address.to_string
       "1F6fuP7HrBY8aeUazXZitaAsgpsJQFfUun"
 

@@ -18,6 +18,7 @@ defmodule BSV.Transaction.Script do
         chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
       }
   """
+  alias BSV.Address
   alias BSV.Util
 
   defstruct chunks: []
@@ -233,6 +234,7 @@ defmodule BSV.Transaction.Script do
         ]
       }
   """
+  @spec parse(binary, keyword) :: __MODULE__.t
   def parse(data, options \\ []) do
     encoding = Keyword.get(options, :encoding)
     Util.decode(data, encoding)
@@ -271,27 +273,64 @@ defmodule BSV.Transaction.Script do
 
 
   @doc """
+  Build a new pay to public key hash output script, from the given address or
+  public key.
+
+  ## Examples
+
+      iex> BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
+      ...> |> BSV.Address.from_public_key
+      ...> |> BSV.Transaction.Script.build_public_key_hash_out
+      %BSV.Transaction.Script{
+        chunks: [
+          :OP_DUP,
+          :OP_HASH,
+          <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55, 71>>,
+          :OP_EQUALVERIFY,
+          :OP_CHECKSIG
+        ]
+      }
+  """
+  @spec build_public_key_hash_out(Address.t | binary) :: __MODULE__.t
+  def build_public_key_hash_out(%Address{} = address) do
+    chunks = [
+      :OP_DUP,
+      :OP_HASH,
+      address.hash,
+      :OP_EQUALVERIFY,
+      :OP_CHECKSIG
+    ]
+    struct(__MODULE__, chunks: chunks)
+  end
+
+  def build_public_key_hash_out(public_key) when is_binary(public_key) do
+    case String.valid?(public_key) do
+      true -> Address.from_string(public_key)
+      false -> Address.from_public_key(public_key)
+    end
+    |> build_public_key_hash_out
+  end
+
+
+  @doc """
   Pushes a chunk into the given transaction script. The chunk can be any binary
   value or OP code.
 
   ## Examples
 
       iex> %BSV.Transaction.Script{}
-      ...> |> BSV.Transaction.Script.push(:OP_DUP)
-      ...> |> BSV.Transaction.Script.push(:OP_HASH160)
-      ...> |> BSV.Transaction.Script.push(<<106, 252, 13, 107, 181, 120, 40, 42, 192, 246, 173, 92, 90, 242, 41, 76, 25, 113, 33, 8>>)
-      ...> |> BSV.Transaction.Script.push(:OP_EQUALVERIFY)
-      ...> |> BSV.Transaction.Script.push(:OP_CHECKSIG)
+      ...> |> BSV.Transaction.Script.push(:OP_FALSE)
+      ...> |> BSV.Transaction.Script.push(:OP_RETURN)
+      ...> |> BSV.Transaction.Script.push("Hello world")
       %BSV.Transaction.Script{
         chunks: [
-          :OP_DUP,
-          :OP_HASH160,
-          <<106, 252, 13, 107, 181, 120, 40, 42, 192, 246, 173, 92, 90, 242, 41, 76, 25, 113, 33, 8>>,
-          :OP_EQUALVERIFY,
-          :OP_CHECKSIG
+          :OP_FALSE,
+          :OP_RETURN,
+          "Hello world"
         ]
       }
   """
+  @spec push(__MODULE__.t, binary | atom) :: __MODULE__.t
   def push(%__MODULE__{} = script, data)
     when is_atom(data) or is_integer(data)
   do
@@ -331,6 +370,7 @@ defmodule BSV.Transaction.Script do
       ...> |> BSV.Transaction.Script.serialize(encoding: :hex)
       "76a9146afc0d6bb578282ac0f6ad5c5af2294c1971210888ac"
   """
+  @spec serialize(__MODULE__.t, keyword) :: binary
   def serialize(%__MODULE__{} = script, options \\ []) do
     encoding = Keyword.get(options, :encoding)
     serialize_chunks(script.chunks, <<>>)

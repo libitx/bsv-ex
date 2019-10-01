@@ -6,7 +6,6 @@ defmodule BSV.Transaction.OutputTest do
     %{
       hex: "efbee82f000000001976a914c4263eb96d88849f498d139424b59a0cba1005e888ac",
       output: %BSV.Transaction.Output{
-        amount: 8.03782383,
         satoshis: 803782383,
         script: %BSV.Transaction.Script{
           chunks: [

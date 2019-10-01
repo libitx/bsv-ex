@@ -3,7 +3,8 @@ defmodule BSV.Transaction do
   Module for the construction, parsing and serialization of Bitcoin transactions.
   """
   alias BSV.Crypto.Hash
-  alias BSV.Transaction.{Input, Output}
+  alias BSV.Address
+  alias BSV.Transaction.{Input, Output, Script}
   alias BSV.Util
   alias BSV.Util.VarBin
 
@@ -92,5 +93,74 @@ defmodule BSV.Transaction do
     |> Util.reverse_bin
     |> Util.encode(:hex)
   end
-  
+
+
+  @doc """
+  TODOC
+
+  ## Examples
+
+      iex> tx = %BSV.Transaction{}
+      ...> |> BSV.Transaction.add_input(%BSV.Transaction.Input{})
+      iex> length(tx.inputs) == 1
+      true
+  """
+  @spec add_input(__MODULE__.t, Input.t) :: __MODULE__.t
+  def add_input(%__MODULE__{} = tx, %Input{} = input) do
+    inputs = Enum.concat(tx.inputs, [input])
+    Map.put(tx, :inputs, inputs)
+  end
+
+
+  @doc """
+  TODOC
+
+  ## Examples
+
+      iex> tx = %BSV.Transaction{}
+      ...> |> BSV.Transaction.add_output(%BSV.Transaction.Output{})
+      iex> length(tx.outputs) == 1
+      true
+  """
+  @spec add_output(__MODULE__.t, Output.t) :: __MODULE__.t
+  def add_output(%__MODULE__{} = tx, %Output{} = output) do
+    outputs = Enum.concat(tx.outputs, [output])
+    Map.put(tx, :outputs, outputs)
+  end
+
+
+  @doc """
+  TODOC
+  """
+  @spec spend_from(__MODULE__.t, Input.t | list) :: __MODULE__.t
+  def spend_from(tx, %Input{} = input) do
+    case Enum.member?(tx.inputs, input) do
+      true -> tx
+      false -> add_input(tx, input)
+    end
+  end
+
+  def spend_from(tx, inputs) when is_list(inputs) do
+    Enum.each(inputs, &(spend_from(tx, &1)))
+  end
+
+
+  @doc """
+  TODOC
+
+  ## Examples
+
+      iex> tx = %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_to("15KgnG69mTbtkx73vNDNUdrWuDhnmfCxsf", 1000)
+      iex> length(tx.outputs) == 1
+      true
+  """
+  @spec spend_to(%__MODULE__{}, Address.t | binary, integer) :: __MODULE__.t
+  def spend_to(tx, address, satoshis) do
+    output = struct(Output, [
+      satoshis: satoshis,
+      script: Script.build_public_key_hash_out(address)
+    ])
+    add_output(tx, output)
+  end
 end

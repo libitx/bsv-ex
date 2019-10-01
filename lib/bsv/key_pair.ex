@@ -82,10 +82,12 @@ defmodule BSV.KeyPair do
   ## Examples
 
       iex> BSV.KeyPair.wif_decode("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
+      ...> |> BSV.Address.from_public_key
       ...> |> BSV.Address.to_string
       "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
 
       iex> BSV.KeyPair.wif_decode("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
+      ...> |> BSV.Address.from_public_key
       ...> |> BSV.Address.to_string
       "1N5Cu7YUPQhcwZaQLDT5KnDpRVKzFDJxsf"
   """

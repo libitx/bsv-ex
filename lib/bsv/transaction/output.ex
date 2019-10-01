@@ -6,12 +6,11 @@ defmodule BSV.Transaction.Output do
   alias BSV.Util
   alias BSV.Util.VarBin
 
-  defstruct satoshis: 0, amount: 0, script: nil
+  defstruct satoshis: 0, script: nil
 
   @typedoc "Transaction output"
   @type t :: %__MODULE__{
     satoshis: integer,
-    amount: float,
     script: binary
   }
 
@@ -41,7 +40,6 @@ defmodule BSV.Transaction.Output do
 
     {struct(__MODULE__, [
       satoshis: satoshis,
-      amount: satoshis * 0.00000001,
       script: Script.parse(script)
     ]), data}
   end
