@@ -4,7 +4,8 @@ defmodule BSV.Transaction do
   """
   alias BSV.Crypto.Hash
   alias BSV.Address
-  alias BSV.Transaction.{Input, Output, Script}
+  alias BSV.Script
+  alias BSV.Transaction.{Input, Output}
   alias BSV.Util
   alias BSV.Util.VarBin
 

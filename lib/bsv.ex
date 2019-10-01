@@ -81,19 +81,19 @@ defmodule BSV do
   ### Creating transactions
 
   For further details and examples refer to `BSV.Transaction`,
-  `BSV.Transaction.Input`, `BSV.Transaction.Output` and `BSV.Transaction.Script`.
+  `BSV.Transaction.Input`, `BSV.Transaction.Output` and `BSV.Script`.
 
-      iex> script = %BSV.Transaction.Script{}
-      ...> |> BSV.Transaction.Script.push(:OP_FALSE)
-      ...> |> BSV.Transaction.Script.push(:OP_RETURN)
-      ...> |> BSV.Transaction.Script.push("hello world")
-      %BSV.Transaction.Script{chunks: [:OP_FALSE, :OP_RETURN, "hello world"]}
+      iex> script = %BSV.Script{}
+      ...> |> BSV.Script.push(:OP_FALSE)
+      ...> |> BSV.Script.push(:OP_RETURN)
+      ...> |> BSV.Script.push("hello world")
+      %BSV.Script{chunks: [:OP_FALSE, :OP_RETURN, "hello world"]}
 
       iex> output = %BSV.Transaction.Output{script: script}
       %BSV.Transaction.Output{
         amount: 0,
         satoshis: 0,
-        script: %BSV.Transaction.Script{
+        script: %BSV.Script{
           chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
         }
       }

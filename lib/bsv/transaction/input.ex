@@ -2,7 +2,7 @@ defmodule BSV.Transaction.Input do
   @moduledoc """
   Module for parsing and serialising transaction inputs.
   """
-  alias BSV.Transaction.Script
+  alias BSV.Script
   alias BSV.Util
   alias BSV.Util.VarBin
 

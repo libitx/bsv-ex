@@ -23,13 +23,13 @@ defmodule BSV.Util.VarBinTest do
         %BSV.Transaction.Input{
           txid: "0000000000000000000000000000000000000000000000000000000000000000",
           index: 1,
-          script: %BSV.Transaction.Script{chunks: [:OP_FALSE]},
+          script: %BSV.Script{chunks: [:OP_FALSE]},
           sequence: 0
         },
         %BSV.Transaction.Input{
           txid: "1111111111111111111111111111111111111111111111111111111111111111",
           index: 2,
-          script: %BSV.Transaction.Script{chunks: [:OP_FALSE]},
+          script: %BSV.Script{chunks: [:OP_FALSE]},
           sequence: 100
         }
       ] |> BSV.Util.VarBin.serialize_items(&BSV.Transaction.Input.serialize/1)
@@ -61,13 +61,13 @@ defmodule BSV.Util.VarBinTest do
     test "must serialize multiple outputs" do
       data = [
         %BSV.Transaction.Output{
-          script: %BSV.Transaction.Script{chunks: [:OP_FALSE]}
+          script: %BSV.Script{chunks: [:OP_FALSE]}
         },
         %BSV.Transaction.Output{
-          script: %BSV.Transaction.Script{chunks: [:OP_FALSE]}
+          script: %BSV.Script{chunks: [:OP_FALSE]}
         },
         %BSV.Transaction.Output{
-          script: %BSV.Transaction.Script{chunks: [:OP_FALSE]}
+          script: %BSV.Script{chunks: [:OP_FALSE]}
         }
       ] |> BSV.Util.VarBin.serialize_items(&BSV.Transaction.Output.serialize/1)
       <<n::integer, _::binary>> = data

@@ -7,7 +7,7 @@ defmodule BSV.Transaction.OutputTest do
       hex: "efbee82f000000001976a914c4263eb96d88849f498d139424b59a0cba1005e888ac",
       output: %BSV.Transaction.Output{
         satoshis: 803782383,
-        script: %BSV.Transaction.Script{
+        script: %BSV.Script{
           chunks: [
             :OP_DUP,
             :OP_HASH160,
