@@ -3,18 +3,26 @@ defmodule BSV.Transaction.Input do
   Module for parsing and serialising transaction inputs.
   """
   alias BSV.Script
+  alias BSV.Transaction.Output
   alias BSV.Util
   alias BSV.Util.VarBin
 
-  defstruct txid: nil, index: 0, script: nil, sequence: 0
+  defstruct output_txid: nil,
+            output_index: 0,
+            script: nil,
+            sequence: 0,
+            utxo: nil
 
   @typedoc "Transaction input"
   @type t :: %__MODULE__{
-    txid: String.t,
-    index: integer,
+    output_txid: String.t,
+    output_index: integer,
     script: binary,
-    sequence: integer
+    sequence: integer,
+    utxo: Output.t
   }
+
+  @max_sequence 0xFFFFFFFF
 
 
   @doc """
@@ -42,8 +50,8 @@ defmodule BSV.Transaction.Input do
     <<sequence::little-32, data::binary>> = data
 
     {struct(__MODULE__, [
-      txid: txid |> Util.reverse_bin |> Util.encode(:hex),
-      index: index,
+      output_txid: txid |> Util.reverse_bin |> Util.encode(:hex),
+      output_index: index,
       script: Script.parse(script),
       sequence: sequence
     ]), data}
@@ -68,7 +76,7 @@ defmodule BSV.Transaction.Input do
   def serialize(%__MODULE__{} = input, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    txid = input.txid
+    txid = input.output_txid
     |> Util.decode(:hex)
     |> Util.reverse_bin
     script = input.script
@@ -77,7 +85,7 @@ defmodule BSV.Transaction.Input do
 
     <<
       txid::binary,
-      input.index::little-32,
+      input.output_index::little-32,
       script::binary,
       input.sequence::little-32
     >>

@@ -18,7 +18,6 @@ defmodule BSV.Script do
         chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
       }
   """
-  alias BSV.Address
   alias BSV.Script.OpCode
   alias BSV.Util
 
@@ -88,46 +87,6 @@ defmodule BSV.Script do
   defp parse_chunks(<<op::integer, data::binary>>, chunks) do
     {opcode, _opnum} = OpCode.get(op)
     parse_chunks(data, [opcode | chunks])
-  end
-
-
-  @doc """
-  Build a new pay to public key hash output script, from the given address or
-  public key.
-
-  ## Examples
-
-      iex> BSV.KeyPair.from_ecdsa_key(BSV.Test.bsv_keys)
-      ...> |> BSV.Address.from_public_key
-      ...> |> BSV.Script.build_public_key_hash_out
-      %BSV.Script{
-        chunks: [
-          :OP_DUP,
-          :OP_HASH,
-          <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55, 71>>,
-          :OP_EQUALVERIFY,
-          :OP_CHECKSIG
-        ]
-      }
-  """
-  @spec build_public_key_hash_out(Address.t | binary) :: __MODULE__.t
-  def build_public_key_hash_out(%Address{} = address) do
-    chunks = [
-      :OP_DUP,
-      :OP_HASH,
-      address.hash,
-      :OP_EQUALVERIFY,
-      :OP_CHECKSIG
-    ]
-    struct(__MODULE__, chunks: chunks)
-  end
-
-  def build_public_key_hash_out(public_key) when is_binary(public_key) do
-    case String.valid?(public_key) do
-      true -> Address.from_string(public_key)
-      false -> Address.from_public_key(public_key)
-    end
-    |> build_public_key_hash_out
   end
 
 

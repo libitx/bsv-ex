@@ -21,14 +21,14 @@ defmodule BSV.Util.VarBinTest do
     test "must serialize multiple inputs" do
       data = [
         %BSV.Transaction.Input{
-          txid: "0000000000000000000000000000000000000000000000000000000000000000",
-          index: 1,
+          output_txid: "0000000000000000000000000000000000000000000000000000000000000000",
+          output_index: 1,
           script: %BSV.Script{chunks: [:OP_FALSE]},
           sequence: 0
         },
         %BSV.Transaction.Input{
-          txid: "1111111111111111111111111111111111111111111111111111111111111111",
-          index: 2,
+          output_txid: "1111111111111111111111111111111111111111111111111111111111111111",
+          output_index: 2,
           script: %BSV.Script{chunks: [:OP_FALSE]},
           sequence: 100
         }

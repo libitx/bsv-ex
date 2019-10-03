@@ -1,4 +1,7 @@
 defmodule BSV.Script.OpCode do
+  @moduledoc """
+  Module for accessing OP code atoms and byte integers.
+  """
 
   @op_codes %{
     # push value
