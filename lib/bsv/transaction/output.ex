@@ -14,6 +14,8 @@ defmodule BSV.Transaction.Output do
     script: binary
   }
 
+  @p2pkh_script_size 25
+
 
   @doc """
   Parse the given binary into a single transaction output. Returns a tuple
@@ -70,5 +72,17 @@ defmodule BSV.Transaction.Output do
     <<output.satoshis::little-64, script::binary>>
     |> Util.encode(encoding)
   end
+
+
+  @doc """
+  Returns the size of the given output. If the output has a script, it's actual
+  size is calculated, otherwise a P2PKH output is estimated.
+  """
+  @spec get_size(__MODULE__.t) :: integer
+  def get_size(%__MODULE__{script: script}) when is_nil(script),
+    do: 8 + @p2pkh_script_size
+
+  def get_size(%__MODULE__{} = tx),
+    do: serialize(tx) |> byte_size
 
 end

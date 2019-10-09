@@ -24,6 +24,8 @@ defmodule BSV.Transaction.Input do
 
   @max_sequence 0xFFFFFFFF
 
+  @p2pkh_script_size 108
+
 
   @doc """
   Parse the given binary into a transaction input. Returns a tuple containing
@@ -91,5 +93,17 @@ defmodule BSV.Transaction.Input do
     >>
     |> Util.encode(encoding)
   end
+
+
+  @doc """
+  Returns the size of the given input. If the input has a script, it's actual
+  size is calculated, otherwise a P2PKH input is estimated.
+  """
+  @spec get_size(__MODULE__.t) :: integer
+  def get_size(%__MODULE__{script: script}) when is_nil(script),
+    do: 40 + @p2pkh_script_size
+
+  def get_size(%__MODULE__{} = tx),
+    do: serialize(tx) |> byte_size
   
 end

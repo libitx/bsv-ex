@@ -11,7 +11,13 @@ defmodule BSV.Transaction do
   alias BSV.Util
   alias BSV.Util.VarBin
 
-  defstruct version: 1, inputs: [], outputs: [], lock_time: 0
+  defstruct version: 1,
+            lock_time: 0,
+            inputs: [],
+            outputs: [],
+            change_script: nil,
+            change_output: nil,
+            fee: nil
 
   @typedoc "Bitcoin Transaction"
   @type t :: %__MODULE__{
@@ -20,6 +26,9 @@ defmodule BSV.Transaction do
     outputs: list,
     lock_time: integer
   }
+
+  @dust_limit 546
+  @fee_per_kb 1000
 
   
   @doc """
@@ -88,6 +97,13 @@ defmodule BSV.Transaction do
   @doc """
   Returns the given transaction's txid, which is a double SHA-256 hash of the
   serialized transaction, reversed.
+
+  ## Examples
+
+      iex> %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 72000)
+      ...> |> BSV.Transaction.get_txid
+      "c8e8f4951eb08f9e6e12b92da30b0b9a0849202dcbb5ac35e13acc91b8c4de6d"
   """
   @spec get_txid(__MODULE__.t) :: String.t
   def get_txid(%__MODULE__{} = tx) do
@@ -95,6 +111,80 @@ defmodule BSV.Transaction do
     |> Hash.sha256_sha256
     |> Util.reverse_bin
     |> Util.encode(:hex)
+  end
+
+
+  @doc """
+  Returns the size of the given transaction. Where any inputs are without a
+  signed script, it's size is estimated assuming a P2PKH input.
+
+  ## Examples
+
+      iex> %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
+      ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
+      ...> |> BSV.Transaction.get_size
+      191
+  """
+  @spec get_size(__MODULE__.t) :: integer
+  def get_size(%__MODULE__{} = tx) do
+    input_s = length(tx.inputs)
+    |> VarBin.serialize_int
+    |> byte_size
+    output_s = if is_nil(tx.change_output), do: 0, else: 1
+    |> Kernel.+(tx.outputs |> length)
+    |> VarBin.serialize_int
+    |> byte_size
+    inputs = tx.inputs
+    |> Enum.map(&Input.get_size/1)
+    |> Enum.sum
+    |> Kernel.+(input_s)
+    outputs = tx.outputs
+    |> Enum.map(&Output.get_size/1)
+    |> Enum.sum
+    |> Kernel.+(output_s)
+    change = case tx.change_output do
+      nil -> 0
+      output -> Output.get_size(output)
+    end
+
+    8 + inputs + outputs + change
+  end
+
+
+  @doc """
+  Returns the fee for the given transaction. If the fee has already been set
+  using `f:BSV.Transaction.set_fee/2`, then that figure is returned. Otherwise
+  a fee is calculated based on the result of `f:BSV.Transaction.get_size/1`.
+
+  ## Examples
+
+      iex> %BSV.Transaction{}
+      ...> |> BSV.Transaction.set_fee(500)
+      ...> |> BSV.Transaction.get_fee
+      500
+
+      iex> %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
+      ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
+      ...> |> BSV.Transaction.get_fee
+      191
+  """
+  @spec get_fee(__MODULE__.t) :: integer
+  def get_fee(%__MODULE__{fee: fee}) when is_integer(fee),
+    do: fee
+  
+  def get_fee(%__MODULE__{fee: fee} = tx) when is_nil(fee),
+    do: get_size(tx) * @fee_per_kb / 1000 |> round
+
+
+  @doc """
+  Sets the fee for the given transaction. Resets the signatures for all inputs.
+  """
+  @spec set_fee(__MODULE__.t, integer) :: __MODULE__.t
+  def set_fee(%__MODULE__{} = tx, fee) when is_integer(fee) do
+    Map.put(tx, :fee, fee)
+    |> update_change_output
   end
 
 
@@ -109,11 +199,11 @@ defmodule BSV.Transaction do
       ...> ]
       ...>
       iex> BSV.Transaction.spend_from(%BSV.Transaction{}, inputs)
-      ...> |> BSV.Transaction.input_sum
+      ...> |> BSV.Transaction.get_input_sum
       4575
   """
-  @spec input_sum(__MODULE__.t) :: integer
-  def input_sum(%__MODULE__{} = tx),
+  @spec get_input_sum(__MODULE__.t) :: integer
+  def get_input_sum(%__MODULE__{} = tx),
     do: tx.inputs |> Enum.reduce(0, &(&2 + &1.utxo.satoshis))
 
 
@@ -125,39 +215,34 @@ defmodule BSV.Transaction do
       iex> %BSV.Transaction{}
       ...> |> BSV.Transaction.spend_to("15KgnG69mTbtkx73vNDNUdrWuDhnmfCxsf", 5000)
       ...> |> BSV.Transaction.spend_to("15KgnG69mTbtkx73vNDNUdrWuDhnmfCxsf", 1325)
-      ...> |> BSV.Transaction.output_sum
+      ...> |> BSV.Transaction.get_output_sum
       6325
   """
-  @spec output_sum(__MODULE__.t) :: integer
-  def output_sum(%__MODULE__{} = tx),
+  @spec get_output_sum(__MODULE__.t) :: integer
+  def get_output_sum(%__MODULE__{} = tx),
     do: tx.outputs |> Enum.reduce(0, &(&2 + &1.satoshis))
 
 
   @doc """
-  Adds the given input to the transaction. The input must be complete with a
-  UTXO or the function will raise an error.
+  Adds the given input to the transaction. Resets the signatures for all inputs.
 
   ## Examples
 
-      iex> input = %BSV.Transaction.Input{utxo: %BSV.Transaction.Output{}}
       iex> tx = %BSV.Transaction{}
-      ...> |> BSV.Transaction.add_input(input)
+      ...> |> BSV.Transaction.add_input(%BSV.Transaction.Input{})
       iex> length(tx.inputs) == 1
       true
   """
   @spec add_input(__MODULE__.t, Input.t) :: __MODULE__.t
-  def add_input(%__MODULE__{}, %Input{utxo: utxo})
-    when is_nil(utxo),
-    do: raise "Invalid input. Must have UTXO."
-
   def add_input(%__MODULE__{} = tx, %Input{} = input) do
     inputs = Enum.concat(tx.inputs, [input])
     Map.put(tx, :inputs, inputs)
+    |> update_change_output
   end
 
 
   @doc """
-  Adds the given output to the transaction.
+  Adds the given output to the transaction. Resets the signatures for all inputs.
 
   ## Examples
 
@@ -170,13 +255,20 @@ defmodule BSV.Transaction do
   def add_output(%__MODULE__{} = tx, %Output{} = output) do
     outputs = Enum.concat(tx.outputs, [output])
     Map.put(tx, :outputs, outputs)
+    |> update_change_output
   end
 
 
   @doc """
-  Adds the given input or list of inputs to the transaction.
+  Adds the given input or list of inputs to the transaction. Each input must be
+  complete with a spendable UTXO or the function will raise an error. Resets the
+  signatures for all inputs.
   """
   @spec spend_from(__MODULE__.t, Input.t | list) :: __MODULE__.t
+  def spend_from(%__MODULE__{}, %Input{utxo: utxo})
+    when is_nil(utxo),
+    do: raise "Invalid input. Must have spendable UTXO."
+
   def spend_from(%__MODULE__{} = tx, %Input{} = input) do
     case Enum.member?(tx.inputs, input) do
       true -> tx
@@ -190,7 +282,7 @@ defmodule BSV.Transaction do
 
   @doc """
   Creates a P2PKH output using the given address and spend amount, and adds the
-  output to the transaction.
+  output to the transaction. Resets the signatures for all inputs.
 
   ## Examples
 
@@ -206,6 +298,38 @@ defmodule BSV.Transaction do
       script: PublicKeyHash.build_output_script(address)
     ])
     add_output(tx, output)
+  end
+
+
+  @doc """
+  Specifies the change address for the given transaction. Resets the signatures
+  for all inputs.
+
+  ## Examples
+
+      iex> %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
+      ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
+      ...> |> BSV.Transaction.change_to("1G26ZnsXQpL9cdqCKE6vViMdW9QwRQTcTJ")
+      ...> |> Map.get(:change_output)
+      %BSV.Transaction.Output{
+        satoshis: 24774,
+        script: %BSV.Script{
+          chunks: [
+            :OP_DUP,
+            :OP_HASH160,
+            <<164, 190, 242, 205, 108, 224, 228, 253, 144, 102, 35, 209, 230, 33, 135, 143, 211, 21, 79, 82>>,
+            :OP_EQUALVERIFY,
+            :OP_CHECKSIG
+          ]
+        }
+      }
+  """
+  @spec change_to(__MODULE__.t, Address.t | binary) :: __MODULE__.t
+  def change_to(%__MODULE__{} = tx, address) do
+    script = PublicKeyHash.build_output_script(address)
+    Map.put(tx, :change_script, script)
+    |> update_change_output
   end
 
 
@@ -251,5 +375,33 @@ defmodule BSV.Transaction do
 
   def sign(%__MODULE__{} = tx, keys) when is_list(keys),
     do: keys |> Enum.reduce(tx, &(sign(&2, &1)))
+
+
+  # Needs to be called every time a change is made to inputs or outputs
+  defp update_change_output(%__MODULE__{change_script: script} = tx)
+    when is_nil(script),
+    do: tx
+
+  defp update_change_output(%__MODULE__{} = tx) do
+    change_output = struct(Output, script: tx.change_script)
+
+    tx = clear_signatures(tx)
+    |> Map.put(:change_output, change_output)
+
+    change_amount = get_input_sum(tx) - get_output_sum(tx) - get_fee(tx)
+    change_output = Map.put(change_output, :satoshis, change_amount)
+
+    case change_amount > @dust_limit do
+      true -> Map.put(tx, :change_output, change_output)
+      false -> Map.put(tx, :change_output, nil)
+    end
+  end
+
+
+  defp clear_signatures(%__MODULE__{} = tx) do
+    inputs = tx.inputs
+    |> Enum.map(&(Map.put(&1, :script, nil)))
+    Map.put(tx, :inputs, inputs)
+  end
 
 end
