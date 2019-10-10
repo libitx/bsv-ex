@@ -2,26 +2,34 @@ defmodule BSV do
   @moduledoc """
   BSV-ex. Elixir Bitcoin SV library.
 
-  The intent of this library is to provide a full-featured BSV library that is
-  broadly comparable in scope to [Money Button's BSV Javascript library](https://github.com/moneybutton/bsv).
+  BSV-ex is a general purpose library for building Bitcoin SV applications in
+  Elixir. The intent of this library is to be broadly comparable in scope, and
+  cross compatible with [Money Button's BSV Javascript library](https://github.com/moneybutton/bsv).
 
-  Currently this library offers the following:
+  ## Features
 
-  * General crypto functions - wide range of hashing, ECDSA and RSA encryption and signature functions.
-  * Bitcoin specific crypto - Electrum-compatible message encryption and signatures.
-  * Bitcoin key pair generation and related functions.
-  * BIP-39 mnemonic phrase generation and deterministic keys.
-  * Raw transaction parsing, manipulation and serialization.
+  Currently this library offers the following functionality:
 
-  What is NOT in this library:
+  * Transaction parsing, construction, signing and serialization
+  * Keypair generation and address encoding and decoding
+  * BIP-39 mnemonic phrase generation and deterministic keys
+  * Bitcoin message signing (Electrum compatible)
+  * ECIES encryption/decryption (Electrum compatible)
+  * Wide range of both Bitcoin and non-Bitcoin specific crypto functions
 
-  * P2P - this is not a full node implementation.
+  Full documentation can be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
+
+  #### Note to developers
+
+  This is a new library and new codebase. As such developers should proceed with
+  caution and test using testnet and small value transactions. In future
+  versions the API is subject to change as the library is developed towards
+  maturity.
 
   ## Installation
 
-  As this package uses `libsecp256k1` NIF bindings, please ensure you have
-  `libtool`, `automake` and `autogen` installed in order for the package to
-  compile.
+  The package is bundled with `libsecp256k1` NIF bindings. `libtool`, `automake`
+  and `autogen` are required in order for the package to compile.
 
   The package can be installed by adding `bsv` to your list of dependencies in
   `mix.exs`:
@@ -98,8 +106,12 @@ defmodule BSV do
         }
       }
 
-      iex> tx = %BSV.Transaction{outputs: [output]}
+      iex> tx = %BSV.Transaction{}
+      ...> |> BSV.Transaction.spend_from(utxo)
+      ...> |> BSV.Transaction.add_output(output)
+      ...> |> BSV.Transaction.change_to("15KgnG69mTbtkx73vNDNUdrWuDhnmfCxsf")
+      ...> |> BSV.Transaction.sign(private_key)
       ...> |> BSV.Transaction.serialize(encoding: :hex)
-      "01000000000100000000000000000e006a0b68656c6c6f20776f726c6400000000"
+      "010000000142123cac628be8df8bbf1fc21449c94bb8b81bc4a5960193be37688694626f49000000006b483045022100df13af549e5f6a23f70e0332856a0934a6fbbf7edceb19b15cafd8d3009ce12f02205ecf6b0f9456354de7c0b9d6b8877dac896b72edd9f7e3881b5ac69c82c03aac41210296207d8752d01b1cf8de77d258c02dd7280edc2bce9b59023311bbd395cbe93affffffff0100000000000000000e006a0b68656c6c6f20776f726c6400000000"
   """
 end
