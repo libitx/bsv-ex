@@ -84,7 +84,6 @@ iex> script = %BSV.Script{}
 
 iex> output = %BSV.Transaction.Output{script: script}
 %BSV.Transaction.Output{
-  amount: 0,
   satoshis: 0,
   script: %BSV.Script{
     chunks: [:OP_FALSE, :OP_RETURN, "hello world"]

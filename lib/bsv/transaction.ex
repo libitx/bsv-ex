@@ -16,15 +16,18 @@ defmodule BSV.Transaction do
             inputs: [],
             outputs: [],
             change_script: nil,
-            change_output: nil,
+            change_index: nil,
             fee: nil
 
   @typedoc "Bitcoin Transaction"
   @type t :: %__MODULE__{
     version: integer,
+    lock_time: integer,
     inputs: list,
     outputs: list,
-    lock_time: integer
+    change_script: nil,
+    change_index: nil,
+    fee: nil
   }
 
   @dust_limit 546
@@ -124,31 +127,20 @@ defmodule BSV.Transaction do
       ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
       ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
       ...> |> BSV.Transaction.get_size
-      191
+      192
   """
   @spec get_size(__MODULE__.t) :: integer
   def get_size(%__MODULE__{} = tx) do
-    input_s = length(tx.inputs)
-    |> VarBin.serialize_int
-    |> byte_size
-    output_s = if is_nil(tx.change_output), do: 0, else: 1
-    |> Kernel.+(tx.outputs |> length)
-    |> VarBin.serialize_int
-    |> byte_size
     inputs = tx.inputs
     |> Enum.map(&Input.get_size/1)
     |> Enum.sum
-    |> Kernel.+(input_s)
+    |> Kernel.+(tx.inputs |> length |> VarBin.serialize_int |> byte_size)
     outputs = tx.outputs
     |> Enum.map(&Output.get_size/1)
     |> Enum.sum
-    |> Kernel.+(output_s)
-    change = case tx.change_output do
-      nil -> 0
-      output -> Output.get_size(output)
-    end
+    |> Kernel.+(tx.outputs |> length |> VarBin.serialize_int |> byte_size)
 
-    8 + inputs + outputs + change
+    8 + inputs + outputs
   end
 
 
@@ -168,7 +160,7 @@ defmodule BSV.Transaction do
       ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
       ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
       ...> |> BSV.Transaction.get_fee
-      191
+      192
   """
   @spec get_fee(__MODULE__.t) :: integer
   def get_fee(%__MODULE__{fee: fee}) when is_integer(fee),
@@ -185,6 +177,19 @@ defmodule BSV.Transaction do
   def set_fee(%__MODULE__{} = tx, fee) when is_integer(fee) do
     Map.put(tx, :fee, fee)
     |> update_change_output
+  end
+
+
+  @doc """
+  Returns the change output of the given transaction.
+  """
+  @spec get_change_output(__MODULE__.t) :: Output.t
+  def get_change_output(%__MODULE__{change_index: index})
+    when is_nil(index),
+    do: nil
+
+  def get_change_output(%__MODULE__{} = tx) do
+    Enum.at(tx.outputs, tx.change_index)
   end
 
 
@@ -311,7 +316,7 @@ defmodule BSV.Transaction do
       ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
       ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
       ...> |> BSV.Transaction.change_to("1G26ZnsXQpL9cdqCKE6vViMdW9QwRQTcTJ")
-      ...> |> Map.get(:change_output)
+      ...> |> BSV.Transaction.get_change_output
       %BSV.Transaction.Output{
         satoshis: 24774,
         script: %BSV.Script{
@@ -383,18 +388,42 @@ defmodule BSV.Transaction do
     do: tx
 
   defp update_change_output(%__MODULE__{} = tx) do
-    change_output = struct(Output, script: tx.change_script)
-
-    tx = clear_signatures(tx)
-    |> Map.put(:change_output, change_output)
+    tx = tx
+    |> remove_change_output
+    |> clear_signatures
+    |> add_change_output
 
     change_amount = get_input_sum(tx) - get_output_sum(tx) - get_fee(tx)
-    change_output = Map.put(change_output, :satoshis, change_amount)
 
     case change_amount > @dust_limit do
-      true -> Map.put(tx, :change_output, change_output)
-      false -> Map.put(tx, :change_output, nil)
+      false -> remove_change_output(tx)
+      true ->
+        tx
+        |> remove_change_output
+        |> add_change_output(change_amount)
     end
+  end
+
+
+  defp remove_change_output(%__MODULE__{change_index: index} = tx)
+    when is_nil(index),
+    do: tx
+
+  defp remove_change_output(%__MODULE__{change_index: index} = tx) do
+    outputs = List.delete_at(tx.outputs, index)
+    tx
+    |> Map.put(:outputs, outputs)
+    |> Map.put(:change_index, nil)
+  end
+
+
+  defp add_change_output(%__MODULE__{} = tx, satoshis \\ 0) do
+    index   = length(tx.outputs)
+    output  = struct(Output, script: tx.change_script, satoshis: satoshis)
+    outputs = tx.outputs ++ [output]
+    tx
+    |> Map.put(:outputs, outputs)
+    |> Map.put(:change_index, index)
   end
 
 

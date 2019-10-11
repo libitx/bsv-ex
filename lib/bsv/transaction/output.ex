@@ -65,9 +65,10 @@ defmodule BSV.Transaction.Output do
   def serialize(%__MODULE__{} = output, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    script = output.script
-    |> Script.serialize
-    |> VarBin.serialize_bin
+    script = case output.script do
+      %Script{} = s -> Script.serialize(s) |> VarBin.serialize_bin
+      _ -> <<>>
+    end
 
     <<output.satoshis::little-64, script::binary>>
     |> Util.encode(encoding)

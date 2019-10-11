@@ -1,6 +1,7 @@
 defmodule BSV.TransactionTest do
   use ExUnit.Case
   doctest BSV.Transaction
+  alias BSV.Transaction.{Input, Output}
 
   setup_all do
     %{
@@ -37,4 +38,71 @@ defmodule BSV.TransactionTest do
     end
   end
 
+
+  # Use these tests in conjunction with bsv.js scripts and cross reference values
+  # node test/js/tx.js --require PATH_TO_BSV
+  describe "Cross reference with bsv.js" do
+    setup do
+      keys    = BSV.Test.bsv_keys |> BSV.KeyPair.from_ecdsa_key
+      address = keys |> BSV.Address.from_public_key |> BSV.Address.to_string
+
+      prev_tx = %BSV.Transaction{}
+      |> BSV.Transaction.spend_to(address, 10000)
+
+      input = %Input{
+        output_txid: BSV.Transaction.get_txid(prev_tx),
+        output_index: 0,
+        sequence: 0xFFFFFFFF,
+        utxo: List.first(prev_tx.outputs)
+      }
+
+      output = %Output{
+        script: %BSV.Script{
+          chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
+        }
+      }
+
+      tx = %BSV.Transaction{}
+      |> BSV.Transaction.spend_from(input)
+      |> BSV.Transaction.add_output(output)
+      |> BSV.Transaction.change_to(address)
+      |> BSV.Transaction.sign(keys)
+
+      %{
+        keys: keys,
+        address: address,
+        tx: tx,
+
+        bsv_change1: 9785,
+        bsv_change2: 9000,
+        bsv_txid1: "43a73fa3ffc86a9500af7bda7accf2c8f96ac5c643df4b09b1203c65027b6b84",
+        bsv_txid2: "7ca0de70bc3b9e3561e13345edb0fde0a376337b5bbc9866519075bbd8c6550b"
+      }
+    end
+
+    test "must match change amount with bsv.js", ctx do
+      change = BSV.Transaction.get_change_output(ctx.tx)
+      assert change.satoshis == ctx.bsv_change1
+    end
+
+    test "must match txid amount with bsv.js", ctx do
+      assert BSV.Transaction.get_txid(ctx.tx) == ctx.bsv_txid1
+    end
+
+    test "must match with bsv.js after changing fee", ctx do
+      tx = BSV.Transaction.set_fee(ctx.tx, 1000)
+      |> BSV.Transaction.sign(ctx.keys)
+
+      change = BSV.Transaction.get_change_output(tx)
+      assert change.satoshis == ctx.bsv_change2
+      assert BSV.Transaction.get_txid(tx) == ctx.bsv_txid2
+    end
+  end
+
 end
+
+# 304402206372ed66cc9ba2e8e174d1bcccc83c85d85d314daa3c05b2bf00e2b5b3fa23f70220372a3e4326bb29094ecfac38797a8a383d2ed3e1bbd998744db6d142919d0e5141
+# 0296207d8752d01b1cf8de77d258c02dd7280edc2bce9b59023311bbd395cbe93a
+
+# 3045022100a65898bc041e2b1fa0a0dbb848d61d7e782cd0a7cba54315bf1c7d9032104ded0220475c5144c1a219d41e93f40b19f052a5ecc3c9811adc6065e1ae03e9f4fb8ed941
+# 0296207d8752d01b1cf8de77d258c02dd7280edc2bce9b59023311bbd395cbe93a

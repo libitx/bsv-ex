@@ -7,8 +7,9 @@ defmodule BSV.Transaction.SignatureTest do
   alias BSV.Transaction.Input
   alias BSV.Util
 
-  # These tests are kinda rubbish. Have generated a sighash and signature using
-  # bsv.js and want these tests to generate identical binary values.
+  # These tests are kinda rubbish
+  # Use these tests in conjunction with bsv.js scripts and cross reference values
+  # node test/js/sighash.js --require PATH_TO_BSV
   setup_all do
     keys    = BSV.Test.bsv_keys |> KeyPair.from_ecdsa_key
     address = keys |> Address.from_public_key |> Address.to_string
@@ -20,6 +21,7 @@ defmodule BSV.Transaction.SignatureTest do
       output_txid: Transaction.get_txid(prev_tx),
       output_index: 0,
       sequence: 0xFFFFFFFF,
+      script: %BSV.Script{},
       utxo: List.first(prev_tx.outputs)
     }
 

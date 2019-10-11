@@ -81,9 +81,11 @@ defmodule BSV.Transaction.Input do
     txid = input.output_txid
     |> Util.decode(:hex)
     |> Util.reverse_bin
-    script = input.script
-    |> Script.serialize
-    |> VarBin.serialize_bin
+
+    script = case input.script do
+      %Script{} = s -> Script.serialize(s) |> VarBin.serialize_bin
+      _ -> <<>>
+    end
 
     <<
       txid::binary,
@@ -100,10 +102,12 @@ defmodule BSV.Transaction.Input do
   size is calculated, otherwise a P2PKH input is estimated.
   """
   @spec get_size(__MODULE__.t) :: integer
-  def get_size(%__MODULE__{script: script}) when is_nil(script),
-    do: 40 + @p2pkh_script_size
-
-  def get_size(%__MODULE__{} = tx),
-    do: serialize(tx) |> byte_size
+  def get_size(%__MODULE__{script: script} = tx) do
+    case script do
+      nil -> 40 + @p2pkh_script_size
+      %Script{chunks: []} -> 40 + @p2pkh_script_size
+      _ -> serialize(tx) |> byte_size
+    end
+  end
   
 end
