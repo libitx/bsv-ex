@@ -29,7 +29,7 @@ defmodule BSV.MixProject do
       ],
       package: [
         name: "bsv",
-        files: ~w(lib .formatter.exs mix.exs README.md LICENSE.md),
+        files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE.md),
         licenses: ["MIT"],
         links: %{"GitHub" => "https://github.com/libitx/bsv-ex"}
       ]
