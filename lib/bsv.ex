@@ -36,7 +36,7 @@ defmodule BSV do
 
       def deps do
         [
-          {:bsv, "~> 0.2.0"}
+          {:bsv, "~> 0.2"}
         ]
       end
 
