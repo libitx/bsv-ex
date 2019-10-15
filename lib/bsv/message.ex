@@ -80,10 +80,15 @@ defmodule BSV.Message do
     {comp, comp_opt} = if prefix > 30, do: {true, :compressed}, else: {false, :uncompressed}
 
     with true <- String.valid?(public_key),
-         {:ok, public_key} <- message_digest(message)
-          |> :libsecp256k1.ecdsa_recover_compact(sig, comp_opt, prefix - sig_prefix(comp))
+         {:ok, recovered_key} <- message_digest(message)
+          |> :libsecp256k1.ecdsa_recover_compact(sig, comp_opt, prefix - sig_prefix(comp)),
+         sanity_check <- BSV.Address.from_public_key(recovered_key)
+          |> BSV.Address.to_string == public_key
     do
-      do_verify(sig, message, public_key)
+      case sanity_check do
+        true -> do_verify(sig, message, recovered_key)
+        _ -> false
+      end
     else
       false -> do_verify(sig, message, public_key)
       {:error, err} -> raise inspect(err)
@@ -92,7 +97,6 @@ defmodule BSV.Message do
 
 
   defp do_verify(signature, message, public_key) do
-
     case message_digest(message)
       |> :libsecp256k1.ecdsa_verify_compact(signature, public_key)
     do
