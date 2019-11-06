@@ -43,6 +43,11 @@ defmodule BSV.MessageTest do
       sig = BSV.Message.sign("hello world", ctx.priv_key, encoding: :hex)
       assert String.match?(sig, ~r/^[a-f0-9]+$/i)
     end
+
+    test "must return false when fake signature provided" do
+      result = BSV.Message.verify("fakesig", "hello world", "1AKHViYgBGbmxi8qiJkNvoHNeDu9m3MfPE", encoding: false)
+      assert result == false
+    end
   end
 
 

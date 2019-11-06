@@ -91,6 +91,7 @@ defmodule BSV.Message do
       end
     else
       false -> do_verify(sig, message, public_key)
+      {:error, 'Recovery id invalid 0-3'} -> false
       {:error, err} -> raise inspect(err)
     end
   end
