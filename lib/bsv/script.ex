@@ -166,12 +166,12 @@ defmodule BSV.Script do
     suffix = case byte_size(chunk) do
       op when op > 0 and op < 76 ->
         <<op::integer, chunk::binary>>
-      len when len < 76 ->
-        <<76::integer, chunk::binary>>
-      len when len < 77 ->
-        <<77::integer, chunk::binary>>
-      len when len < 78 ->
-        <<78::integer, chunk::binary>>
+      len when len < 0x100 ->
+        <<76::integer, len::integer, chunk::binary>>
+      len when len < 0x10000 ->
+        <<77::integer, len::little-16, chunk::binary>>
+      len when len < 0x100000000 ->
+        <<78::integer, len::little-32, chunk::binary>>
       op -> << op::integer >>
     end
     serialize_chunks(chunks, data <> suffix)
