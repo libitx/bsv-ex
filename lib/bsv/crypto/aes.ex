@@ -89,7 +89,10 @@ defmodule BSV.Crypto.AES do
       16 -> :aes_128_cbc
       _ -> :aes_256_cbc
     end
-    padding = 16 - rem(byte_size(data), 16)
+    padding = case rem(byte_size(data), 16) do
+      0 -> 0
+      pad -> 16 - pad
+    end
     
     :crypto.crypto_one_time(mode, secret, iv, data <> :binary.copy(<<padding>>, padding), true)
     |> Util.encode(encoding)
