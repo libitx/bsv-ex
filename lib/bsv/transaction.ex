@@ -31,7 +31,7 @@ defmodule BSV.Transaction do
   }
 
   @dust_limit 546
-  @fee_per_kb 1000
+  @fee_per_kb 500
 
   
   @doc """
