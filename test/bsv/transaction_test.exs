@@ -73,9 +73,9 @@ defmodule BSV.TransactionTest do
         address: address,
         tx: tx,
 
-        bsv_change1: 9785,
+        bsv_change1: 9892,
         bsv_change2: 9000,
-        bsv_txid1: "43a73fa3ffc86a9500af7bda7accf2c8f96ac5c643df4b09b1203c65027b6b84",
+        bsv_txid1: "6eb93b815958f059f5b6367a9d41b174e339f230c47d335d2b55732ceced82c8",
         bsv_txid2: "7ca0de70bc3b9e3561e13345edb0fde0a376337b5bbc9866519075bbd8c6550b"
       }
     end

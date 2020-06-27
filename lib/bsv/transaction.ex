@@ -33,7 +33,7 @@ defmodule BSV.Transaction do
   @dust_limit 546
   @fee_per_kb 500
 
-  
+
   @doc """
   Parse the given binary into a transaction. Returns a tuple containing the
   transaction input and the remaining binary data.
@@ -160,12 +160,12 @@ defmodule BSV.Transaction do
       ...> |> BSV.Transaction.spend_from(%BSV.Transaction.Input{utxo: %BSV.Transaction.Output{satoshis: 100000}})
       ...> |> BSV.Transaction.spend_to("1B8j21Ym6QbJQ6kRvT1N7pvdBN2qPDhqij", 75000)
       ...> |> BSV.Transaction.get_fee
-      192
+      96
   """
   @spec get_fee(__MODULE__.t) :: integer
   def get_fee(%__MODULE__{fee: fee}) when is_integer(fee),
     do: fee
-  
+
   def get_fee(%__MODULE__{fee: fee} = tx) when is_nil(fee),
     do: get_size(tx) * @fee_per_kb / 1000 |> round
 
@@ -318,7 +318,7 @@ defmodule BSV.Transaction do
       ...> |> BSV.Transaction.change_to("1G26ZnsXQpL9cdqCKE6vViMdW9QwRQTcTJ")
       ...> |> BSV.Transaction.get_change_output
       %BSV.Transaction.Output{
-        satoshis: 24774,
+        satoshis: 24887,
         script: %BSV.Script{
           chunks: [
             :OP_DUP,

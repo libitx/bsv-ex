@@ -7,10 +7,13 @@ defmodule BSV.Transaction.Input do
   alias BSV.Util
   alias BSV.Util.VarBin
 
+  @max_sequence 0xFFFFFFFF
+  @p2pkh_script_size 108
+
   defstruct output_txid: nil,
-            output_index: 0,
+            output_index: nil,
             script: nil,
-            sequence: 0,
+            sequence: @max_sequence,
             utxo: nil
 
   @typedoc "Transaction input"
@@ -21,10 +24,6 @@ defmodule BSV.Transaction.Input do
     sequence: integer,
     utxo: Output.t
   }
-
-  @max_sequence 0xFFFFFFFF
-
-  @p2pkh_script_size 108
 
 
   @doc """
@@ -109,5 +108,5 @@ defmodule BSV.Transaction.Input do
       _ -> serialize(tx) |> byte_size
     end
   end
-  
+
 end
