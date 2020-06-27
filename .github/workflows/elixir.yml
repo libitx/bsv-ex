@@ -19,7 +19,7 @@ jobs:
         elixir-version: 1.10.x # Define the elixir version [required]
         otp-version: 22.2 # Define the OTP version [required]
     - name: Install system deps
-      run: apt-get install autogen openssl
+      run: sudo apt-get install autogen openssl
     - name: Install Dependencies
       run: mix deps.get
     - name: Run Tests
