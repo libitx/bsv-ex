@@ -1,5 +1,6 @@
 defmodule BSV.Crypto.RSATest do
   use ExUnit.Case
+  @moduletag :rsa
   doctest BSV.Crypto.RSA
 
   setup_all do

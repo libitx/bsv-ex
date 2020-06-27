@@ -1,5 +1,6 @@
 defmodule BSV.Crypto.RSA.PrivateKeyTest do
   use ExUnit.Case
+  @moduletag :rsa
   doctest BSV.Crypto.RSA.PrivateKey
 
   setup_all do

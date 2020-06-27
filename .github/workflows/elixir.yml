@@ -22,5 +22,7 @@ jobs:
       run: sudo apt-get install autogen openssl
     - name: Install Dependencies
       run: mix deps.get
+    - name: Compile package
+      run: mix deps.compile && mix compile
     - name: Run Tests
-      run: mix test
+      run: mix test --exclude rsa:true
