@@ -85,8 +85,9 @@ defmodule BSV.Util do
   @spec reverse_bin(binary) :: binary
   def reverse_bin(data) do
     data
-    |> :binary.decode_unsigned(:little)
-    |> :binary.encode_unsigned(:big)
+    |> :binary.bin_to_list
+    |> Enum.reverse
+    |> :binary.list_to_bin
   end
-  
+
 end

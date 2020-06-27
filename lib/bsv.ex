@@ -1,6 +1,6 @@
 defmodule BSV do
   @moduledoc """
-  ![Hex.pm](https://img.shields.io/hexpm/v/bsv-ex?color=informational)
+  ![Hex.pm](https://img.shields.io/hexpm/v/bsv?color=informational)
   ![License](https://img.shields.io/github/license/libitx/bsv-ex?color=informational)
   ![Build](https://img.shields.io/github/workflow/status/libitx/bsv-ex/Elixir%20CI)
 
