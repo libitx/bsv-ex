@@ -1,6 +1,8 @@
 defmodule BSV do
   @moduledoc """
-  BSV-ex. Elixir Bitcoin SV library.
+  ![Hex.pm](https://img.shields.io/hexpm/v/bsv-ex?color=informational)
+  ![License](https://img.shields.io/github/license/libitx/bsv-ex?color=informational)
+  ![Build](https://img.shields.io/github/workflow/status/libitx/bsv-ex/Elixir%20CI)
 
   BSV-ex is a general purpose library for building Bitcoin SV applications in
   Elixir. The intent of this library is to be broadly comparable in scope, and
