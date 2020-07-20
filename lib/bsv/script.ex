@@ -21,13 +21,13 @@ defmodule BSV.Script do
   alias BSV.Script.OpCode
   alias BSV.Util
 
-  defstruct chunks: []
+  defstruct chunks: [], coinbase: nil
 
   @typedoc "Bitcoin Script"
   @type t :: %__MODULE__{
-    chunks: list
+    chunks: list,
+    coinbase: binary | nil
   }
-  
 
   @doc """
   Parses the given binary into a transaction script.
@@ -149,10 +149,16 @@ defmodule BSV.Script do
       "76a9146afc0d6bb578282ac0f6ad5c5af2294c1971210888ac"
   """
   @spec serialize(__MODULE__.t, keyword) :: binary
-  def serialize(%__MODULE__{} = script, options \\ []) do
+  def serialize(script, options \\ [])
+  def serialize(%__MODULE__{coinbase: nil} = script, options) do
     encoding = Keyword.get(options, :encoding)
     serialize_chunks(script.chunks, <<>>)
     |> Util.encode(encoding)
+  end
+
+  def serialize(%__MODULE__{coinbase: coinbase, chunks: []}, options) do
+    encoding = Keyword.get(options, :encoding)
+    Util.encode(coinbase, encoding)
   end
 
   defp serialize_chunks([], data), do: data
@@ -176,5 +182,32 @@ defmodule BSV.Script do
     end
     serialize_chunks(chunks, data <> suffix)
   end
+
+  @doc """
+  Gets a coinbase script.
+
+  ## Examples
+
+    iex> Script.get_coinbase("keep calm and BSV on")
+    %Script{coinbase: "keep calm and BSV on", chunks: []}
+  """
+  @spec get_coinbase(binary) :: __MODULE__.t()
+  def get_coinbase(data), do: %__MODULE__{coinbase: data, chunks: []}
+
+  @doc """
+  Gets whether this is a coinbase script.
+
+  ## Examples
+
+    iex> Script.get_coinbase("keep calm and BSV on") |> Script.is_coinbase()
+    true
+
+    iex> %Script{chunks: [:OP_1]} |> Script.is_coinbase()
+    false
+
+  """
+  @spec is_coinbase(__MODULE__.t()) :: boolean
+  def is_coinbase(%__MODULE__{coinbase: nil}), do: false
+  def is_coinbase(%__MODULE__{coinbase: data, chunks: []}) when data !== nil, do: true
 
 end

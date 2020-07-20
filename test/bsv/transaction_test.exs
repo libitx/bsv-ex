@@ -17,7 +17,7 @@ defmodule BSV.TransactionTest do
       {tx, ""} = BSV.Transaction.parse(ctx.tx1, encoding: :hex)
       assert length(tx.inputs) == 2
       assert length(tx.outputs) == 3
-      assert BSV.Transaction.is_coinbase(tx) == false
+       assert BSV.Transaction.is_coinbase(tx) == false
 
       Enum.each(tx.inputs, fn input ->
         assert Input.is_null(input) == false

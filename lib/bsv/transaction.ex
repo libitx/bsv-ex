@@ -381,6 +381,9 @@ defmodule BSV.Transaction do
   def sign(%__MODULE__{} = tx, keys) when is_list(keys),
     do: keys |> Enum.reduce(tx, &(sign(&2, &1)))
 
+  @spec is_coinbase(__MODULE__.t()) :: boolean
+  def is_coinbase(%__MODULE__{inputs: [first_input | _] = inputs}), do:
+    length(inputs) == 1 and Input.is_null(first_input)
 
   # Needs to be called every time a change is made to inputs or outputs
   defp update_change_output(%__MODULE__{change_script: script} = tx)
