@@ -1,11 +1,13 @@
 defmodule BSV.TransactionTest do
   use ExUnit.Case
   doctest BSV.Transaction
+  alias BSV.Script
   alias BSV.Transaction.{Input, Output}
 
   setup_all do
     %{
-      tx1: "02000000027bb22176433bb45bacede86a43764f98c7023f1a79b00138e3d3ea610716a8f1010000006b483045022100c7036739f47361398bd115dbe9302fdc456d75f83fb38e531f4a445c8385138a022006f68ca095a35886f3eb217f416650490a3f0a279f8dc564d0222c884002f85841210232b357c5309644cf4aa72b9b2d8bfe58bdf2515d40119318d5cb51ef378cae7effffffff197725400c9846a19a03cfd151bd089b9ec3e90ecbfa72b9c5448d52b2baae43020000006b483045022100b23044350aaaafb08480fee7addadde918c2b5515b66a3c445be05ca809ce290022044c89daa88303522cb72830ab71d1411da65f0a58dca43fcd998f80df3794cc441210282d7e568e56f59e01a4edae297ac26caabc4684971ac6c7558c91c0fa84002f7ffffffff03efbee82f000000001976a914c4263eb96d88849f498d139424b59a0cba1005e888ac010c1dfa000000001976a9146cbff9881ac47da8cb699e4543c28f9b3d6941da88ac404b4c00000000001976a914f7899faf1696892e6cb029b00c713f044761f03588ac00000000"
+      tx1: "02000000027bb22176433bb45bacede86a43764f98c7023f1a79b00138e3d3ea610716a8f1010000006b483045022100c7036739f47361398bd115dbe9302fdc456d75f83fb38e531f4a445c8385138a022006f68ca095a35886f3eb217f416650490a3f0a279f8dc564d0222c884002f85841210232b357c5309644cf4aa72b9b2d8bfe58bdf2515d40119318d5cb51ef378cae7effffffff197725400c9846a19a03cfd151bd089b9ec3e90ecbfa72b9c5448d52b2baae43020000006b483045022100b23044350aaaafb08480fee7addadde918c2b5515b66a3c445be05ca809ce290022044c89daa88303522cb72830ab71d1411da65f0a58dca43fcd998f80df3794cc441210282d7e568e56f59e01a4edae297ac26caabc4684971ac6c7558c91c0fa84002f7ffffffff03efbee82f000000001976a914c4263eb96d88849f498d139424b59a0cba1005e888ac010c1dfa000000001976a9146cbff9881ac47da8cb699e4543c28f9b3d6941da88ac404b4c00000000001976a914f7899faf1696892e6cb029b00c713f044761f03588ac00000000",
+      coinbase_tx1: "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff1d0379d5092f7376706f6f6c2e636f6d2f30e77996fe42f03db5bf080100ffffffff0163a64e25000000001976a91468888423f412b6b4166d61fe9e66a1aeff30df1f88ac00000000"
     }
   end
 
@@ -15,6 +17,23 @@ defmodule BSV.TransactionTest do
       {tx, ""} = BSV.Transaction.parse(ctx.tx1, encoding: :hex)
       assert length(tx.inputs) == 2
       assert length(tx.outputs) == 3
+      assert BSV.Transaction.is_coinbase(tx) == false
+
+      Enum.each(tx.inputs, fn input ->
+        assert Input.is_null(input) == false
+        assert input.script.coinbase == nil
+      end)
+    end
+
+    test "suceeds with a coinbase transaction", ctx do
+      {tx, ""} = BSV.Transaction.parse(ctx.coinbase_tx1, encoding: :hex)
+      assert BSV.Transaction.is_coinbase(tx) == true
+      assert length(tx.inputs) == 1
+      assert length(tx.outputs) == 1
+
+      [input] = tx.inputs
+      assert Input.is_null(input) == true
+      assert input.script == %Script{coinbase: "\x03y\xD5\t/svpool.com/0\xE7y\x96\xFEB\xF0=\xB5\xBF\b\x01\0", chunks: []}
     end
   end
 
