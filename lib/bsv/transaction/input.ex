@@ -22,7 +22,7 @@ defmodule BSV.Transaction.Input do
     output_index: integer,
     script: binary,
     sequence: integer,
-    utxo: Output.t
+    utxo: Output.t | nil
   }
 
 
