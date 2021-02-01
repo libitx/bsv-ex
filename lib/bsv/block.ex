@@ -58,11 +58,11 @@ defmodule BSV.Block do
     iex> Base.encode16(block.hash)
     "00000000839A8E6886AB5951D76F411475428AFC90947EE320161BBF18EB6048"
   """
-  @spec parse(binary, boolean, keyword) :: {__MODULE__.t(), binary}
+  @spec parse(binary | IO.device(), boolean, keyword) :: {__MODULE__.t(), binary}
   def parse(data, include_transactions \\ false, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    <<block_bytes::binary-size(80), rest::binary>> = data |> Util.decode(encoding)
+    {block_bytes, rest} = data |> Util.decode(encoding) |> VarBin.read_bytes(80)
 
     <<version::little-size(32), previous_block::binary-size(32), merkle_root::binary-size(32),
       timestamp::little-size(32), bits::binary-size(4), nonce::binary-size(4)>> = block_bytes

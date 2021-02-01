@@ -53,10 +53,10 @@ defmodule BSV.Transaction do
   def parse(data, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    <<version::little-32, data::binary>> = data |> Util.decode(encoding)
+    {<<version::little-32>>, data} = data |> Util.decode(encoding) |> VarBin.read_bytes(4)
     {inputs, data} = data |> VarBin.parse_items(&Input.parse/1)
     {outputs, data} = data |> VarBin.parse_items(&Output.parse/1)
-    <<lock_time::little-32, data::binary>> = data
+    {<<lock_time::little-32>>, data} = data |> VarBin.read_bytes(4)
 
     {struct(__MODULE__, [
       version: version,

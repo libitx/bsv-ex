@@ -45,10 +45,13 @@ defmodule BSV.Transaction.Input do
   def parse(data, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    <<txid::bytes-32, index::little-32, data::binary>> = data
-    |> Util.decode(encoding)
+    {<<txid::bytes-32, index::little-32>>, data} =
+      data
+      |> Util.decode(encoding)
+      |> VarBin.read_bytes(36)
+
     {script, data} = VarBin.parse_bin(data)
-    <<sequence::little-32, data::binary>> = data
+    {<<sequence::little-32>>, data} = data |> VarBin.read_bytes(4)
 
     txid = txid |> Util.reverse_bin |> Util.encode(:hex)
 
