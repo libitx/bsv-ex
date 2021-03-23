@@ -2,7 +2,7 @@ defmodule BSV.Message do
   @moduledoc """
   Module to sign and verify messages with Bitcoin keys. Is compatible with
   ElectrumSV and bsv.js.
-  
+
   Internally uses `libsecp256k1` NIF bindings for compact signatures and public
   key recovery from signatures.
   """
@@ -11,7 +11,7 @@ defmodule BSV.Message do
   alias BSV.Util
   alias BSV.Util.VarBin
 
-  
+
   @doc """
   Creates a signature for the given message, using the given private key.
 
@@ -62,8 +62,8 @@ defmodule BSV.Message do
   * `:encoding` - Decode the given signature with either the `:base64` (default) or `:hex` encoding scheme. Set to `false` to accept binary signature.
 
   ## Examples
-  
-      BSV.Crypto.RSA.verify(signature, message, address)
+
+      BSV.Message.verify(signature, message, address)
       true
   """
   @spec verify(binary, binary, KeyPair.t | binary, keyword) :: boolean
@@ -117,5 +117,5 @@ defmodule BSV.Message do
 
   defp sig_prefix(true), do: 31
   defp sig_prefix(false), do: 27
-  
+
 end

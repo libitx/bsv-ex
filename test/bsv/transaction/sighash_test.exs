@@ -31,7 +31,7 @@ defmodule BSV.Transaction.SignatureTest do
     %{
       keys: keys,
       tx: tx,
-      sighash: "3b173d3c1f9c2264c75cea7a97dceb7135bc610d7ddab25ec4e33667694e42b8",
+      sighash: "b8424e696736e3c45eb2da7d0d61bc3571ebdc977aea5cc764229c1f3c3d173b",
       signature: "304402204a664732e1aca7cd43916a049abf591130d41772a0d15493e01e3cedf5816a960220091b1b116142f74d763516a4558b56ae86f9ad32ff2da8d0067ae144886db1a1"
     }
   end
@@ -39,7 +39,7 @@ defmodule BSV.Transaction.SignatureTest do
 
   describe "BSV.Transaction.Signature.sighash/4" do
     test "must return the correct sighash", ctx do
-      sighash = BSV.Transaction.Signature.sighash(ctx.tx, List.first(ctx.tx.inputs), 65)
+      sighash = BSV.Transaction.Signature.sighash(ctx.tx, 0, 65)
       |> Util.encode(:hex)
       assert sighash == ctx.sighash
     end
@@ -48,7 +48,7 @@ defmodule BSV.Transaction.SignatureTest do
 
   describe "BSV.Transaction.Signature.sign_input/4" do
     test "must return the correct sighash", ctx do
-      signature = BSV.Transaction.Signature.sign_input(ctx.tx, List.first(ctx.tx.inputs), ctx.keys.private_key)
+      signature = BSV.Transaction.Signature.sign_input(ctx.tx, 0, ctx.keys.private_key)
       |> elem(0)
       |> Util.encode(:hex)
       assert signature == ctx.signature

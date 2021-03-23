@@ -3,10 +3,12 @@ defmodule BSV.Script.VM do
   TODO
   """
   use Bitwise
-  alias BSV.{Script, Util}
+  alias BSV.{Script, Transaction, Util}
   alias BSV.Util.ScriptNum
 
-  defstruct stack: [],
+  defstruct tx: nil,
+            vin: nil,
+            stack: [],
             alt_stack: [],
             if_stack: [],
             op_return: [],
@@ -14,6 +16,8 @@ defmodule BSV.Script.VM do
 
 
   @type t :: %__MODULE__{
+    tx: Transaction.t | nil,
+    vin: integer | nil,
     stack: list,
     alt_stack: list,
     if_stack: list,
@@ -164,10 +168,10 @@ defmodule BSV.Script.VM do
       :OP_HASH160 -> op_hash160(vm)
       :OP_HASH256 -> op_hash256(vm)
       :OP_CODESEPARATOR -> op_nop(vm)
-      #:OP_CHECKSIG -> op_checksig(vm)
-      #:OP_CHECKSIGVERIFY -> op_checksigverify(vm)
-      #:OP_CHECKMULTISIG -> op_checkmultisig(vm)
-      #:OP_CHECKMULTISIGVERIFY -> op_checkmultisigverify(vm)
+      :OP_CHECKSIG -> op_checksig(vm)
+      :OP_CHECKSIGVERIFY -> op_checksigverify(vm)
+      :OP_CHECKMULTISIG -> op_checkmultisig(vm)
+      :OP_CHECKMULTISIGVERIFY -> op_checkmultisigverify(vm)
 
       # Nops and reserved words
       :OP_NOP1 -> op_nop(vm)
@@ -1177,6 +1181,101 @@ defmodule BSV.Script.VM do
     hash = :crypto.hash(:sha256, :crypto.hash(:sha256, top))
     put_in(vm.stack, [hash | stack])
   end
+
+
+  @doc """
+  Verifies the signature in the second top stack element against the current
+  transaction sighash using the pubkey on top of the stack. Replaces them with
+  the boolean result.
+  """
+  @spec op_checksig(t) :: t
+  def op_checksig(%__MODULE__{stack: stack} = vm)
+    when length(stack) < 2,
+    do: err(vm, "OP_CHECKSIG invalid stack length")
+
+  def op_checksig(%__MODULE__{tx: %Transaction{} = tx, vin: vin, stack: [pubkey, signature | stack]} = vm)
+    when is_integer(vin)
+  do
+    sig_length = byte_size(signature) - 1
+    <<sig::binary-size(sig_length), sighash_type>> = signature
+    sighash = Transaction.Signature.sighash(tx, vin, sighash_type)
+
+    case :libsecp256k1.ecdsa_verify(sighash, sig, pubkey) do
+      :ok -> put_in(vm.stack, [<<1>> | stack])
+      _ -> put_in(vm.stack, [<<>> | stack])
+    end
+  end
+
+  def op_checksig(%__MODULE__{} = vm),
+    do: err(vm, "OP_CHECKSIG invalid TX context")
+
+
+  @doc """
+  Runs `op_checksig/1` and `op_verify/1`.
+  """
+  @spec op_checksigverify(t) :: t
+  def op_checksigverify(%__MODULE__{} = vm), do: vm |> op_checksig |> op_verify
+
+
+  @doc """
+  The top stack element is the number of public keys. The next n elements are
+  the public keys. The next element is the number of signatures and the next n
+  elements are the signatures.
+
+  Each signature is itereated over and each public key is checked if it verifies
+  the signature against the current transactions sighash. Once a public key is
+  checked it is not checked again, so signatures must be pushed onto the stack
+  in the same order as the corresponding public keys.
+  """
+  @spec op_checkmultisig(t) :: t
+  def op_checkmultisig(%__MODULE__{stack: []} = vm),
+    do: err(vm, "OP_CHECKMULTISIG stack empty")
+
+  def op_checkmultisig(%__MODULE__{tx: %Transaction{} = tx, vin: vin, stack: [pk_length | stack]} = vm)
+    when is_integer(vin)
+  do
+    with {pubkeys, [sig_length | stack]} <- Enum.split(stack, ScriptNum.decode(pk_length)),
+         {sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length))
+    do
+      sigs = Enum.reverse(sigs)
+      pubkeys = Enum.reverse(pubkeys)
+
+      # Iterate over sigs and build list of valid sigs and used keys
+      {valid, _} = Enum.reduce(sigs, {[], []}, fn signature, {valid, usedkeys} ->
+        sig_length = byte_size(signature) - 1
+        <<sig::binary-size(sig_length), sighash_type>> = signature
+        sighash = Transaction.Signature.sighash(tx, vin, sighash_type)
+
+        # Iterate keys minus used keys until signature verifies
+        Enum.reduce_while(pubkeys -- usedkeys, {valid, usedkeys}, fn pubkey, {valid, usedkeys} ->
+          case :libsecp256k1.ecdsa_verify(sighash, sig, pubkey) do
+            :ok ->
+              {:halt, {[signature | valid], [pubkey | usedkeys]}}
+            _ ->
+              {:cont, {valid, [pubkey | usedkeys]}}
+          end
+        end)
+      end)
+
+      case Enum.all?(sigs, & &1 in valid) do
+        true -> put_in(vm.stack, [<<1>> | stack])
+        _ -> put_in(vm.stack, [<<>> | stack])
+      end
+    else
+      {_ignore, stack} -> put_in(vm.stack, [<<>> | stack])
+    end
+  end
+
+  def op_checkmultisig(%__MODULE__{} = vm),
+    do: err(vm, "OP_CHECKMULTISIG invalid TX context")
+
+
+  @doc """
+  Runs `op_checkmultisig/1` and `op_verify/1`.
+  """
+  @spec op_checkmultisigverify(t) :: t
+  def op_checkmultisigverify(%__MODULE__{} = vm),
+    do: vm |> op_checkmultisig |> op_verify
 
 
   @doc """

@@ -376,7 +376,7 @@ defmodule BSV.Script.VMTest do
   end
 
 
-  describe "7. Crypto operations" do
+  describe "7a. Crypto operations" do
     test "OP_RIPEMD160 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_RIPEMD160])
       assert top == <<66, 207, 162, 17, 1, 142, 164, 146, 253, 238, 69, 172, 99, 123, 121, 114, 160, 173, 104, 115>>
@@ -400,6 +400,112 @@ defmodule BSV.Script.VMTest do
     test "OP_HASH256 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_HASH256])
       assert top == <<199, 173, 232, 143, 199, 162, 20, 152, 166, 165, 229, 195, 133, 225, 246, 139, 237, 130, 43, 114, 170, 99, 196, 169, 164, 138, 2, 194, 70, 110, 226, 158>>
+    end
+  end
+
+
+  alias BSV.{Address, KeyPair, Transaction}
+  alias BSV.Transaction.Input
+
+  describe "OP_CHECKSIG" do
+    setup %{vm: vm} do
+      keys    = BSV.Test.bsv_keys |> KeyPair.from_ecdsa_key
+      address = keys |> Address.from_public_key |> Address.to_string
+      prev_tx = Transaction.spend_to(%Transaction{}, address, 50000)
+
+      input = %Input{
+        output_txid: Transaction.get_txid(prev_tx),
+        output_index: 0,
+        sequence: 0xFFFFFFFF,
+        script: %BSV.Script{},
+        utxo: List.first(prev_tx.outputs)
+      }
+
+      tx = Transaction.add_input(%Transaction{}, input)
+      vm = Map.merge(vm, %{tx: tx, vin: 0})
+      {signature, sighash_type} = BSV.Transaction.Signature.sign_input(vm.tx, vm.vin, keys.private_key)
+
+      %{
+        keys: keys,
+        sig: <<signature::binary, sighash_type>>,
+        vm: vm
+      }
+    end
+
+    test "OP_CHECKSIG verifies the signature using the public key", %{keys: keys, sig: sig, vm: vm} do
+      assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [sig, keys.public_key, :OP_CHECKSIG])
+    end
+
+    test "OP_CHECKSIG returns false if signature invalid", %{sig: sig, vm: vm} do
+      keys = KeyPair.generate()
+      assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, [sig, keys.public_key, :OP_CHECKSIG])
+    end
+
+    test "OP_CHECKSIGVERIFY as OP_CHECKSIG but halts if not truthy stack", %{keys: keys, sig: sig, vm: vm} do
+      assert {:ok, %VM{stack: []}} = VM.eval(vm, [sig, keys.public_key, :OP_CHECKSIGVERIFY])
+      keys = KeyPair.generate()
+      assert {:error, %VM{stack: [<<>>]}} = VM.eval(vm, [sig, keys.public_key, :OP_CHECKSIGVERIFY])
+    end
+  end
+
+
+  describe "OP_CHECKMULTISIG" do
+    setup %{vm: vm} do
+      keys    = Enum.map(1..3, fn _i -> KeyPair.generate() end)
+      key     = BSV.Test.bsv_keys |> KeyPair.from_ecdsa_key
+      address = key |> Address.from_public_key |> Address.to_string
+      prev_tx = Transaction.spend_to(%Transaction{}, address, 50000)
+
+      input = %Input{
+        output_txid: Transaction.get_txid(prev_tx),
+        output_index: 0,
+        sequence: 0xFFFFFFFF,
+        script: %BSV.Script{},
+        utxo: List.first(prev_tx.outputs)
+      }
+
+      tx = Transaction.add_input(%Transaction{}, input)
+      vm = Map.merge(vm, %{tx: tx, vin: 0})
+
+      sigs = Enum.map(keys, fn k ->
+        {signature, sighash_type} = BSV.Transaction.Signature.sign_input(vm.tx, vm.vin, k.private_key)
+        <<signature::binary, sighash_type>>
+      end)
+
+      %{
+        keys: Enum.map(keys, & &1.public_key),
+        sigs: sigs,
+        vm: vm
+      }
+    end
+
+    test "OP_CHECKMULTISIG verifies all of the signatures using all the public keys", %{keys: keys, sigs: sigs, vm: vm} do
+      script = [:OP_0 | sigs] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
+      assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, script)
+    end
+
+    test "OP_CHECKMULTISIG verifies all of the signatures using 2/3 the public keys", %{keys: keys, sigs: sigs, vm: vm} do
+      [_skip | sigs] = sigs
+      script = [:OP_0 | sigs] ++ [:OP_2 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
+      assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, script)
+    end
+
+    test "OP_CHECKMULTISIG returns false if sigs in wrong order", %{keys: keys, sigs: sigs, vm: vm} do
+      [_skip | sigs] = sigs
+      script = [:OP_0 | Enum.reverse(sigs)] ++ [:OP_2 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
+      assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, script)
+    end
+
+    test "OP_CHECKMULTISIG returns false if junk value doesn't exist", %{keys: keys, sigs: sigs, vm: vm} do
+      script = sigs ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
+      assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, script)
+    end
+
+    test "OP_CHECKMULTISIGVERIFY as OP_CHECKMULTISIG but halts if not truthy stack", %{keys: keys, sigs: sigs, vm: vm} do
+      script = [:OP_0 | sigs] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIGVERIFY]
+      assert {:ok, %VM{stack: []}} = VM.eval(vm, script)
+      script = [:OP_0 | Enum.reverse(sigs)] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIGVERIFY]
+      assert {:error, %VM{stack: [<<>>]}} = VM.eval(vm, script)
     end
   end
 

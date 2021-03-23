@@ -365,16 +365,19 @@ defmodule BSV.Transaction do
     pubkey_hash = Address.from_public_key(public_key)
     |> Map.get(:hash)
 
-    inputs = Enum.map(tx.inputs, fn input ->
+    inputs = tx.inputs
+    |> Enum.with_index()
+    |> Enum.map(fn {input, vin} ->
       case pubkey_hash == PublicKeyHash.get_hash(input.utxo.script) do
         false -> input
         true ->
           script = tx
-          |> Signature.sign_input(input, private_key)
+          |> Signature.sign_input(vin, private_key)
           |> PublicKeyHash.build_input_script(public_key)
           Map.put(input, :script, script)
       end
     end)
+
     Map.put(tx, :inputs, inputs)
   end
 

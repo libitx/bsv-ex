@@ -21,20 +21,20 @@ defmodule BSV.Transaction.Signature do
 
   defguard sighash_all?(sighash_type)
     when (sighash_type &&& 31) == @sighash_all
-  
+
   defguard sighash_none?(sighash_type)
     when (sighash_type &&& 31) == @sighash_none
-  
+
   defguard sighash_single?(sighash_type)
     when (sighash_type &&& 31) == @sighash_single
-  
+
   defguard sighash_forkid?(sighash_type)
     when (sighash_type &&& @sighash_forkid) != 0
 
   defguard sighash_anyone_can_pay?(sighash_type)
     when (sighash_type &&& @sighash_anyonecanpay) != 0
 
-  
+
   @doc """
   Signs the given transaction input with the given private key.
 
@@ -44,26 +44,36 @@ defmodule BSV.Transaction.Signature do
 
   * `:sighash_type` - Optionally specify the sighash type by passing an 8-bit integer. Defaults to `SIGHASH_FORKID`.
   """
-  @spec sign_input(Transaction.t, Input.t, binary, keyword) :: {binary, integer}
-  def sign_input(%Transaction{} = tx, %Input{} = input, <<private_key::binary>>, options \\ []) do
+  @spec sign_input(Transaction.t, integer, binary, keyword) :: {binary, integer}
+  def sign_input(%Transaction{} = tx, vin, <<private_key::binary>>, options \\ []) do
     sighash_type = Keyword.get(options, :sighash_type, @default_sighash)
 
     {:ok, signature} = tx
-    |> sighash(input, sighash_type)
-    |> Util.reverse_bin
+    |> sighash(vin, sighash_type)
     |> :libsecp256k1.ecdsa_sign(private_key, :default, <<>>)
     {signature, sighash_type}
   end
 
-  
+
   @doc """
   Generates a transaction digest for signing, using the given sighash type.
   """
-  @spec sighash(Transaction.t, Input.t, integer) :: binary
-  def sighash(%Transaction{} = tx, %Input{} = input, sighash_type)
+  @spec sighash(Transaction.t, integer, integer) :: binary
+  def sighash(%Transaction{} = tx, vin, sighash_type) do
+    tx
+    |> preimage(vin, sighash_type)
+    |> Hash.sha256_sha256
+  end
+
+
+  @doc """
+  Generates a transaction preimage, suing the given sighash type
+  """
+  @spec preimage(Transaction.t, integer, integer) :: binary
+  def preimage(%Transaction{} = tx, index, sighash_type)
     when sighash_forkid?(sighash_type)
   do
-    index = Enum.find_index(tx.inputs, &(&1 == input))
+    input = Enum.at(tx.inputs, index)
 
     # Input prevouts/nSequence
     hash_prevouts = get_prevouts_hash(tx.inputs, sighash_type)
@@ -95,11 +105,9 @@ defmodule BSV.Transaction.Signature do
       tx.lock_time::little-32,
       (sighash_type >>> 0)::little-32
     >>
-    |> Hash.sha256_sha256
-    |> Util.reverse_bin
   end
 
-  def sighash(%Transaction{} = _tx, %Input{} = _input, _sighash_type),
+  def preimage(%Transaction{} = _tx, %Input{} = _input, _sighash_type),
     do: raise "Legacy Sighash algorithm not implemented yet."
 
 
