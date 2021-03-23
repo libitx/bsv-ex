@@ -36,8 +36,8 @@ defmodule BSV.Crypto.ECIES do
   @spec encrypt(binary, PublicKey.t | binary, keyword) :: binary
   def encrypt(data, public_key, options \\ [])
 
-  def encrypt(data, %PublicKey{} = public_key, options) do
-    encrypt(data, public_key.public_key, options)
+  def encrypt(data, %PublicKey{point: public_key}, options) do
+    encrypt(data, public_key, options)
   end
 
   def encrypt(data, public_key, options) when is_binary(public_key) do
