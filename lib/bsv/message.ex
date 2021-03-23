@@ -6,7 +6,7 @@ defmodule BSV.Message do
   Internally uses `libsecp256k1` NIF bindings for compact signatures and public
   key recovery from signatures.
   """
-  alias BSV.Crypto.Hash
+  alias BSV.Crypto.{Hash, Secp256k1}
   alias BSV.KeyPair
   alias BSV.Util
   alias BSV.Util.VarBin
@@ -42,11 +42,9 @@ defmodule BSV.Message do
     compressed = Keyword.get(options, :compressed, true)
     encoding = Keyword.get(options, :encoding, :base64)
 
-    {:ok, signature, recovery} = message
+    message
     |> message_digest
-    |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
-
-    <<sig_prefix(compressed) + recovery, signature::binary>>
+    |> Secp256k1.sign(private_key, compact: true, compressed: compressed)
     |> Util.encode(encoding)
   end
 
@@ -75,35 +73,31 @@ defmodule BSV.Message do
 
   def verify(signature, message, public_key, options) when is_binary(public_key) do
     encoding = Keyword.get(options, :encoding, :base64)
-
-    <<prefix::integer, sig::binary>> = Util.decode(signature, encoding)
-    {comp, comp_opt} = if prefix > 30, do: {true, :compressed}, else: {false, :uncompressed}
+    sig = Util.decode(signature, encoding)
 
     with true <- String.valid?(public_key),
-         {:ok, recovered_key} <- message_digest(message)
-          |> :libsecp256k1.ecdsa_recover_compact(sig, comp_opt, prefix - sig_prefix(comp)),
-         sanity_check <- BSV.Address.from_public_key(recovered_key)
-          |> BSV.Address.to_string == public_key
+         recovered_key when is_binary(recovered_key) <-
+            Secp256k1.recover_key(sig, message_digest(message))
     do
-      case sanity_check do
+      recovered_key
+      |> BSV.Address.from_public_key()
+      |> BSV.Address.to_string()
+      |> Kernel.==(public_key)
+      |> case do
         true -> do_verify(sig, message, recovered_key)
         _ -> false
       end
     else
       false -> do_verify(sig, message, public_key)
+      :error -> false
       {:error, 'Recovery id invalid 0-3'} -> false
       {:error, err} -> raise inspect(err)
     end
   end
 
 
-  defp do_verify(signature, message, public_key) do
-    case message_digest(message)
-      |> :libsecp256k1.ecdsa_verify_compact(signature, public_key)
-    do
-      :ok -> true
-      _err -> false
-    end
+  defp do_verify(sig, message, public_key) do
+    Secp256k1.verify(sig, message_digest(message), public_key)
   end
 
 

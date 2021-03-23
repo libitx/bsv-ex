@@ -2,7 +2,7 @@ defmodule BSV.Extended.Children do
   @moduledoc """
   Module for deriving children from BIP-32 extended keys.
   """
-  alias BSV.Crypto.Hash
+  alias BSV.Crypto.{Hash, Secp256k1}
   alias BSV.Crypto.ECDSA
   alias BSV.Extended.{PublicKey, PrivateKey}
 
@@ -141,9 +141,8 @@ defmodule BSV.Extended.Children do
     <<derived_key::binary-32, child_chain::binary>>,
     %PublicKey{key: key})
   do
-    with {:ok, public_child_key} <-
-          :libsecp256k1.ec_pubkey_tweak_add(key, derived_key),
-          do: {public_child_key, child_chain}
+    public_child_key = Secp256k1.pubkey_add(key, derived_key)
+    {public_child_key, child_chain}
   end
 
 
@@ -158,7 +157,7 @@ defmodule BSV.Extended.Children do
   # Private. Gets a fingerpinrt from the given private or public key
   defp get_fingerprint(%PrivateKey{} = key),
     do: PrivateKey.get_public_key(key) |> get_fingerprint
-    
+
   defp get_fingerprint(%PublicKey{key: key}), do: get_fingerprint(key)
 
   defp get_fingerprint(key) when is_binary(key) do

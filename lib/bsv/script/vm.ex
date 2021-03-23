@@ -1,8 +1,9 @@
 defmodule BSV.Script.VM do
   @moduledoc """
-  TODO
+  Pure Elixir Bitcoin Script VM.
   """
   use Bitwise
+  alias BSV.Crypto.Secp256k1
   alias BSV.{Script, Transaction, Util}
   alias BSV.Util.ScriptNum
 
@@ -33,7 +34,7 @@ defmodule BSV.Script.VM do
 
 
   @doc """
-  TODO
+  Evaluates the given script and returns a VM state.
   """
   @spec eval(t, Script.t | list) :: {:ok, t} | {:error, t}
   def eval(%__MODULE__{} = vm, %Script{chunks: chunks}),
@@ -1200,10 +1201,9 @@ defmodule BSV.Script.VM do
     <<sig::binary-size(sig_length), sighash_type>> = signature
     sighash = Transaction.Signature.sighash(tx, vin, sighash_type)
 
-    case :libsecp256k1.ecdsa_verify(sighash, sig, pubkey) do
-      :ok -> put_in(vm.stack, [<<1>> | stack])
-      _ -> put_in(vm.stack, [<<>> | stack])
-    end
+    if Secp256k1.verify(sig, sighash, pubkey),
+      do: put_in(vm.stack, [<<1>> | stack]),
+      else: put_in(vm.stack, [<<>> | stack])
   end
 
   def op_checksig(%__MODULE__{} = vm),
@@ -1248,12 +1248,10 @@ defmodule BSV.Script.VM do
 
         # Iterate keys minus used keys until signature verifies
         Enum.reduce_while(pubkeys -- usedkeys, {valid, usedkeys}, fn pubkey, {valid, usedkeys} ->
-          case :libsecp256k1.ecdsa_verify(sighash, sig, pubkey) do
-            :ok ->
-              {:halt, {[signature | valid], [pubkey | usedkeys]}}
-            _ ->
-              {:cont, {valid, [pubkey | usedkeys]}}
-          end
+
+          if Secp256k1.verify(sig, sighash, pubkey),
+            do: {:halt, {[signature | valid], [pubkey | usedkeys]}},
+            else: {:cont, {valid, [pubkey | usedkeys]}}
         end)
       end)
 
@@ -1286,7 +1284,7 @@ defmodule BSV.Script.VM do
 
 
   @doc """
-  TODO
+  Determines if the Script VM is truthy or falsey.
   """
   @spec valid?(t) :: boolean
   def valid?(%__MODULE__{if_stack: if_stack}) when length(if_stack) > 0, do: false

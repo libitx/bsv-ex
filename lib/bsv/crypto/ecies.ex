@@ -13,7 +13,7 @@ defmodule BSV.Crypto.ECIES do
       "hello world"
   """
   alias BSV.Util
-  alias BSV.Crypto.Hash
+  alias BSV.Crypto.{Hash, Secp256k1}
   alias BSV.Crypto.AES
   alias BSV.Crypto.ECDSA
   alias BSV.Crypto.ECDSA.{PublicKey, PrivateKey}
@@ -47,11 +47,9 @@ defmodule BSV.Crypto.ECIES do
     {ephemeral_pubkey, ephemeral_privkey} = ECDSA.generate_key_pair
 
     # Derive ECDH key and sha512 hash
-    key_hash = with {:ok, ecdh_key} <-
-        :libsecp256k1.ec_pubkey_tweak_mul(public_key, ephemeral_privkey)
-    do
-      ecdh_key |> PublicKey.compress |> Hash.sha512
-    end
+    key_hash = public_key
+    |> Secp256k1.pubkey_mul(ephemeral_privkey)
+    |> Hash.sha512()
 
     # iv and keyE used in AES, keyM used in HMAC
     <<iv::binary-16, keyE::binary-16, keyM::binary-32>> = key_hash
@@ -99,15 +97,9 @@ defmodule BSV.Crypto.ECIES do
     >> = encrypted
 
     # Derive ECDH key and sha512 hash
-    key_hash = with {:ok, pub_key} <-
-        :libsecp256k1.ec_pubkey_decompress(ephemeral_pubkey),
-      {:ok, ecdh_key} <-
-        :libsecp256k1.ec_pubkey_tweak_mul(pub_key, private_key)
-    do
-      ecdh_key |> PublicKey.compress |> Hash.sha512
-    else
-      err -> raise err
-    end
+    key_hash = ephemeral_pubkey
+    |> Secp256k1.pubkey_mul(private_key)
+    |> Hash.sha512()
 
     # iv and keyE used in AES, keyM used in HMAC
     <<iv::binary-16, keyE::binary-16, keyM::binary-32>> = key_hash
@@ -120,3 +112,8 @@ defmodule BSV.Crypto.ECIES do
   end
 
 end
+
+
+#key_hash = public_key
+#    |> Secp256k1.pubkey_mul(ephemeral_privkey)
+#    |> Hash.sha512()

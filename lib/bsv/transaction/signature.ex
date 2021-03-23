@@ -4,7 +4,7 @@ defmodule BSV.Transaction.Signature do
   """
 
   use Bitwise
-  alias BSV.Crypto.Hash
+  alias BSV.Crypto.{Hash, Secp256k1}
   alias BSV.Script
   alias BSV.Transaction
   alias BSV.Transaction.{Input, Output}
@@ -48,9 +48,9 @@ defmodule BSV.Transaction.Signature do
   def sign_input(%Transaction{} = tx, vin, <<private_key::binary>>, options \\ []) do
     sighash_type = Keyword.get(options, :sighash_type, @default_sighash)
 
-    {:ok, signature} = tx
+    signature = tx
     |> sighash(vin, sighash_type)
-    |> :libsecp256k1.ecdsa_sign(private_key, :default, <<>>)
+    |> Secp256k1.sign(private_key)
     {signature, sighash_type}
   end
 
