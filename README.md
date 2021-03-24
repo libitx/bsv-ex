@@ -1,5 +1,7 @@
 # BSV-ex - Elixir Bitcoin SV Library
 
+![BSV-ex](https://github.com/libitx/bsv-ex/raw/master/media/poster.png)
+
 ![Hex.pm](https://img.shields.io/hexpm/v/bsv?color=informational)
 ![License](https://img.shields.io/github/license/libitx/bsv-ex?color=informational)
 ![Build](https://img.shields.io/github/workflow/status/libitx/bsv-ex/Elixir%20CI)
@@ -16,6 +18,7 @@ Currently this library offers the following functionality:
 * Bitcoin message signing (Electrum compatible)
 * ECIES encryption/decryption (Electrum compatible)
 * Wide range of both Bitcoin and non-Bitcoin specific crypto functions
+* Full featured, pure Elixir Bitcoin Script VM
 
 Full documentation can be found at [https://hexdocs.pm/bsv](https://hexdocs.pm/bsv).
 
@@ -25,14 +28,23 @@ This is a new library and new codebase. As such developers should proceed with c
 
 ## Installation
 
-The package is bundled with `libsecp256k1` NIF bindings. `libtool`, `automake` and `autogen` are required in order for the package to compile.
-
 The package can be installed by adding `bsv` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:bsv, "~> 0.3"}
+    {:bsv, "~> 0.4"}
+  ]
+end
+```
+
+By default, [Curvy](https://hexdocs.pm/curvy) - a pure Elixir implementation of `secp256k1` is used. Optionally `libsecp256k1` can by used by adding it to your dependencies. `libtool`, `automake` and `autogen` are required in order for the package to compile with `libsecp256k1`.
+
+```elixir
+def deps do
+  [
+    {:bsv, "~> 0.4"},
+    {:libsecp256k1, "~> 0.1"}
   ]
 end
 ```
@@ -118,6 +130,6 @@ Credit and thanks to the authors of the following libraries, for helping me get 
 
 ## License
 
-© Copyright 2019 libitx.
+BSV-ex is open source and released under the [Apache-2 License](https://github.com/libitx/bsv-elixir/blob/master/LICENSE).
 
-BSV-ex is free software and released under the [MIT license](https://github.com/libitx/bsv-elixir/blob/master/LICENSE.md).
+© Copyright 2019-2021 Chronos Labs Ltd.

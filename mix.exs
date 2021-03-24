@@ -4,7 +4,7 @@ defmodule BSV.MixProject do
   def project do
     [
       app: :bsv,
-      version: "0.3.0",
+      version: "0.4.0",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -30,7 +30,7 @@ defmodule BSV.MixProject do
       package: [
         name: "bsv",
         files: ~w(lib priv .formatter.exs mix.exs README.md LICENSE.md),
-        licenses: ["MIT"],
+        licenses: ["Apache-2.0"],
         links: %{"GitHub" => "https://github.com/libitx/bsv-ex"}
       ]
     ]

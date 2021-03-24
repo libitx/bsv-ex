@@ -198,6 +198,20 @@ defmodule BSV.Script.VM do
 
 
   @doc """
+  As `eval/2` but returns the VM struct or raises an error.
+  """
+  @spec eval!(t, Script.t | list) :: t
+  def eval!(vm, script) do
+    case eval(vm, script) do
+      {:ok, vm} ->
+        vm
+      {:error, %__MODULE__{:error => error}} ->
+        raise error
+    end
+  end
+
+
+  @doc """
   Generic pushdata. Pushes any given binary or integer to the stack.
   """
   @spec op_pushdata(t, binary | number) :: t
