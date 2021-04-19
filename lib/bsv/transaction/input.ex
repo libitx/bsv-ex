@@ -20,7 +20,7 @@ defmodule BSV.Transaction.Input do
   @type t :: %__MODULE__{
     output_txid: String.t,
     output_index: integer,
-    script: binary,
+    script: Script.t | nil,
     sequence: integer,
     utxo: Output.t | nil
   }
