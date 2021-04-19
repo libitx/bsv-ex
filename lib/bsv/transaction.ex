@@ -355,7 +355,7 @@ defmodule BSV.Transaction do
   end
 
   def sign(%__MODULE__{} = tx, private_key) when is_binary(private_key) do
-    keypair = private_key
+    keypair = [private_key: private_key]
     |> ECDSA.generate_key_pair
     |> KeyPair.from_ecdsa_key
     sign(tx, keypair)
