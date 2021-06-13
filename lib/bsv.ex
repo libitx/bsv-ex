@@ -54,7 +54,7 @@ defmodule BSV do
 
   ## Usage
 
-  Many examples are demonstrated throught the documentation, but see the
+  Many examples are demonstrated throughout the documentation, but see the
   following for some quick-start examples:
 
   ### Key pairs and addresses
