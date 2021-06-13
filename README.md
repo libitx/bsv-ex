@@ -97,13 +97,14 @@ iex> script = %BSV.Script{}
 ...> |> BSV.Script.push(:OP_FALSE)
 ...> |> BSV.Script.push(:OP_RETURN)
 ...> |> BSV.Script.push("hello world")
-%BSV.Script{chunks: [:OP_FALSE, :OP_RETURN, "hello world"]}
+%BSV.Script{chunks: [:OP_FALSE, :OP_RETURN, "hello world"], coinbase: nil}
 
 iex> output = %BSV.Transaction.Output{script: script}
 %BSV.Transaction.Output{
   satoshis: 0,
   script: %BSV.Script{
-    chunks: [:OP_FALSE, :OP_RETURN, "hello world"]
+    chunks: [:OP_FALSE, :OP_RETURN, "hello world"],
+    coinbase: nil
   }
 }
 
