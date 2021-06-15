@@ -36,8 +36,11 @@ defmodule BSV.Transaction.Output do
   def parse(data, options \\ []) do
     encoding = Keyword.get(options, :encoding)
 
-    <<satoshis::little-64, data::binary>> = data
-    |> Util.decode(encoding)
+    {<<satoshis::little-64>>, data} =
+      data
+      |> Util.decode(encoding)
+      |> VarBin.read_bytes(8)
+
     {script, data} = VarBin.parse_bin(data)
 
     {struct(__MODULE__, [

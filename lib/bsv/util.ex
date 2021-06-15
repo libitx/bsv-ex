@@ -30,7 +30,6 @@ defmodule BSV.Util do
     end
   end
 
-
   @doc """
   Decodes the given binary data with the specified encoding scheme.
 
@@ -49,8 +48,8 @@ defmodule BSV.Util do
       iex> BSV.Util.decode("68656c6c6f20776f726c64", :hex)
       "hello world"
   """
-  @spec decode(binary, atom) :: binary
-  def decode(data, encoding) do
+  @spec decode(binary | IO.device(), atom) :: binary
+  def decode(data, encoding) when is_binary(data) do
     case encoding do
       :base64 -> Base.decode64!(data)
       :hex    -> Base.decode16!(data, case: :mixed)
@@ -58,6 +57,9 @@ defmodule BSV.Util do
     end
   end
 
+  def decode(data, _) do
+    data
+  end
 
   @doc """
   Generates random bits for the given number of bytes.
@@ -72,7 +74,6 @@ defmodule BSV.Util do
   def random_bytes(bytes) when is_integer(bytes) do
     :crypto.strong_rand_bytes(bytes)
   end
-
 
   @doc """
   Reverses the order of the given binary data.
@@ -89,5 +90,4 @@ defmodule BSV.Util do
     |> Enum.reverse
     |> :binary.list_to_bin
   end
-
 end

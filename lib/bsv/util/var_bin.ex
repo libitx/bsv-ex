@@ -17,11 +17,39 @@ defmodule BSV.Util.VarBin do
       iex> BSV.Util.VarBin.parse_int(<<254, 0, 225, 245, 5>>)
       {100_000_000, ""}
   """
-  @spec parse_int(binary) :: {integer, binary}
-  def parse_int(<<253, size::little-16, data::binary>>), do: {size, data}
-  def parse_int(<<254, size::little-32, data::binary>>), do: {size, data}
-  def parse_int(<<255, size::little-64, data::binary>>), do: {size, data}
-  def parse_int(<<size::integer, data::binary>>), do: {size, data}
+  @spec parse_int(binary | IO.device()) :: {integer, binary}
+  def parse_int(<<253, size::little-16, data::binary>> = binary) when is_binary(binary),
+    do: {size, data}
+
+  def parse_int(<<254, size::little-32, data::binary>> = binary) when is_binary(binary),
+    do: {size, data}
+
+  def parse_int(<<255, size::little-64, data::binary>> = binary) when is_binary(binary),
+    do: {size, data}
+
+  def parse_int(<<size::integer, data::binary>> = binary) when is_binary(binary), do: {size, data}
+
+  def parse_int(file) when not is_binary(file) do
+    size =
+      case file |> IO.binread(1) do
+        <<253>> ->
+          <<size::little-16>> = file |> IO.binread(2)
+          size
+
+        <<254>> ->
+          <<size::little-32>> = file |> IO.binread(4)
+          size
+
+        <<255>> ->
+          <<size::little-64>> = file |> IO.binread(8)
+          size
+
+        <<size::integer>> ->
+          size
+      end
+
+    {size, file}
+  end
 
 
   @doc """
@@ -55,8 +83,7 @@ defmodule BSV.Util.VarBin do
   @spec parse_bin(binary) :: {binary, binary}
   def parse_bin(data) do
     {size, data} = parse_int(data)
-    <<bin::bytes-size(size), data::binary>> = data
-    {bin, data}
+    data |> read_bytes(size)
   end
 
 
@@ -134,4 +161,22 @@ defmodule BSV.Util.VarBin do
     serialize_items(items, data <> bin, callback)
   end
 
+  @spec read_bytes(binary() | IO.device(), non_neg_integer()) ::
+          {binary(), binary() | IO.device()}
+  def read_bytes(data, size) when is_binary(data) do
+    <<block_bytes::binary-size(size), rest::binary>> = data
+    {block_bytes, rest}
+  end
+
+  def read_bytes(file, size) do
+    data = IO.binread(file, size)
+
+    if is_binary(data) do
+      {data, file}
+    else
+      require Logger
+      Logger.error("read bytes: #{inspect(data)}")
+      {"", file}
+    end
+  end
 end
