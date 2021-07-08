@@ -11,7 +11,7 @@ defmodule BSV.Transaction.Output do
   @typedoc "Transaction output"
   @type t :: %__MODULE__{
     satoshis: integer,
-    script: binary
+    script: Script.t | nil
   }
 
   @p2pkh_script_size 25
