@@ -54,7 +54,7 @@ defmodule BSV.Crypto.Hash do
 
   def hmac(data, algorithm, key, options \\ []) do
     encoding = Keyword.get(options, :encoding)
-    :crypto.hmac(algorithm, key, data)
+    :crypto.mac(:hmac, algorithm, key, data)
     |> Util.encode(encoding)
   end
 
