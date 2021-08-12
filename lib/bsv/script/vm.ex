@@ -7,12 +7,15 @@ defmodule BSV.Script.VM do
   alias BSV.{Script, Transaction, Util}
   alias BSV.Util.ScriptNum
 
+  @default_opts %{}
+
   defstruct tx: nil,
             vin: nil,
             stack: [],
             alt_stack: [],
             if_stack: [],
             op_return: [],
+            opts: @default_opts,
             error: nil
 
 
@@ -23,14 +26,17 @@ defmodule BSV.Script.VM do
     alt_stack: list,
     if_stack: list,
     op_return: list,
+    opts: map,
     error: nil | String.t
   }
 
   @doc """
   Initiates a new VM struct
   """
-  @spec init() :: t
-  def init(), do: %__MODULE__{}
+  @spec init(keyword) :: t
+  def init(opts) do
+    %__MODULE__{opts: Enum.into(opts, @default_opts)}
+  end
 
 
   @doc """
@@ -732,6 +738,9 @@ defmodule BSV.Script.VM do
     when length(stack) < 2,
     do: err(vm, "OP_EQUAL invalid stack length")
 
+  def op_equal(%__MODULE__{opts: %{simulate: true}, stack: [_a, _b | stack]} = vm),
+    do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
+
   def op_equal(%__MODULE__{stack: [a, b | stack]} = vm)
     when a == b,
     do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
@@ -1004,6 +1013,9 @@ defmodule BSV.Script.VM do
     when length(stack) < 2,
     do: err(vm, "OP_NUMEQUAL invalid stack length")
 
+  def op_numequal(%__MODULE__{opts: %{simulate: true}, stack: [_a, _b | stack]} = vm),
+    do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
+
   def op_numequal(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) == ScriptNum.decode(b), do: 1, else: 0
     put_in(vm.stack, [ScriptNum.encode(res) | stack])
@@ -1208,6 +1220,9 @@ defmodule BSV.Script.VM do
     when length(stack) < 2,
     do: err(vm, "OP_CHECKSIG invalid stack length")
 
+  def op_checksig(%__MODULE__{opts: %{simulate: true}, stack: [_pk, _sig | stack]} = vm),
+    do: put_in(vm.stack, [<<1>> | stack])
+
   def op_checksig(%__MODULE__{tx: %Transaction{} = tx, vin: vin, stack: [pubkey, signature | stack]} = vm)
     when is_integer(vin)
   do
@@ -1244,6 +1259,16 @@ defmodule BSV.Script.VM do
   @spec op_checkmultisig(t) :: t
   def op_checkmultisig(%__MODULE__{stack: []} = vm),
     do: err(vm, "OP_CHECKMULTISIG stack empty")
+
+  def op_checkmultisig(%__MODULE__{opts: %{simulate: true}, stack: [pk_length | stack]} = vm) do
+    with {_pubkeys, [sig_length | stack]} <- Enum.split(stack, ScriptNum.decode(pk_length)),
+         {_sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length))
+    do
+      put_in(vm.stack, [<<1>> | stack])
+    else
+      {_ignore, stack} -> put_in(vm.stack, [<<>> | stack])
+    end
+  end
 
   def op_checkmultisig(%__MODULE__{tx: %Transaction{} = tx, vin: vin, stack: [pk_length | stack]} = vm)
     when is_integer(vin)
