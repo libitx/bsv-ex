@@ -1,0 +1,4 @@
+%{
+  "basefiftyeight": {:hex, :basefiftyeight, "0.1.0", "3d48544743bf9aab7ab02aed803ac42af77acf268c7d8c71d4f39e7fa85ee8d3", [:mix], [], "hexpm", "af12f551429528c711e98628c029ad48d1e5ba5a284f40b2d91029a65381837a"},
+  "curvy": {:hex, :curvy, "0.2.1", "9accca55b4956015319f4aac0320f2a1470be3459c37ffcc71ceac084a5715ef", [:mix], [], "hexpm", "76c6975499ea1f6bb554f7166b5111f95ad5d5e27703ed94921572e789087206"},
+}
