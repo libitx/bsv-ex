@@ -22,4 +22,11 @@ defmodule BSV.Util do
   def encode(data, :hex), do: Base.encode16(data, case: :lower)
   def encode(data, _), do: data
 
+  @doc """
+  TODO
+  """
+  @spec rand_bytes(integer()) :: binary()
+  def rand_bytes(bytes) when is_integer(bytes),
+    do: :crypto.strong_rand_bytes(bytes)
+
 end
