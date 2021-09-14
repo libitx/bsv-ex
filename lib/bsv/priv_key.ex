@@ -21,6 +21,11 @@ defmodule BSV.PrivKey do
   @typedoc "TODO"
   @type privkey_wif() :: String.t()
 
+  @version_bytes %{
+    main: <<0x80>>,
+    test: <<0xEF>>
+  }
+
   @doc """
   TODO
   """
@@ -42,7 +47,7 @@ defmodule BSV.PrivKey do
       <<d::binary-32>> ->
         struct(__MODULE__, d: d, compressed: compressed)
       _ ->
-        raise ArgumentError, "Invalid binary privkey"
+        raise ArgumentError, "Invalid privkey"
     end
   end
 
@@ -51,12 +56,17 @@ defmodule BSV.PrivKey do
   """
   @spec from_wif(privkey_wif()) :: t()
   def from_wif(wif) when is_binary(wif) do
+    version_byte = @version_bytes[BSV.network()]
+
     case B58.decode58_check!(wif) do
-      {<<d::binary-32, 1>>, <<0x80>>} ->
+      {<<d::binary-32, 1>>, ^version_byte} ->
         struct(__MODULE__, d: d, compressed: true)
 
-      {<<d::binary-32>>, <<0x80>>} ->
+      {<<d::binary-32>>, ^version_byte} ->
         struct(__MODULE__, d: d, compressed: false)
+
+      {<<_d::binary-32>>, version_byte} ->
+        raise ArgumentError, "Invalid version byte #{ version_byte } for network: #{ BSV.network() }"
 
       _result ->
         raise ArgumentError, "Invalid WIF key"
@@ -77,12 +87,13 @@ defmodule BSV.PrivKey do
   """
   @spec to_wif(t()) :: privkey_wif()
   def to_wif(%__MODULE__{d: d, compressed: compressed}) do
+    version_byte = @version_bytes[BSV.network()]
     privkey_with_suffix = case compressed do
       true -> <<d::binary, 0x01>>
       false -> d
     end
 
-    B58.encode58_check!(privkey_with_suffix, <<0x80>>)
+    B58.encode58_check!(privkey_with_suffix, version_byte)
   end
 
 end

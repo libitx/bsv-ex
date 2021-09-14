@@ -34,7 +34,7 @@ defmodule BSV.PrivKeyTest do
     end
 
     test "raises error with invalid binary" do
-      assert_raise ArgumentError, fn ->
+      assert_raise ArgumentError, ~r/invalid privkey/i, fn ->
         PrivKey.from_binary("notaprivkey")
       end
     end
@@ -54,7 +54,7 @@ defmodule BSV.PrivKeyTest do
     end
 
     test "raises error with invalid wif" do
-      assert_raise ArgumentError, fn ->
+      assert_raise ArgumentError, ~r/invalid checksum/i, fn ->
         PrivKey.from_wif("notawif")
       end
     end

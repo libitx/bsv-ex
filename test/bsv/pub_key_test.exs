@@ -35,7 +35,7 @@ defmodule BSV.PubKeyTest do
     end
 
     test "raises error with invalid binary" do
-      assert_raise ArgumentError, fn ->
+      assert_raise ArgumentError, ~r/invalid pubkey/i, fn ->
         PubKey.from_binary("notapubkey")
       end
     end

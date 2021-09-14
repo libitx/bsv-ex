@@ -32,7 +32,7 @@ defmodule BSV.PubKey do
         %Key{point: point, compressed: compressed} = Key.from_pubkey(pubkey)
         struct(__MODULE__, point: point, compressed: compressed)
       _ ->
-        raise ArgumentError, "Invalid binary pubkey"
+        raise ArgumentError, "Invalid pubkey"
     end
   end
 
