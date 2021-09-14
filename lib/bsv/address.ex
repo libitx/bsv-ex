@@ -58,7 +58,7 @@ defmodule BSV.Address do
   TODO
   """
   @spec to_string(t()) :: address_str()
-  def to_string(%__MODULE__{pubkey_hash: pubkey_hash}, opts \\ []) do
+  def to_string(%__MODULE__{pubkey_hash: pubkey_hash}) do
     version_byte = @version_bytes[BSV.network()]
     B58.encode58_check!(pubkey_hash, version_byte)
   end

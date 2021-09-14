@@ -11,6 +11,9 @@ defmodule BSV.Mnemonic do
   @typedoc "TODO"
   @type entropy_length() :: 128 | 160 | 192 | 224 | 256
 
+  @typedoc "TODO"
+  @type seed() :: <<_::64>>
+
   @lang Application.get_env(:bsv, :lang, "en")
 
   @wordlist :code.priv_dir(:bsv)
@@ -61,6 +64,7 @@ defmodule BSV.Mnemonic do
   @doc """
   TODO
   """
+  @spec to_seed(t(), keyword()) :: seed()
   def to_seed(mnemonic, opts \\ []) when is_binary(mnemonic) do
     passphrase = Keyword.get(opts, :passphrase, "")
     encoding = Keyword.get(opts, :encoding)
