@@ -29,4 +29,15 @@ defmodule BSV.Util do
   def rand_bytes(bytes) when is_integer(bytes),
     do: :crypto.strong_rand_bytes(bytes)
 
+  @doc """
+  TODO
+  """
+  @spec reverse_bin(binary()) :: binary()
+  def reverse_bin(data) when is_binary(data) do
+    data
+    |> :binary.bin_to_list()
+    |> Enum.reverse()
+    |> :binary.list_to_bin()
+  end
+
 end
