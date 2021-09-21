@@ -34,10 +34,10 @@ defmodule BSV.TxOut do
   def from_binary!(data, opts \\ []) when is_binary(data) do
     case from_binary(data, opts) do
       {:ok, txout} ->
-          txout
+        txout
 
       {:error, error} ->
-          raise BSV.DecodeError, error
+        raise BSV.DecodeError, error
     end
   end
 
@@ -57,24 +57,24 @@ defmodule BSV.TxOut do
     @impl true
     def parse(txout, data) do
       with <<satoshis::little-64, data::binary>> <- data,
-           {:ok, script, data} <- VarInt.parse_data(data),
+           {:ok, script, rest} <- VarInt.parse_data(data),
            {:ok, script} <- Script.from_binary(script)
       do
         {:ok, struct(txout, [
           satoshis: satoshis,
           script: script
-        ]), data}
+        ]), rest}
       end
     end
 
     @impl true
-    def serialize(txout) do
-      script_data = txout.script
+    def serialize(%{satoshis: satoshis, script: script}) do
+      script_data = script
       |> Serializable.serialize()
       |> VarInt.encode_binary()
 
       <<
-        txout.satoshis::little-64,
+        satoshis::little-64,
         script_data::binary
       >>
     end

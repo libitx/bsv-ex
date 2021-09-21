@@ -4,7 +4,7 @@ defmodule BSV.VarInt do
   format used throughout Bitcoin to represent the length of binary data in a
   compact form.
   """
-  alias BSV.Util.Serializable
+  alias BSV.Serializable
 
   @max_int64 18_446_744_073_709_551_615
 
