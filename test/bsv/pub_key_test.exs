@@ -13,38 +13,62 @@ defmodule BSV.PubKeyTest do
     75, 140, 90, 22, 8, 122, 233, 116, 221, 100, 93, 180, 96, 132, 105, 242,
     152, 151>>
   @test_hex "03f81f8c8b90f5ec06ee4245eab166e8af903fc73a6dd73636687ef027870abe39"
-  @test_key PubKey.from_binary(@test_bytes)
+  @test_key PubKey.from_binary!(@test_bytes)
 
   describe "PubKey.from_binary/2" do
     test "wraps a compressed pubkey binary" do
-      pubkey = PubKey.from_binary(@test_bytes)
+      assert {:ok, pubkey} = PubKey.from_binary(@test_bytes)
       assert pubkey.point == @test_key.point
       assert pubkey.compressed
     end
 
     test "wraps an uncompressed pubkey binary" do
-      pubkey = PubKey.from_binary(@test_bytes2)
+      assert {:ok, pubkey} = PubKey.from_binary(@test_bytes2)
       assert pubkey.point == @test_key.point
       refute pubkey.compressed
     end
 
     test "decodes a hex pubkey" do
-      pubkey = PubKey.from_binary(@test_hex, encoding: :hex)
+      assert {:ok, pubkey} = PubKey.from_binary(@test_hex, encoding: :hex)
+      assert pubkey.point == @test_key.point
+      assert pubkey.compressed
+    end
+
+    test "returns error with invalid binary" do
+      assert {:error, _error} = PubKey.from_binary("notapubkey")
+    end
+  end
+
+  describe "PubKey.from_binary!/2" do
+    test "wraps a compressed pubkey binary" do
+      pubkey = PubKey.from_binary!(@test_bytes)
+      assert pubkey.point == @test_key.point
+      assert pubkey.compressed
+    end
+
+    test "wraps an uncompressed pubkey binary" do
+      pubkey = PubKey.from_binary!(@test_bytes2)
+      assert pubkey.point == @test_key.point
+      refute pubkey.compressed
+    end
+
+    test "decodes a hex pubkey" do
+      pubkey = PubKey.from_binary!(@test_hex, encoding: :hex)
       assert pubkey.point == @test_key.point
       assert pubkey.compressed
     end
 
     test "raises error with invalid binary" do
-      assert_raise ArgumentError, ~r/invalid pubkey/i, fn ->
-        PubKey.from_binary("notapubkey")
+      assert_raise BSV.DecodeError, ~r/invalid pubkey/i, fn ->
+        PubKey.from_binary!("notapubkey")
       end
     end
   end
 
   describe "PubKey.from_privkey/1" do
     setup do
-      privkey = PrivKey.from_wif("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
-      privkey2 = PrivKey.from_wif("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
+      privkey = PrivKey.from_wif!("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
+      privkey2 = PrivKey.from_wif!("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
       %{privkey: privkey, privkey2: privkey2}
     end
 

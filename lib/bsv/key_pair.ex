@@ -19,7 +19,7 @@ defmodule BSV.KeyPair do
   def new(opts \\ []) do
     {_pubkey, privkey} = :crypto.generate_key(:ecdh, :secp256k1)
     privkey
-    |> PrivKey.from_binary(opts)
+    |> PrivKey.from_binary!(opts)
     |> from_privkey()
   end
 

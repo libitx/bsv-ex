@@ -31,6 +31,9 @@ defmodule BSV.ExtKey do
   @typedoc "TODO"
   @type xpub() :: String.t
 
+  @typedoc "TODO"
+  @type derivation_path() :: String.t
+
   @privkey_version_bytes %{
     main: <<4, 136, 173, 228>>,
     test: <<4, 53, 131, 148>>
@@ -50,37 +53,52 @@ defmodule BSV.ExtKey do
   @doc """
   TODO
   """
-  @spec from_seed(Mnemonic.seed(), keyword()) :: t()
+  @spec from_seed(Mnemonic.seed(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_seed(seed, opts \\ []) when is_binary(seed) do
     encoding = Keyword.get(opts, :encoding)
     version = @privkey_version_bytes[BSV.network()]
-    seed = decode(seed, encoding)
 
-    if bit_size(seed) < 128, do: raise ArgumentError, "Less than 128 bit seed is non standard"
-    if bit_size(seed) > 512, do: raise ArgumentError, "More than 512 bit seed is non standard"
+    with {:ok, seed} when bit_size(seed) >= 128 and bit_size(seed) <= 512 <- decode(seed, encoding) do
+      <<d::binary-32, chain_code::binary-32>> = Hash.sha512_hmac(seed, "Bitcoin seed")
+      privkey = PrivKey.from_binary!(d)
+      pubkey = PubKey.from_privkey(privkey)
 
-    <<d::binary-32, chain_code::binary-32>> = seed
-    |> Hash.sha512_hmac("Bitcoin seed")
+      {:ok, struct(__MODULE__, [
+        version: version,
+        chain_code: chain_code,
+        privkey: privkey,
+        pubkey: pubkey
+      ])}
+    else
+      {:ok, seed} ->
+        {:error, {:invalid_seed, byte_size(seed)}}
 
-    privkey = PrivKey.from_binary(d)
-    pubkey = PubKey.from_privkey(privkey)
-
-    struct(__MODULE__, [
-      version: version,
-      chain_code: chain_code,
-      privkey: privkey,
-      pubkey: pubkey
-    ])
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   @doc """
   TODO
   """
-  @spec from_string(xprv() | xpub()) :: t()
+  @spec from_seed!(Mnemonic.seed(), keyword()) :: t()
+  def from_seed!(seed, opts \\ []) when is_binary(seed) do
+    case from_seed(seed, opts) do
+      {:ok, extkey} ->
+        extkey
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_string(xprv() | xpub()) :: {:ok, t()} | {:error, term()}
   def from_string(<<"xprv", _::binary>> = xprv) do
     <<version_byte, prefix::binary>> = version = @privkey_version_bytes[BSV.network()]
 
-    with {data, <<^version_byte>>} <- B58.decode58_check!(xprv) do
+    with {:ok, {data, <<^version_byte>>}} when byte_size(data) == 77 <- B58.decode58_check(xprv) do
       <<
         ^prefix::binary-3,
         depth::8,
@@ -91,10 +109,10 @@ defmodule BSV.ExtKey do
         d::binary
       >> = data
 
-      privkey = PrivKey.from_binary(d)
+      privkey = PrivKey.from_binary!(d)
       pubkey = PubKey.from_privkey(privkey)
 
-      struct(__MODULE__, [
+      {:ok, struct(__MODULE__, [
         version: version,
         depth: depth,
         fingerprint: fingerprint,
@@ -102,17 +120,17 @@ defmodule BSV.ExtKey do
         chain_code: chain_code,
         privkey: privkey,
         pubkey: pubkey
-      ])
+      ])}
     else
-      _ ->
-        raise ArgumentError, "Invalid xprv"
+      _error ->
+        {:error, :invalid_xprv}
     end
   end
 
   def from_string(<<"xpub", _::binary>> = xprv) do
     <<version_byte, prefix::binary>> = version = @pubkey_version_bytes[BSV.network()]
 
-    with {data, <<^version_byte>>} <- B58.decode58_check!(xprv) do
+    with {:ok, {data, <<^version_byte>>}} when byte_size(data) == 77 <- B58.decode58_check(xprv) do
       <<
         ^prefix::binary-3,
         depth::8,
@@ -122,19 +140,35 @@ defmodule BSV.ExtKey do
         pubkey::binary
       >> = data
 
-      struct(__MODULE__, [
+      pubkey = PubKey.from_binary!(pubkey)
+
+      {:ok, struct(__MODULE__, [
         version: version,
         depth: depth,
         fingerprint: fingerprint,
         child_index: child_index,
         chain_code: chain_code,
-        pubkey: PubKey.from_binary(pubkey)
-      ])
+        pubkey: pubkey
+      ])}
     else
-      _ ->
-        raise ArgumentError, "Invalid xpub"
+      _error ->
+        {:error, :invalid_xpub}
     end
   end
+
+  @doc """
+  TODO
+  """
+  @spec from_string!(xprv() | xpub()) :: t()
+  def from_string!(data) when is_binary(data) do
+    case from_string(data) do
+      {:ok, extkey} ->
+        extkey
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
+
 
   @doc """
   TODO
@@ -142,14 +176,13 @@ defmodule BSV.ExtKey do
   @spec to_public(t()) :: t()
   def to_public(%__MODULE__{} = extkey) do
     version = @pubkey_version_bytes[BSV.network()]
-    extkey
-    |> Map.put(:version, version)
-    |> Map.put(:privkey, nil)
+    struct(extkey, version: version, privkey: nil)
   end
 
   @doc """
   TODO
   """
+  @spec to_string(t()) :: xprv() | xpub()
   def to_string(%__MODULE__{privkey: %PrivKey{}} = extkey) do
     <<version_byte, version::binary>> = @privkey_version_bytes[BSV.network()]
     privkey = PrivKey.to_binary(extkey.privkey)
@@ -182,8 +215,15 @@ defmodule BSV.ExtKey do
   @doc """
   TODO
   """
-  def derive(%__MODULE__{} = extkey, path),
-    do: derive_pathlist(extkey, get_pathlist(path))
+  @spec derive(t(), derivation_path()) :: t()
+  def derive(%__MODULE__{} = extkey, path) when is_binary(path) do
+    case String.match?(path, ~r/^[mM](\/\d+'?)+/) do
+      true ->
+        derive_pathlist(extkey, get_pathlist(path))
+      false ->
+        raise ArgumentError, "Invalid derivation path"
+    end
+  end
 
   # Returns a list of integers from the given path string
   defp get_pathlist(<<"m/", path::binary>>), do: {:private, get_pathlist(path)}
@@ -196,13 +236,14 @@ defmodule BSV.ExtKey do
 
   # Returns a hardened or normal integer from the given path chunk
   defp path_chunk_to_integer(chunk) do
-    case String.reverse(chunk) do
-      <<"'", rev_chunk::binary>> ->
-        String.reverse(rev_chunk)
+    case Regex.run(~r/(\d+)(')?$/, chunk) do
+      [_, chunk, "'"] ->
+        chunk
         |> String.to_integer
         |> Kernel.+(1)
         |> Kernel.+(@mersenne_prime)
-      _ ->
+
+      [_, chunk] ->
         String.to_integer(chunk)
     end
   end
@@ -261,7 +302,7 @@ defmodule BSV.ExtKey do
     |> rem(curve_order)
     |> :binary.encode_unsigned()
     |> pad_bytes()
-    |> PrivKey.from_binary()
+    |> PrivKey.from_binary!()
 
     {privkey, PubKey.from_privkey(privkey), child_chain}
   end

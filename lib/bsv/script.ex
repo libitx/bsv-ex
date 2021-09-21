@@ -3,7 +3,7 @@ defmodule BSV.Script do
   TODO
   """
   alias BSV.OpCode
-  import BSV.Util, only: [decode: 2, encode: 2]
+  import BSV.Util, only: [decode: 2, decode!: 2, encode: 2]
 
   defstruct chunks: []
 
@@ -15,27 +15,56 @@ defmodule BSV.Script do
   @doc """
   TODO
   """
-  @spec from_asm(binary()) :: t()
+  @spec from_asm(binary()) :: {:ok, t()} | {:error, term()}
   def from_asm(data) when is_binary(data) do
     chunks = data
     |> String.split(" ")
     |> Enum.map(&parse_asm_chunk/1)
 
-    struct(__MODULE__, chunks: chunks)
+    {:ok, struct(__MODULE__, chunks: chunks)}
+  rescue
+    _error ->
+      {:error, {:invalid_encoding, :asm}}
   end
 
   @doc """
   TODO
   """
-  @spec from_binary(binary(), keyword()) :: t()
+  @spec from_asm!(binary()) :: t()
+  def from_asm!(data) when is_binary(data) do
+    case from_asm(data) do
+      {:ok, script} ->
+        script
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
     encoding = Keyword.get(opts, :encoding)
 
-    chunks = data
-    |> decode(encoding)
-    |> parse_bytes()
+    with {:ok, data} <- decode(data, encoding),
+         {:ok, chunks} <- parse_bytes(data)
+    do
+      {:ok, struct(__MODULE__, chunks: chunks)}
+    end
+  end
 
-    struct(__MODULE__, chunks: chunks)
+  @doc """
+  TODO
+  """
+  @spec from_binary!(binary(), keyword()) :: t()
+  def from_binary!(data, opts \\ []) when is_binary(data) do
+    case from_binary(data, opts) do
+      {:ok, script} ->
+        script
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
   end
 
   @doc """
@@ -43,15 +72,11 @@ defmodule BSV.Script do
   """
   @spec push(t(), atom() | integer() | binary()) :: t()
   def push(%__MODULE__{} = script, data)
-    when is_atom(data) or is_integer(data)
+    when is_atom(data)
+    or (is_integer(data) and data in 0..255)
   do
-    case OpCode.get(data) do
-      {opcode, _num} ->
-        push_chunk(script, opcode)
-
-      nil ->
-        raise "Invalid OpCode: #{data}"
-    end
+    {opcode, _num} = OpCode.get!(data)
+    push_chunk(script, opcode)
   end
 
   def push(%__MODULE__{} = script, data) when is_binary(data),
@@ -85,12 +110,12 @@ defmodule BSV.Script do
 
   defp parse_asm_chunk("-1"), do: :OP_1NEGATE
   defp parse_asm_chunk("0"), do: :OP_0
-  defp parse_asm_chunk(chunk), do: decode(chunk, :hex)
+  defp parse_asm_chunk(chunk), do: decode!(chunk, :hex)
 
   # TODO
   defp parse_bytes(data, chunks \\ [])
 
-  defp parse_bytes(<<>>, chunks), do: Enum.reverse(chunks)
+  defp parse_bytes(<<>>, chunks), do: {:ok, Enum.reverse(chunks)}
 
   defp parse_bytes(<<op::integer, data::binary>>, chunks)
     when op > 0 and op < 76
@@ -115,13 +140,8 @@ defmodule BSV.Script do
   end
 
   defp parse_bytes(<<op::integer, data::binary>>, chunks) do
-    case OpCode.get(op) do
-      {opcode, _num} ->
-        parse_bytes(data, [opcode | chunks])
-
-      nil ->
-        raise "Invalid OpCode: #{op}"
-    end
+    {opcode, _num} = OpCode.get!(op)
+    parse_bytes(data, [opcode | chunks])
   end
 
   # TODO

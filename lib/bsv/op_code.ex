@@ -174,11 +174,13 @@ defmodule BSV.OpCode do
       iex> BSV.OpCode.get :UNKNOWN_CODE
       nil
   """
-  @spec get(atom() | String.t() | binary() | integer()) :: t() | nil
+  @spec get(atom() | String.t() | binary() | byte()) :: t() | nil
   def get(op) when is_atom(op) do
     case @op_codes[op] do
-      nil -> nil
-      num -> {op, num}
+      nil ->
+        nil
+      num ->
+        {op, num}
     end
   end
 
@@ -189,7 +191,20 @@ defmodule BSV.OpCode do
 
   def get(0), do: {:OP_FALSE, 0}
 
-  def get(op) when is_integer(op),
+  def get(op) when is_integer(op) and op in 0..255,
     do: Enum.find(@op_codes, fn {_k, v} -> v == op end)
+
+  @doc """
+  TODO
+  """
+  @spec get!(atom() | String.t() | binary() | byte()) :: t()
+  def get!(op) do
+    case get(op) do
+      {op, num} ->
+        {op, num}
+      nil ->
+        raise BSV.DecodeError, {:invalid_opcode, op}
+    end
+  end
 
 end

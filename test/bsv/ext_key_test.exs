@@ -11,54 +11,92 @@ defmodule BSV.ExtKeyTest do
 
   describe "ExtKey.from_seed/2" do
     test "creates extkey from binary seed" do
-      assert %ExtKey{} = extkey = Mnemonic.to_seed(@test_words) |> ExtKey.from_seed()
+      assert {:ok, %ExtKey{} = extkey} = Mnemonic.to_seed(@test_words) |> ExtKey.from_seed()
       assert ExtKey.to_string(extkey) == @test_xprv
       assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
     end
 
     test "creates extkey from hex encoded seed" do
-      assert %ExtKey{} = extkey = ExtKey.from_seed(@test_seed, encoding: :hex)
+      assert {:ok, %ExtKey{} = extkey} = ExtKey.from_seed(@test_seed, encoding: :hex)
+      assert ExtKey.to_string(extkey) == @test_xprv
+      assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
+    end
+
+    test "returns error if seed is too small or too big" do
+      assert {:error, _error} = BSV.Util.rand_bytes(15) |> ExtKey.from_seed()
+      assert {:error, _error} = BSV.Util.rand_bytes(65) |> ExtKey.from_seed()
+    end
+  end
+
+  describe "ExtKey.from_seed!/2" do
+    test "creates extkey from binary seed" do
+      assert %ExtKey{} = extkey = Mnemonic.to_seed(@test_words) |> ExtKey.from_seed!()
+      assert ExtKey.to_string(extkey) == @test_xprv
+      assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
+    end
+
+    test "creates extkey from hex encoded seed" do
+      assert %ExtKey{} = extkey = ExtKey.from_seed!(@test_seed, encoding: :hex)
       assert ExtKey.to_string(extkey) == @test_xprv
       assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
     end
 
     test "raises error if seed is too small or too big" do
-      assert_raise ArgumentError, ~r/seed is non standard/, fn ->
-        BSV.Util.rand_bytes(15) |> ExtKey.from_seed()
+      assert_raise BSV.DecodeError, ~r/invalid seed length/i, fn ->
+        BSV.Util.rand_bytes(15) |> ExtKey.from_seed!()
       end
-      assert_raise ArgumentError, ~r/seed is non standard/, fn ->
-        BSV.Util.rand_bytes(65) |> ExtKey.from_seed()
+      assert_raise BSV.DecodeError, ~r/invalid seed length/i, fn ->
+        BSV.Util.rand_bytes(65) |> ExtKey.from_seed!()
       end
     end
   end
 
   describe "ExtKey.from_string/1" do
     test "decodes xprv into a key" do
-      assert %ExtKey{} = extkey = ExtKey.from_string(@test_xprv)
+      assert {:ok, %ExtKey{} = extkey} = ExtKey.from_string(@test_xprv)
       assert ExtKey.to_string(extkey) == @test_xprv
       assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
     end
 
     test "decodes xpub into a key" do
-      assert %ExtKey{} = extkey = ExtKey.from_string(@test_xpub)
+      assert {:ok, %ExtKey{} = extkey} = ExtKey.from_string(@test_xpub)
+      assert is_nil(extkey.privkey)
+      assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
+    end
+
+    test "returns error with invalid xprv or xpub" do
+      assert {:error, _error} = ExtKey.from_string("xprvNotAnXprv")
+      assert {:error, _error} = ExtKey.from_string("xpubNotAnXpub")
+    end
+  end
+
+  describe "ExtKey.from_string!/1" do
+    test "decodes xprv into a key" do
+      assert %ExtKey{} = extkey = ExtKey.from_string!(@test_xprv)
+      assert ExtKey.to_string(extkey) == @test_xprv
+      assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
+    end
+
+    test "decodes xpub into a key" do
+      assert %ExtKey{} = extkey = ExtKey.from_string!(@test_xpub)
       assert is_nil(extkey.privkey)
       assert ExtKey.to_public(extkey) |> ExtKey.to_string() == @test_xpub
     end
 
     test "raises error with invalid xprv or xpub" do
-      assert_raise ArgumentError, fn ->
-        ExtKey.from_string("xprvNotAnXprv")
+      assert_raise BSV.DecodeError, ~r/invalid xprv/i, fn ->
+        ExtKey.from_string!("xprvNotAnXprv")
       end
 
-      assert_raise ArgumentError, fn ->
-        ExtKey.from_string("xpubNotAnXpub")
+      assert_raise BSV.DecodeError, ~r/invalid xpub/i, fn ->
+        ExtKey.from_string!("xpubNotAnXpub")
       end
     end
   end
 
   describe "ExtKey.to_public/1" do
     test "converts private extkey to public extkey" do
-      assert %ExtKey{} = extkey = ExtKey.from_string(@test_xprv) |> ExtKey.to_public()
+      assert %ExtKey{} = extkey = ExtKey.from_string!(@test_xprv) |> ExtKey.to_public()
       assert is_nil(extkey.privkey)
       assert extkey.version == <<4, 136, 178, 30>>
     end
@@ -66,19 +104,19 @@ defmodule BSV.ExtKeyTest do
 
   describe "ExtKey.to_string/1" do
     test "returns xprv of private extkey" do
-      assert %ExtKey{} = extkey = ExtKey.from_string(@test_xprv)
+      assert %ExtKey{} = extkey = ExtKey.from_string!(@test_xprv)
       assert ExtKey.to_string(extkey) == @test_xprv
     end
 
     test "returns xpub of public extkey" do
-      assert %ExtKey{} = extkey = ExtKey.from_string(@test_xprv) |> ExtKey.to_public()
+      assert %ExtKey{} = extkey = ExtKey.from_string!(@test_xprv) |> ExtKey.to_public()
       assert ExtKey.to_string(extkey) == @test_xpub
     end
   end
 
   describe "ExtKey.derive/2" do
     setup do
-      master = ExtKey.from_seed(@test_seed, encoding: :hex)
+      master = ExtKey.from_seed!(@test_seed, encoding: :hex)
       %{priv: master, pub: ExtKey.to_public(master)}
     end
 

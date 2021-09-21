@@ -55,7 +55,7 @@ defmodule BSV.ScriptNum do
   """
   @spec encode(number()) :: binary()
   def encode(0), do: <<>>
-  def encode(n) when is_number(n) do
+  def encode(n) when is_integer(n) do
     <<first, rest::binary>> = abs(n)
     |> :binary.encode_unsigned(:big)
 

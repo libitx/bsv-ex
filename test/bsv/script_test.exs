@@ -9,19 +9,36 @@ defmodule BSV.ScriptTest do
 
   describe "Script.from_asm/1" do
     test "parses ASM encoded p2pkh script" do
-      assert %Script{chunks: chunks} = Script.from_asm(@p2pkh_asm)
+      assert {:ok, %Script{chunks: chunks}} = Script.from_asm(@p2pkh_asm)
       assert [:OP_DUP, :OP_HASH160, _pubkey_hash, :OP_EQUALVERIFY, :OP_CHECKSIG] = chunks
+    end
+
+    test "returns error with invalid ASM" do
+      assert {:error, _error} = Script.from_asm("OP_RETURN xyz OP_0")
+    end
+  end
+
+  describe "Script.from_asm!/1" do
+    test "parses ASM encoded p2pkh script" do
+      assert %Script{chunks: chunks} = Script.from_asm!(@p2pkh_asm)
+      assert [:OP_DUP, :OP_HASH160, _pubkey_hash, :OP_EQUALVERIFY, :OP_CHECKSIG] = chunks
+    end
+
+    test "raises error with invalid ASM" do
+      assert_raise BSV.DecodeError, ~r/error decoding/i, fn ->
+        assert {:error, _error} = Script.from_asm!("OP_RETURN xyz OP_0")
+      end
     end
   end
 
   describe "Script.from_binary/2" do
     test "parses hex encoded p2pkh script" do
-      assert %Script{chunks: chunks} = Script.from_binary(@p2pkh_hex, encoding: :hex)
+      assert {:ok, %Script{chunks: chunks}} = Script.from_binary(@p2pkh_hex, encoding: :hex)
       assert [:OP_DUP, :OP_HASH160, _pubkey_hash, :OP_EQUALVERIFY, :OP_CHECKSIG] = chunks
     end
 
     test "parses hex encoded UNIV script" do
-      assert %Script{chunks: chunks} = Script.from_binary(@univ_hex, encoding: :hex)
+      assert {:ok, %Script{chunks: chunks}} = Script.from_binary(@univ_hex, encoding: :hex)
       assert [:OP_FALSE, :OP_RETURN, "UNIV" | _rest] = chunks
       assert length(chunks) == 7
     end

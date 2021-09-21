@@ -23,16 +23,33 @@ defmodule BSV.PubKey do
   @doc """
   TODO
   """
-  @spec from_binary(pubkey_bin(), keyword()) :: t()
+  @spec from_binary(pubkey_bin(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(pubkey, opts \\ []) when is_binary(pubkey) do
     encoding = Keyword.get(opts, :encoding)
 
-    case decode(pubkey, encoding) do
-      pubkey when byte_size(pubkey) in [33, 65] ->
-        %Key{point: point, compressed: compressed} = Key.from_pubkey(pubkey)
-        struct(__MODULE__, point: point, compressed: compressed)
-      _ ->
-        raise ArgumentError, "Invalid pubkey"
+    with {:ok, pubkey} when byte_size(pubkey) in [33, 65] <- decode(pubkey, encoding) do
+      %Key{point: point, compressed: compressed} = Key.from_pubkey(pubkey)
+      {:ok, struct(__MODULE__, point: point, compressed: compressed)}
+    else
+      {:ok, pubkey} ->
+        {:error, {:invalid_pubkey, byte_size(pubkey)}}
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_binary!(pubkey_bin(), keyword()) :: t()
+  def from_binary!(pubkey, opts \\ []) when is_binary(pubkey) do
+    case from_binary(pubkey, opts) do
+      {:ok, pubkey} ->
+        pubkey
+      {:error, {:invalid_pubkey, _length} = error} ->
+        raise BSV.DecodeError, error
+      {:error, error} ->
+        raise error
     end
   end
 

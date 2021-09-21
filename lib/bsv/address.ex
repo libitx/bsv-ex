@@ -39,18 +39,31 @@ defmodule BSV.Address do
   @doc """
   TODO
   """
-  @spec from_string(address_str()) :: t()
+  @spec from_string(address_str()) :: {:ok, t()} | {:error, term()}
   def from_string(address) when is_binary(address) do
     version_byte = @version_bytes[BSV.network()]
-    case B58.decode58_check!(address) do
-      {<<pubkey_hash::binary-20>>, ^version_byte} ->
-        struct(__MODULE__, pubkey_hash: pubkey_hash)
+    case B58.decode58_check(address) do
+      {:ok, {<<pubkey_hash::binary-20>>, ^version_byte}} ->
+        {:ok, struct(__MODULE__, pubkey_hash: pubkey_hash)}
 
-      {<<_pubkey_hash::binary-20>>, version_byte} ->
-        raise ArgumentError, "Invalid version byte #{ version_byte } for network: #{ BSV.network() }"
+      {:ok, {<<_pubkey_hash::binary-20>>, version_byte}} ->
+        {:error, {:invalid_base58_check, version_byte, BSV.network()}}
 
-      _result ->
-        raise ArgumentError, "Invalid address"
+      _error ->
+        {:error, :invalid_address}
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_string!(address_str()) :: t()
+  def from_string!(address) when is_binary(address) do
+    case from_string(address) do
+      {:ok, privkey} ->
+        privkey
+      {:error, error} ->
+        raise BSV.DecodeError, error
     end
   end
 

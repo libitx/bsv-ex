@@ -25,37 +25,71 @@ defmodule BSV.PrivKeyTest do
   describe "PrivKey.from_binary/2" do
     test "wraps an existing key binary" do
       d = @test_bytes
-      assert %PrivKey{d: ^d} = PrivKey.from_binary(d)
+      assert {:ok, %PrivKey{d: ^d}} = PrivKey.from_binary(d)
     end
 
     test "decodes an existing hex key" do
-      assert %PrivKey{d: d} = PrivKey.from_binary(@test_hex, encoding: :hex)
+      assert {:ok, %PrivKey{d: d}} = PrivKey.from_binary(@test_hex, encoding: :hex)
+      assert d == @test_bytes
+    end
+
+    test "returns error with invalid binary" do
+      assert {:error, _error} = PrivKey.from_binary("notaprivkey")
+    end
+  end
+
+  describe "PrivKey.from_binary!/2" do
+    test "wraps an existing key binary" do
+      d = @test_bytes
+      assert %PrivKey{d: ^d} = PrivKey.from_binary!(d)
+    end
+
+    test "decodes an existing hex key" do
+      assert %PrivKey{d: d} = PrivKey.from_binary!(@test_hex, encoding: :hex)
       assert d == @test_bytes
     end
 
     test "raises error with invalid binary" do
-      assert_raise ArgumentError, ~r/invalid privkey/i, fn ->
-        PrivKey.from_binary("notaprivkey")
+      assert_raise BSV.DecodeError, ~r/invalid privkey/i, fn ->
+        PrivKey.from_binary!("notaprivkey")
       end
     end
   end
 
   describe "PrivKey.from_wif/1" do
     test "decodes wif into a private key" do
-      assert %PrivKey{} = privkey = PrivKey.from_wif(@test_wif)
+      assert {:ok, %PrivKey{} = privkey} = PrivKey.from_wif(@test_wif)
       assert privkey.d == @test_bytes
       assert privkey.compressed
     end
 
     test "decodes uncompressed wif into a private key" do
-      assert %PrivKey{} = privkey = PrivKey.from_wif(@test_wif2)
+      assert {:ok, %PrivKey{} = privkey} = PrivKey.from_wif(@test_wif2)
+      assert privkey.d == @test_bytes
+      refute privkey.compressed
+    end
+
+    test "returns error with invalid wif" do
+      assert {:error, _error} = PrivKey.from_wif("notawif")
+    end
+  end
+
+  describe "PrivKey.from_wif!/1" do
+    test "decodes wif into a private key" do
+      assert %PrivKey{} = privkey = PrivKey.from_wif!(@test_wif)
+      assert privkey.d == @test_bytes
+      assert privkey.compressed
+    end
+
+    test "decodes uncompressed wif into a private key" do
+      assert %PrivKey{} = privkey = PrivKey.from_wif!(@test_wif2)
       assert privkey.d == @test_bytes
       refute privkey.compressed
     end
 
     test "raises error with invalid wif" do
-      assert_raise ArgumentError, ~r/invalid checksum/i, fn ->
-        PrivKey.from_wif("notawif")
+      assert_raise BSV.DecodeError, ~r/invalid wif/i, fn ->
+        PrivKey.from_wif!("notawif")
       end
     end
   end
@@ -80,7 +114,7 @@ defmodule BSV.PrivKeyTest do
 
     test "wif encodes the uncompressed private key" do
       wif =
-        PrivKey.from_binary(@test_bytes, compressed: false)
+        PrivKey.from_binary!(@test_bytes, compressed: false)
         |> PrivKey.to_wif()
       assert wif == @test_wif2
     end

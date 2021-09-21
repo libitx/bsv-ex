@@ -32,44 +32,72 @@ defmodule BSV.PrivKey do
   @spec new(keyword()) :: t()
   def new(opts \\ []) do
     {_pubkey, privkey} = :crypto.generate_key(:ecdh, :secp256k1)
-    from_binary(privkey, opts)
+    from_binary!(privkey, opts)
   end
 
   @doc """
   TODO
   """
-  @spec from_binary(privkey_bin(), keyword()) :: t()
+  @spec from_binary(privkey_bin(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(privkey, opts \\ []) when is_binary(privkey) do
     encoding = Keyword.get(opts, :encoding)
     compressed = Keyword.get(opts, :compressed, true)
 
     case decode(privkey, encoding) do
-      <<d::binary-32>> ->
-        struct(__MODULE__, d: d, compressed: compressed)
-      _ ->
-        raise ArgumentError, "Invalid privkey"
+      {:ok, <<d::binary-32>>} ->
+        {:ok, struct(__MODULE__, d: d, compressed: compressed)}
+      {:ok, d} ->
+        {:error, {:invalid_privkey, byte_size(d)}}
+      {:error, error} ->
+        {:error, error}
     end
   end
 
   @doc """
   TODO
   """
-  @spec from_wif(privkey_wif()) :: t()
+  @spec from_binary!(privkey_bin(), keyword()) :: t()
+  def from_binary!(privkey, opts \\ []) when is_binary(privkey) do
+    case from_binary(privkey, opts) do
+      {:ok, privkey} ->
+        privkey
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_wif(privkey_wif()) :: {:ok, t()} | {:error, term()}
   def from_wif(wif) when is_binary(wif) do
     version_byte = @version_bytes[BSV.network()]
 
-    case B58.decode58_check!(wif) do
-      {<<d::binary-32, 1>>, ^version_byte} ->
-        struct(__MODULE__, d: d, compressed: true)
+    case B58.decode58_check(wif) do
+      {:ok, {<<d::binary-32, 1>>, ^version_byte}} ->
+        {:ok, struct(__MODULE__, d: d, compressed: true)}
 
-      {<<d::binary-32>>, ^version_byte} ->
-        struct(__MODULE__, d: d, compressed: false)
+      {:ok, {<<d::binary-32>>, ^version_byte}} ->
+        {:ok, struct(__MODULE__, d: d, compressed: false)}
 
-      {<<_d::binary-32>>, version_byte} ->
-        raise ArgumentError, "Invalid version byte #{ version_byte } for network: #{ BSV.network() }"
+      {:ok, {<<d::binary>>, version_byte}} when byte_size(d) in [32,33] ->
+        {:error, {:invalid_base58_check, version_byte, BSV.network()}}
 
-      _result ->
-        raise ArgumentError, "Invalid WIF key"
+      _error ->
+        {:error, :invalid_wif}
+    end
+  end
+
+  @doc """
+  TODO
+  """
+  @spec from_wif!(privkey_wif()) :: t()
+  def from_wif!(wif) when is_binary(wif) do
+    case from_wif(wif) do
+      {:ok, privkey} ->
+        privkey
+      {:error, error} ->
+        raise BSV.DecodeError, error
     end
   end
 

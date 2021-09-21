@@ -9,10 +9,33 @@ defmodule BSV.Util do
   @doc """
   TODO
   """
-  @spec decode(binary(), encoding()) :: binary()
-  def decode(data, :base64), do: Base.decode64!(data)
-  def decode(data, :hex), do: Base.decode16!(data, case: :lower)
-  def decode(data, _), do: data
+  @spec decode(binary(), encoding()) :: {:ok, binary()} | {:error, term()}
+  def decode(data, encoding) do
+    case do_decode(data, encoding) do
+      {:ok, data} ->
+        {:ok, data}
+      :error ->
+        {:error, {:invalid_encoding, encoding}}
+    end
+  end
+
+  # TODO
+  defp do_decode(data, :base64), do: Base.decode64(data)
+  defp do_decode(data, :hex), do: Base.decode16(data, case: :lower)
+  defp do_decode(data, _), do: {:ok, data}
+
+  @doc """
+  TODO
+  """
+  @spec decode!(binary(), encoding()) :: binary()
+  def decode!(data, encoding) do
+    case decode(data, encoding) do
+      {:ok, data} ->
+        data
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
 
   @doc """
   TODO

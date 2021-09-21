@@ -22,8 +22,8 @@ defmodule BSV.KeyPairTest do
 
   describe "KeyPair.from_privkey/1" do
     setup do
-      privkey = PrivKey.from_wif("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
-      privkey2 = PrivKey.from_wif("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
+      privkey = PrivKey.from_wif!("KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF")
+      privkey2 = PrivKey.from_wif!("5JH9eTJyj6bYopGhBztsDd4XvAbFNQkpZEw8AXYoQePtK1r86nu")
       %{privkey: privkey, privkey2: privkey2}
     end
 
