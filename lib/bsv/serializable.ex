@@ -1,4 +1,4 @@
-defprotocol BSV.Util.Serializable do
+defprotocol BSV.Serializable do
   @moduledoc """
   TODO
   """

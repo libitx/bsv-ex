@@ -22,7 +22,8 @@ defmodule BSV.MixProject do
   defp deps do
     [
       {:basefiftyeight, "~> 0.1"},
-      {:curvy, "~> 0.2"}
+      {:curvy, "~> 0.2"},
+      {:ex_doc, "~> 0.25", only: :dev, runtime: false},
     ]
   end
 end

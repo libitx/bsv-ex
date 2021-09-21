@@ -38,6 +38,32 @@ defmodule BSV.VarInt do
   end
 
   @doc """
+  TODO
+
+  ## Examples
+
+      iex> BSV.VarInt.decode_binary(<<5, 104, 101, 108, 108, 111>>)
+      {:ok, "hello"}
+  """
+  @spec decode_binary(binary()) :: {:ok, binary()} | {:error, term()}
+  def decode_binary(data) when is_binary(data) do
+    with {:ok, data, _rest} <- parse_data(data), do: {:ok, data}
+  end
+
+  @doc """
+  TODO
+  """
+  @spec decode_binary!(binary()) :: binary()
+  def decode_binary!(data) when is_binary(data) do
+    case decode_binary(data) do
+      {:ok, data} ->
+        data
+      {:error, error} ->
+        raise BSV.DecodeError, error
+    end
+  end
+
+  @doc """
   Encodes the given integer into a VarInt binary.
 
   ## Examples
