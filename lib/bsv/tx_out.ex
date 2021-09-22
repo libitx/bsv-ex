@@ -70,7 +70,7 @@ defmodule BSV.TxOut do
     @impl true
     def serialize(%{satoshis: satoshis, script: script}) do
       script_data = script
-      |> Serializable.serialize()
+      |> Script.to_binary()
       |> VarInt.encode_binary()
 
       <<

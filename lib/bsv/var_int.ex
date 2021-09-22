@@ -145,21 +145,21 @@ defmodule BSV.VarInt do
   @spec parse_items(binary(), Serializable.t()) ::
     {:ok, list(Serializable.t()), binary()} |
     {:error, term()}
-  def parse_items(data, target) when is_binary(data) and is_atom(target) do
+  def parse_items(data, mod) when is_binary(data) and is_atom(mod) do
     with {:ok, int, data} <- parse_int(data) do
-      parse_items(data, int, target)
+      parse_items(data, int, mod)
     end
   end
 
   # TODO
-  defp parse_items(data, num, target, result \\ [])
+  defp parse_items(data, num, mod, result \\ [])
 
-  defp parse_items(data, num, _target, result) when length(result) == num,
+  defp parse_items(data, num, _mod, result) when length(result) == num,
     do: {:ok, Enum.reverse(result), data}
 
-  defp parse_items(data, num, target, result) do
-    with {:ok, item, data} <- Serializable.parse(target, data) do
-      parse_items(data, num, target, [item | result])
+  defp parse_items(data, num, mod, result) do
+    with {:ok, item, data} <- Serializable.parse(struct(mod), data) do
+      parse_items(data, num, mod, [item | result])
     end
   end
 

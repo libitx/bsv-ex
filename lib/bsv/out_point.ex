@@ -2,8 +2,11 @@ defmodule BSV.OutPoint do
   @moduledoc """
   TODO
   """
-  alias BSV.Serializable
+  alias BSV.{Serializable, Tx}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
+
+  @coinbase_hash <<0::256>>
+  @coinbase_sequence 0xFFFFFFFF
 
   defstruct hash: nil, index: nil
 
@@ -44,6 +47,20 @@ defmodule BSV.OutPoint do
   @doc """
   TODO
   """
+  @spec get_txid(t()) :: Tx.txid()
+  def get_txid(%__MODULE__{hash: hash}),
+    do: hash |> reverse_bin() |> encode(:hex)
+
+  @doc """
+  TODO
+  """
+  @spec null?(t()) :: boolean()
+  def null?(%__MODULE__{hash: @coinbase_hash, index: @coinbase_sequence}), do: true
+  def null?(%__MODULE__{}), do: false
+
+  @doc """
+  TODO
+  """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = outpoint, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)
@@ -52,12 +69,6 @@ defmodule BSV.OutPoint do
     |> Serializable.serialize()
     |> encode(encoding)
   end
-
-  @doc """
-  TODO
-  """
-  def txid(%__MODULE__{hash: hash}),
-    do: hash |> reverse_bin() |> encode(:hex)
 
   defimpl Serializable do
     @impl true

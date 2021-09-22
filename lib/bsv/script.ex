@@ -5,11 +5,22 @@ defmodule BSV.Script do
   alias BSV.OpCode
   import BSV.Util, only: [decode: 2, decode!: 2, encode: 2]
 
-  defstruct chunks: []
+  defstruct chunks: [], coinbase: nil
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    chunks: list(atom() | binary())
+    chunks: list(chunk()),
+    coinbase: nil | binary()
+  }
+
+  @typedoc "TODO"
+  @type chunk() :: atom() | binary()
+
+  @typedoc "TODO"
+  @type coinbase_data() :: %{
+    height: integer(),
+    data: binary(),
+    nonce: binary()
   }
 
   @doc """
@@ -70,6 +81,23 @@ defmodule BSV.Script do
   @doc """
   TODO
   """
+  @spec get_coinbase_data(t()) :: coinbase_data() | binary()
+  def get_coinbase_data(%__MODULE__{coinbase: data}) when is_binary(data) do
+    case data do
+      <<n::integer, blknum::bytes-size(n), d::integer, data::bytes-size(d), nonce::binary>> ->
+        %{
+          block: BSV.ScriptNum.decode(blknum),
+          data: data,
+          nonce: nonce
+        }
+      data ->
+        data
+    end
+  end
+
+  @doc """
+  TODO
+  """
   @spec push(t(), atom() | integer() | binary()) :: t()
   def push(%__MODULE__{} = script, data)
     when is_atom(data)
@@ -96,7 +124,16 @@ defmodule BSV.Script do
   TODO
   """
   @spec to_binary(t(), keyword()) :: binary()
-  def to_binary(%__MODULE__{chunks: chunks}, opts \\ []) do
+  def to_binary(script, opts \\ [])
+
+  def to_binary(%__MODULE__{chunks: [], coinbase: data}, opts)
+    when is_binary(data)
+  do
+    encoding = Keyword.get(opts, :encoding)
+    encode(data, encoding)
+  end
+
+  def to_binary(%__MODULE__{chunks: chunks}, opts) do
     encoding = Keyword.get(opts, :encoding)
 
     chunks
@@ -117,25 +154,21 @@ defmodule BSV.Script do
 
   defp parse_bytes(<<>>, chunks), do: {:ok, Enum.reverse(chunks)}
 
-  defp parse_bytes(<<op::integer, data::binary>>, chunks)
-    when op > 0 and op < 76
+  defp parse_bytes(<<size::integer, chunk::bytes-size(size), data::binary>>, chunks)
+    when size > 0 and size < 76
   do
-    <<chunk::bytes-size(op), data::binary>> = data
     parse_bytes(data, [chunk | chunks])
   end
 
-  defp parse_bytes(<<76, size::integer, data::binary>>, chunks) do
-    <<chunk::bytes-size(size), data::binary>> = data
+  defp parse_bytes(<<76, size::integer, chunk::bytes-size(size), data::binary>>, chunks) do
     parse_bytes(data, [chunk | chunks])
   end
 
-  defp parse_bytes(<<77, size::little-16, data::binary>>, chunks) do
-    <<chunk::bytes-size(size), data::binary>> = data
+  defp parse_bytes(<<77, size::little-16, chunk::bytes-size(size), data::binary>>, chunks) do
     parse_bytes(data, [chunk | chunks])
   end
 
-  defp parse_bytes(<<78, size::little-32, data::binary>>, chunks) do
-    <<chunk::bytes-size(size), data::binary>> = data
+  defp parse_bytes(<<78, size::little-32, chunk::bytes-size(size), data::binary>>, chunks) do
     parse_bytes(data, [chunk | chunks])
   end
 

@@ -7,14 +7,20 @@ defmodule BSV.TxIn do
 
   @max_sequence 0xFFFFFFFF
 
-  defstruct prev_output: %OutPoint{}, script: %Script{}, sequence: @max_sequence
+  defstruct prev_out: %OutPoint{}, script: %Script{}, sequence: @max_sequence
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    prev_output: OutPoint.t(),
+    prev_out: OutPoint.t(),
     script: Script.t(),
     sequence: integer()
   }
+
+  @doc """
+  TODO
+  """
+  @spec coinbase?(t()) :: boolean()
+  def coinbase?(%__MODULE__{prev_out: outpoint}), do: OutPoint.null?(outpoint)
 
   @doc """
   TODO
@@ -61,11 +67,15 @@ defmodule BSV.TxIn do
     def parse(txin, data) do
       with {:ok, outpoint, data} <- Serializable.parse(%OutPoint{}, data),
            {:ok, script, data} <- VarInt.parse_data(data),
-           {:ok, script} <- Script.from_binary(script),
            <<sequence::little-32, rest::binary>> = data
       do
+        script = case OutPoint.null?(outpoint) do
+          false -> Script.from_binary!(script)
+          true -> %Script{coinbase: script}
+        end
+
         {:ok, struct(txin, [
-          prev_output: outpoint,
+          prev_out: outpoint,
           script: script,
           sequence: sequence
         ]), rest}
@@ -73,10 +83,10 @@ defmodule BSV.TxIn do
     end
 
     @impl true
-    def serialize(%{prev_output: outpoint, script: script, sequence: sequence}) do
+    def serialize(%{prev_out: outpoint, script: script, sequence: sequence}) do
       outpoint_data = Serializable.serialize(outpoint)
       script_data = script
-      |> Serializable.serialize()
+      |> Script.to_binary()
       |> VarInt.encode_binary()
 
       <<
