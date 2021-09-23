@@ -5,7 +5,7 @@ defmodule BSV.Tx do
   alias BSV.{Hash, OutPoint, Script, Serializable, TxIn, TxOut, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
 
-  defstruct version: nil, inputs: [], outputs: [], lock_time: nil
+  defstruct version: 1, inputs: [], outputs: [], lock_time: 0
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
@@ -70,11 +70,20 @@ defmodule BSV.Tx do
   @doc """
   TODO
   """
-  @spec get_txid(t()) :: txid()
-  def get_txid(%__MODULE__{} = tx) do
+  @spec get_hash(t()) :: binary()
+  def get_hash(%__MODULE__{} = tx) do
     tx
     |> to_binary()
     |> Hash.sha256_sha256()
+  end
+
+  @doc """
+  TODO
+  """
+  @spec get_txid(t()) :: txid()
+  def get_txid(%__MODULE__{} = tx) do
+    tx
+    |> get_hash()
     |> reverse_bin()
     |> encode(:hex)
   end
