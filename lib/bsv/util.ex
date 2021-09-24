@@ -21,7 +21,7 @@ defmodule BSV.Util do
 
   # TODO
   defp do_decode(data, :base64), do: Base.decode64(data)
-  defp do_decode(data, :hex), do: Base.decode16(data, case: :lower)
+  defp do_decode(data, :hex), do: Base.decode16(data, case: :mixed)
   defp do_decode(data, _), do: {:ok, data}
 
   @doc """

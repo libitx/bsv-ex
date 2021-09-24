@@ -16,6 +16,9 @@ defmodule BSV.Tx do
   }
 
   @typedoc "TODO"
+  @type hash() :: <<_::256>>
+
+  @typedoc "TODO"
   @type txid() :: String.t()
 
   @doc """
@@ -70,7 +73,7 @@ defmodule BSV.Tx do
   @doc """
   TODO
   """
-  @spec get_hash(t()) :: binary()
+  @spec get_hash(t()) :: hash()
   def get_hash(%__MODULE__{} = tx) do
     tx
     |> to_binary()
