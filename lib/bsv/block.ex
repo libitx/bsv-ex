@@ -2,7 +2,7 @@ defmodule BSV.Block do
   @moduledoc """
   TODO
   """
-  alias BSV.{BlockHeader, Serializable, Tx, VarInt}
+  alias BSV.{BlockHeader, Hash, Serializable, Tx, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2]
 
   defstruct header: nil, txns: []
@@ -12,6 +12,33 @@ defmodule BSV.Block do
     header: BlockHeader.t(),
     txns: list(Tx.t())
   }
+
+  @typedoc "TODO"
+  @type merkle_root() :: <<_::256>>
+
+  @doc """
+  TODO
+  """
+  @spec calc_merkle_root(t()) :: merkle_root()
+  def calc_merkle_root(%__MODULE__{txns: txns}) do
+    txns
+    |> Enum.map(&Tx.get_hash/1)
+    |> hash_nodes()
+  end
+
+  # TODO
+  defp hash_nodes([hash]), do: hash
+
+  defp hash_nodes(nodes) when rem(length(nodes), 2) == 1,
+    do: hash_nodes(nodes ++ List.last(nodes))
+
+  defp hash_nodes(nodes) do
+    nodes
+    |> Enum.chunk_every(2)
+    |> Enum.map(& Hash.sha256_sha256(&1 <> &2))
+    |> hash_nodes()
+  end
+
 
   @doc """
   TODO
@@ -52,6 +79,13 @@ defmodule BSV.Block do
     |> Serializable.serialize()
     |> encode(encoding)
   end
+
+  @doc """
+  TODO
+  """
+  @spec validate_merkle_root(t()) :: boolean()
+  def validate_merkle_root(%__MODULE__{header: header} = block),
+    do: calc_merkle_root(block) == (header && header.merkle_root)
 
 
   defimpl Serializable do

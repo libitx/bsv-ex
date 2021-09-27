@@ -2,7 +2,7 @@ defmodule BSV.Tx do
   @moduledoc """
   TODO
   """
-  alias BSV.{Hash, OutPoint, Script, Serializable, TxIn, TxOut, VarInt}
+  alias BSV.{Hash, Script, Serializable, TxIn, TxOut, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
 
   defstruct version: 1, inputs: [], outputs: [], lock_time: 0
