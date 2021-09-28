@@ -4,7 +4,7 @@ defmodule BSV.Util do
   """
 
   @typedoc "TODO"
-  @type encoding() :: :base64, :hex
+  @type encoding() :: :base64 | :hex
 
   @doc """
   TODO
