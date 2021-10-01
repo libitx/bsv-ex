@@ -35,7 +35,7 @@ defmodule BSV.Block do
   defp hash_nodes(nodes) do
     nodes
     |> Enum.chunk_every(2)
-    |> Enum.map(& Hash.sha256_sha256(&1 <> &2))
+    |> Enum.map(fn [a, b] -> Hash.sha256_sha256(a <> b) end)
     |> hash_nodes()
   end
 

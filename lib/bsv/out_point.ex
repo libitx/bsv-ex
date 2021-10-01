@@ -12,7 +12,7 @@ defmodule BSV.OutPoint do
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    hash: <<_::256>>,
+    hash: binary(),
     index: non_neg_integer()
   }
 

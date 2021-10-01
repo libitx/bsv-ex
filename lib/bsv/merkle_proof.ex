@@ -4,7 +4,7 @@ defmodule BSV.MerkleProof do
   """
   use Bitwise
   alias BSV.{Hash, Serializable, Tx, VarInt}
-  import BSV.Util, only: [decode: 2, encode: 2]
+  import BSV.Util, only: [decode: 2]
 
   defstruct flags: 0, index: nil, tx_hash: nil, target: nil, nodes: []
 
@@ -103,6 +103,14 @@ defmodule BSV.MerkleProof do
           nodes: nodes
         ]), <<>>}
       end
+    end
+
+    @impl true
+    # TODO
+    def serialize(%{flags: flags} = _merkle_proof) do
+      <<
+        flags::integer
+      >>
     end
 
     # TODO

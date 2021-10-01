@@ -104,7 +104,9 @@ defmodule BSV.Tx do
     end)
     |> update_in([:outputs], fn outputs ->
       Enum.sort(outputs, fn a, b ->
-        {a.satoshis, Script.to_binary(a)} < {b.satoshis, Script.to_binary(b)}
+        script_a = Script.to_binary(a.script)
+        script_b = Script.to_binary(b.script)
+        {a.satoshis, script_a} < {b.satoshis, script_b}
       end)
     end)
   end
