@@ -41,6 +41,8 @@ defmodule BSV.SigHash do
   TODO
   """
   @spec preimage(Tx.t(), TxIn.t(), TxOut.t(), sighash_type()) :: preimage()
+  def preimage(tx, input, utxo, sighash_type \\ @default_sighash)
+
   def preimage(%Tx{inputs: inputs} = tx, %TxIn{} = input, %TxOut{} = utxo, sighash_type)
     when sighash_forkid?(sighash_type)
     #and input in inputs
@@ -82,7 +84,7 @@ defmodule BSV.SigHash do
   TODO
   """
   @spec sighash(Tx.t(), TxIn.t(), TxOut.t(), sighash_type()) :: t()
-  def sighash(%Tx{} = tx, %TxIn{} = input, %TxOut{} = utxo, sighash_type) do
+  def sighash(%Tx{} = tx, %TxIn{} = input, %TxOut{} = utxo, sighash_type \\ @default_sighash) do
     tx
     |> preimage(input, utxo, sighash_type)
     |> Hash.sha256_sha256()
