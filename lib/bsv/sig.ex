@@ -44,10 +44,10 @@ defmodule BSV.Sig do
   TODO
   """
   @spec preimage(Tx.t(), non_neg_integer(), TxOut.t(), sighash_type()) :: preimage()
-  def preimage(%Tx{inputs: inputs} = tx, txin_index, %TxOut{} = utxo, sighash_type)
+  def preimage(%Tx{inputs: inputs} = tx, vin, %TxOut{} = txout, sighash_type)
     when sighash_forkid?(sighash_type)
   do
-    input = Enum.at(inputs, txin_index)
+    input = Enum.at(inputs, vin)
 
     # Input prevouts/nSequence
     prevouts_hash = hash_prevouts(tx.inputs, sighash_type)
@@ -57,12 +57,12 @@ defmodule BSV.Sig do
     outpoint = OutPoint.to_binary(input.prev_out)
 
     # subscript
-    subscript = utxo.script
+    subscript = txout.script
     |> Script.to_binary()
     |> VarInt.encode_binary()
 
     # Outputs (none/one/all, depending on flags)
-    outputs_hash = hash_outputs(tx.outputs, txin_index, sighash_type)
+    outputs_hash = hash_outputs(tx.outputs, vin, sighash_type)
 
     <<
       tx.version::little-32,
@@ -70,7 +70,7 @@ defmodule BSV.Sig do
       sequence_hash::binary,
       outpoint::binary,
       subscript::binary,
-      utxo.satoshis::little-64,
+      txout.satoshis::little-64,
       input.sequence::little-32,
       outputs_hash::binary,
       tx.lock_time::little-32,
@@ -78,16 +78,16 @@ defmodule BSV.Sig do
     >>
   end
 
-  def preimage(%Tx{} = _tx, _txin_index, %TxOut{} = _utxo, _sighash_type),
+  def preimage(%Tx{} = _tx, _vin, %TxOut{} = _txout, _sighash_type),
     do: raise "Legacy Sighash algorithm not implemented yet."
 
   @doc """
   TODO
   """
   @spec sighash(Tx.t(), non_neg_integer(), TxOut.t(), sighash_type()) :: sighash()
-  def sighash(%Tx{} = tx, txin_index, %TxOut{} = utxo, sighash_type \\ @default_sighash) do
+  def sighash(%Tx{} = tx, vin, %TxOut{} = txout, sighash_type \\ @default_sighash) do
     tx
-    |> preimage(txin_index, utxo, sighash_type)
+    |> preimage(vin, txout, sighash_type)
     |> Hash.sha256_sha256()
   end
 
@@ -95,11 +95,11 @@ defmodule BSV.Sig do
   TODO
   """
   @spec sign(Tx.t(), non_neg_integer(), TxOut.t(), PrivKey.t(), keyword()) :: signature()
-  def sign(%Tx{} = tx, txin_index, %TxOut{} = utxo, %PrivKey{d: privkey}, opts \\ []) do
+  def sign(%Tx{} = tx, vin, %TxOut{} = txout, %PrivKey{d: privkey}, opts \\ []) do
     sighash_type = Keyword.get(opts, :sighash_type, @default_sighash)
 
     tx
-    |> sighash(txin_index, utxo, sighash_type)
+    |> sighash(vin, txout, sighash_type)
     |> Curvy.sign(privkey, hash: false)
     |> Kernel.<>(<<sighash_type>>)
   end
@@ -107,11 +107,11 @@ defmodule BSV.Sig do
   @doc """
   TODO
   """
-  @spec verify(signature(), Tx.t(), non_neg_integer(), TxOut.t(), PrivKey.t()) :: boolean() | :error
-  def verify(signature, %Tx{} = tx, txin_index, %TxOut{} = utxo, %PubKey{} = pubkey) do
+  @spec verify(signature(), Tx.t(), non_neg_integer(), TxOut.t(), PubKey.t()) :: boolean() | :error
+  def verify(signature, %Tx{} = tx, vin, %TxOut{} = txout, %PubKey{} = pubkey) do
     sig_length = byte_size(signature) - 1
     <<sig::binary-size(sig_length), sighash_type>> = signature
-    message = sighash(tx, txin_index, utxo, sighash_type)
+    message = sighash(tx, vin, txout, sighash_type)
     Curvy.verify(sig, message, PubKey.to_binary(pubkey), hash: false)
   end
 
@@ -140,12 +140,12 @@ defmodule BSV.Sig do
   end
 
   # TODO
-  defp hash_outputs(outputs, txin_index, sighash_type)
+  defp hash_outputs(outputs, vin, sighash_type)
     when sighash_single?(sighash_type)
-    and txin_index < length(outputs)
+    and vin < length(outputs)
   do
     outputs
-    |> Enum.at(txin_index)
+    |> Enum.at(vin)
     |> TxOut.to_binary()
     |> Hash.sha256_sha256()
   end

@@ -9,7 +9,7 @@ defmodule BSV.TxOut do
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    satoshis: integer(),
+    satoshis: non_neg_integer(),
     script: Script.t()
   }
 
