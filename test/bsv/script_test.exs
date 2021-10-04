@@ -56,7 +56,7 @@ defmodule BSV.ScriptTest do
 
     test "pushes an opcode into the script by integer", %{script: script} do
       assert %Script{chunks: chunks} = Script.push(script, 171)
-      assert [:OP_FALSE, :OP_RETURN, :OP_CODESEPARATOR] = chunks
+      assert [:OP_FALSE, :OP_RETURN, <<171, 0>>] = chunks
     end
 
     test "pushes an binary into the script", %{script: script} do

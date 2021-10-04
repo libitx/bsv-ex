@@ -2,7 +2,7 @@ defmodule BSV.Tx do
   @moduledoc """
   TODO
   """
-  alias BSV.{Hash, Script, Serializable, TxIn, TxOut, VarInt}
+  alias BSV.{Hash, Serializable, TxIn, TxOut, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
 
   defstruct version: 1, inputs: [], outputs: [], lock_time: 0
@@ -21,6 +21,21 @@ defmodule BSV.Tx do
   @typedoc "TODO"
   @type txid() :: String.t()
 
+  @typedoc "TODO"
+  @type fee_quote() :: %{
+    mine: %{
+      data: non_neg_integer(),
+      standard: non_neg_integer()
+    },
+    relay: %{
+      data: non_neg_integer(),
+      standard: non_neg_integer()
+    },
+  } | %{
+    data: non_neg_integer(),
+    standard: non_neg_integer()
+  } | non_neg_integer()
+
   @doc """
   TODO
   """
@@ -34,6 +49,28 @@ defmodule BSV.Tx do
   @spec add_output(t(), TxOut.t()) :: t()
   def add_output(%__MODULE__{} = tx, %TxOut{} = txout),
     do: update_in(tx.outputs, & &1 ++ [txout])
+
+  @doc """
+  TODO
+  """
+  @spec calc_required_fee(t(), fee_quote()) :: non_neg_integer()
+  def calc_required_fee(%__MODULE__{} = tx, rates) when is_integer(rates),
+    do: calc_required_fee(tx, %{data: rates, standard: rates})
+
+  def calc_required_fee(%__MODULE__{} = tx, %{mine: rates}),
+    do: calc_required_fee(tx, rates)
+
+  def calc_required_fee(%__MODULE__{inputs: inputs, outputs: outputs}, %{data: _, standard: _} = rates) do
+    [
+      {:standard, 4}, # version
+      {:standard, 4}, # locktime
+      {:standard, length(inputs) |> VarInt.encode() |> byte_size()},
+      {:standard, length(outputs) |> VarInt.encode() |> byte_size()}
+    ]
+    |> Kernel.++(Enum.map(inputs, &calc_fee_part/1))
+    |> Kernel.++(Enum.map(outputs, &calc_fee_part/1))
+    |> Enum.reduce(0, fn {type, bytes}, fee -> fee + ceil(rates[type] * bytes) end)
+  end
 
   @doc """
   TODO
@@ -94,26 +131,6 @@ defmodule BSV.Tx do
   @doc """
   TODO
   """
-  @spec sort(t()) :: t()
-  def sort(%__MODULE__{} = tx) do
-    tx
-    |> update_in([:inputs], fn inputs ->
-      Enum.sort(inputs, fn %{prev_out: a}, %{prev_out: b} ->
-        {reverse_bin(a.hash), a.index} < {reverse_bin(b.hash), b.index}
-      end)
-    end)
-    |> update_in([:outputs], fn outputs ->
-      Enum.sort(outputs, fn a, b ->
-        script_a = Script.to_binary(a.script)
-        script_b = Script.to_binary(b.script)
-        {a.satoshis, script_a} < {b.satoshis, script_b}
-      end)
-    end)
-  end
-
-  @doc """
-  TODO
-  """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = tx, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)
@@ -121,6 +138,21 @@ defmodule BSV.Tx do
     tx
     |> Serializable.serialize()
     |> encode(encoding)
+  end
+
+  # TODO
+  defp calc_fee_part(%TxIn{} = txin) do
+    {:standard, TxIn.size(txin)}
+  end
+
+  # TODO
+  defp calc_fee_part(%TxOut{script: script} = txout) do
+    case script.chunks do
+      [:OP_FALSE, :OP_RETURN | _chunks] ->
+        {:data, TxOut.size(txout)}
+      _ ->
+        {:standard, TxOut.size(txout)}
+    end
   end
 
   defimpl Serializable do

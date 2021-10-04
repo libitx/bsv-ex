@@ -4,13 +4,14 @@ defmodule BSV.Contract do
   """
   alias BSV.{Script, Tx, TxIn, TxOut, UTXO}
 
-  defstruct ctx: nil, mfa: nil, opts: [], script: %Script{}
+  defstruct ctx: nil, mfa: nil, opts: [], subject: nil, script: %Script{}
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    ctx: {Tx.t(), non_neg_integer(), TxOut.t()} | nil,
+    ctx: {Tx.t(), non_neg_integer()} | nil,
     mfa: {module(), atom(), list()},
     opts: keyword(),
+    subject: non_neg_integer() | UTXO.t(),
     script: Script.t()
   }
 
@@ -22,36 +23,27 @@ defmodule BSV.Contract do
       @behaviour Contract
 
       @doc """
-      TODO
+      Returns a locking script contract with the given parameters.
       """
-      @spec init(atom(), map(), keyword()) :: Contract.t()
-      def init(function_name, %{} = params, opts \\ []) when is_atom(function_name) do
-        %Contract{
-          mfa: {__MODULE__, function_name, [params]},
-          opts: opts
-        }
-      end
-
-
-      @doc """
-      TODO
-      """
-      @spec lock(non_neg_integer(), map(), keyword()) :: {:ok, TxOut.t()} | {:error, term()}
+      @spec lock(non_neg_integer(), map(), keyword()) :: Contract.t()
       def lock(satoshis, %{} = params, opts \\ []) do
-        :locking_script
-        |> init(params, opts)
-        |> Contract.lock(satoshis)
+        struct(Contract, [
+          mfa: {__MODULE__, :locking_script, [params]},
+          opts: opts,
+          subject: satoshis
+        ])
       end
 
       @doc """
-      TODO
+      Returns an unlocking script contract with the given parameters.
       """
-      @spec unlock(UTXO.t(), {Tx.t(), non_neg_integer()}, map(), keyword()) :: {:ok, TxIn.t()} | {:error, term()}
-      def unlock(%UTXO{txout: txout} = utxo, {%Tx{} = tx, vin} = _context, %{} = params, opts \\ []) do
-        :unlocking_script
-        |> init(params, opts)
-        |> Map.put(:ctx, {tx, vin, txout})
-        |> Contract.unlock(utxo)
+      @spec unlock(UTXO.t(), map(), keyword()) :: Contract.t()
+      def unlock(%UTXO{} = utxo, %{} = params, opts \\ []) do
+        struct(Contract, [
+          mfa: {__MODULE__, :unlocking_script, [params]},
+          opts: opts,
+          subject: utxo
+        ])
       end
     end
   end
@@ -66,35 +58,14 @@ defmodule BSV.Contract do
   """
   @callback unlocking_script(t(), map()) :: t()
 
-  @doc """
-  TODO
-  """
-  @spec lock(t(), non_neg_integer()) :: {:ok, TxOut.t()} | {:error, term()}
-  def lock(%__MODULE__{mfa: {mod, fun, args}} = contract, satoshis) do
-    try do
-      %{script: script} = apply(mod, fun, [contract | args])
-      {:ok, %TxOut{satoshis: satoshis, script: script}}
-    rescue
-      _e ->
-        {:error, {:argument_error, args}}
-    end
-  end
+  @optional_callbacks unlocking_script: 2
 
   @doc """
   TODO
   """
-  @spec unlock(t(), UTXO.t()) :: {:ok, TxIn.t()} | {:error, term()}
-  def unlock(%__MODULE__{mfa: {mod, fun, args}} = contract, %UTXO{outpoint: outpoint}) do
-    try do
-      %{script: script} = apply(mod, fun, [contract | args])
-      sequence = Keyword.get(contract.opts, :sequence, 0xFFFFFFFF)
-
-      {:ok, %TxIn{prev_out: outpoint, script: script, sequence: sequence}}
-    rescue
-      _e ->
-        {:error, {:argument_error, args}}
-    end
-  end
+  @spec put_ctx(t(), Tx.t(), non_neg_integer()) :: t()
+  def put_ctx(%__MODULE__{} = contract, %Tx{} = tx, vin) when is_integer(vin),
+    do: Map.put(contract, :ctx, {tx, vin})
 
   @doc """
   TODO
@@ -107,14 +78,41 @@ defmodule BSV.Contract do
   TODO
   """
   @spec script_size(t()) :: non_neg_integer()
-  def script_size(%__MODULE__{mfa: {mod, fun, args}} = contract) do
-    %{script: script} = apply(mod, fun, [contract | args])
-    script
+  def script_size(%__MODULE__{} = contract) do
+    contract
+    |> to_script()
     |> Script.to_binary()
     |> byte_size()
   end
 
+  @doc """
+  TODO
+  """
+  @spec to_script(t()) :: Script.t()
+  def to_script(%__MODULE__{mfa: {mod, fun, args}} = contract) do
+    %{script: script} = apply(mod, fun, [contract | args])
+    script
+  end
 
+  @doc """
+  TODO
+  """
+  @spec to_txin(t()) :: TxIn.t()
+  def to_txin(%__MODULE__{subject: %UTXO{outpoint: outpoint}} = contract) do
+    sequence = Keyword.get(contract.opts, :sequence, 0xFFFFFFFF)
+    script = to_script(contract)
+    struct(TxIn, prev_out: outpoint, script: script, sequence: sequence)
+  end
 
+  @doc """
+  TODO
+  """
+  @spec to_txout(t()) :: TxOut.t()
+  def to_txout(%__MODULE__{subject: satoshis} = contract)
+    when is_integer(satoshis)
+  do
+    script = to_script(contract)
+    struct(TxOut, satoshis: satoshis, script: script)
+  end
 
 end

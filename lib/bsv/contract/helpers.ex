@@ -2,7 +2,7 @@ defmodule BSV.Contract.Helpers do
   @moduledoc """
   TODO
   """
-  alias BSV.{Contract, OpCode, PrivKey, Sig}
+  alias BSV.{Contract, OpCode, PrivKey, Sig, UTXO}
 
   # Iterrates over all opcodes
   # Defines a function to push the specified opcode onto the contract script
@@ -27,7 +27,10 @@ defmodule BSV.Contract.Helpers do
   @doc """
   TODO
   """
-  def signature(%Contract{ctx: {tx, index, txout}, opts: opts} = contract, %PrivKey{} = privkey) do
+  def signature(
+    %Contract{ctx: {tx, index}, opts: opts, subject: %UTXO{txout: txout}} = contract,
+    %PrivKey{} = privkey
+  ) do
     signature = Sig.sign(tx, index, txout, privkey, opts)
     Contract.script_push(contract, signature)
   end

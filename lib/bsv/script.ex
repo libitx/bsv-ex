@@ -2,7 +2,7 @@ defmodule BSV.Script do
   @moduledoc """
   TODO
   """
-  alias BSV.OpCode
+  alias BSV.{OpCode, ScriptNum}
   import BSV.Util, only: [decode: 2, decode!: 2, encode: 2]
 
   defstruct chunks: [], coinbase: nil
@@ -99,16 +99,23 @@ defmodule BSV.Script do
   TODO
   """
   @spec push(t(), atom() | integer() | binary()) :: t()
-  def push(%__MODULE__{} = script, data)
-    when is_atom(data)
-    or (is_integer(data) and data in 0..255)
-  do
+  def push(%__MODULE__{} = script, data) when is_atom(data) do
     {opcode, _num} = OpCode.get!(data)
     push_chunk(script, opcode)
   end
 
   def push(%__MODULE__{} = script, data) when is_binary(data),
     do: push_chunk(script, data)
+
+  def push(%__MODULE__{} = script, data) when is_integer(data),
+    do: push_chunk(script, ScriptNum.encode(data))
+
+  @doc """
+  TODO
+  """
+  @spec size(t()) :: non_neg_integer()
+  def size(%__MODULE__{} = script),
+    do: to_binary(script) |> byte_size()
 
   @doc """
   TODO

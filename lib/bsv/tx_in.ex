@@ -53,6 +53,13 @@ defmodule BSV.TxIn do
   @doc """
   TODO
   """
+  @spec size(t()) :: non_neg_integer()
+  def size(%__MODULE__{} = txin),
+    do: to_binary(txin) |> byte_size()
+
+  @doc """
+  TODO
+  """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = txin, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)

@@ -44,6 +44,13 @@ defmodule BSV.TxOut do
   @doc """
   TODO
   """
+  @spec size(t()) :: non_neg_integer()
+  def size(%__MODULE__{} = txout),
+    do: to_binary(txout) |> byte_size()
+
+  @doc """
+  TODO
+  """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = txout, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)
