@@ -1,4 +1,4 @@
-defmodule BSV.Contract.RawScript do
+defmodule BSV.Contract.Raw do
   @moduledoc """
   TODO
   """

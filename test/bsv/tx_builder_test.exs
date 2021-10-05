@@ -2,7 +2,7 @@ defmodule BSV.TxBuilderTest do
   use ExUnit.Case, async: true
   alias BSV.TxBuilder
   alias BSV.{Address, Contract, KeyPair, OutPoint, PrivKey, Script, TxOut, Util, UTXO}
-  alias BSV.Contract.{P2PKH, RawScript}
+  alias BSV.Contract.{P2PKH, Raw}
   doctest TxBuilder
 
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
@@ -94,7 +94,7 @@ defmodule BSV.TxBuilderTest do
       for v <- vectors["outputs"] do
         outputs = Enum.map v["outputs"], fn o ->
           script = Script.from_binary!(o["script"], encoding: :hex)
-          RawScript.lock(o["value"], %{script: script})
+          Raw.lock(o["value"], %{script: script})
         end
 
         builder = TxBuilder.sort(%TxBuilder{outputs: outputs})
@@ -102,7 +102,7 @@ defmodule BSV.TxBuilderTest do
           Enum.find_index(outputs, & &1.mfa == i.mfa and &1.subject == i.subject)
         end)
 
-        assert indexes == v["expected"] #, v["description"]
+        assert indexes == v["expected"] , v["description"]
       end
     end
   end
