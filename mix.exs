@@ -24,6 +24,7 @@ defmodule BSV.MixProject do
       {:basefiftyeight, "~> 0.1"},
       {:curvy, "~> 0.2"},
       {:ex_doc, "~> 0.25", only: :dev, runtime: false},
+      {:jason, "~> 1.2", only: :test}
     ]
   end
 end

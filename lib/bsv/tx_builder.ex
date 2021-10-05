@@ -24,45 +24,25 @@ defmodule BSV.TxBuilder do
 
   @typedoc "TODO"
   @type t() :: %__MODULE__{
-    inputs: list(input_template()),
-    outputs: list(output_template()),
+    inputs: list(Contract.t()),
+    outputs: list(Contract.t()),
     change_script: Script.t() | nil,
     lock_time: non_neg_integer(),
     options: map()
   }
 
-  @typedoc "TODO"
-  @type input_template() ::
-    {module(), UTXO.t(), map()} |
-    {module(), UTXO.t(), map(), keyword()}
-
-  @typedoc "TODO"
-  @type output_template() ::
-    {module(), non_neg_integer(), map()} |
-    {module(), non_neg_integer(), map(), keyword()}
-
   @doc """
   TODO
   """
-  @spec add_input(t(), input_template()) :: t()
-  def add_input(%__MODULE__{} = builder, {mod, %UTXO{}, %{}} = input)
-    when is_atom(mod),
-    do: update_in(builder.inputs, & &1 ++ [input])
-
-  def add_input(%__MODULE__{} = builder, {mod, %UTXO{}, %{}, opts} = input)
-    when is_atom(mod) and is_list(opts),
+  @spec add_input(t(), Contract.t()) :: t()
+  def add_input(%__MODULE__{} = builder, %Contract{mfa: {_, :unlocking_script, _}} = input),
     do: update_in(builder.inputs, & &1 ++ [input])
 
   @doc """
   TODO
   """
-  @spec add_output(t(), output_template()) :: t()
-  def add_output(%__MODULE__{} = builder, {mod, satoshis, %{}} = output)
-    when is_atom(mod) and is_integer(satoshis),
-    do: update_in(builder.outputs, & &1 ++ [output])
-
-  def add_output(%__MODULE__{} = builder, {mod, satoshis, %{}, opts} = output)
-    when is_atom(mod) and is_integer(satoshis) and is_list(opts),
+  @spec add_output(t(), Contract.t()) :: t()
+  def add_output(%__MODULE__{} = builder, %Contract{mfa: {_, :locking_script, _}} = output),
     do: update_in(builder.outputs, & &1 ++ [output])
 
   @doc """
@@ -85,8 +65,7 @@ defmodule BSV.TxBuilder do
   @spec input_sum(t()) :: integer()
   def input_sum(%__MODULE__{inputs: inputs}) do
     inputs
-    |> Enum.map(& elem(&1, 1))
-    |> Enum.map(& &1.txout.satoshis)
+    |> Enum.map(& &1.subject.txout.satoshis)
     |> Enum.sum()
   end
 
@@ -96,7 +75,7 @@ defmodule BSV.TxBuilder do
   @spec output_sum(t()) :: integer()
   def output_sum(%__MODULE__{outputs: outputs}) do
     outputs
-    |> Enum.map(& elem(&1, 1))
+    |> Enum.map(& &1.subject)
     |> Enum.sum()
   end
 
@@ -106,12 +85,12 @@ defmodule BSV.TxBuilder do
   @spec sort(t()) :: t()
   def sort(%__MODULE__{} = builder) do
     builder
-    |> update_in([:inputs], fn inputs ->
+    |> Map.update!(:inputs, fn inputs ->
       Enum.sort(inputs, fn %{subject: %UTXO{outpoint: a}}, %{subject: %UTXO{outpoint: b}} ->
         {reverse_bin(a.hash), a.index} < {reverse_bin(b.hash), b.index}
       end)
     end)
-    |> update_in([:outputs], fn outputs ->
+    |> Map.update!(:outputs, fn outputs ->
       Enum.sort(outputs, fn a, b ->
         script_a = Contract.to_script(a)
         script_b = Contract.to_script(b)
@@ -123,6 +102,7 @@ defmodule BSV.TxBuilder do
   @doc """
   TODO
   """
+  @spec to_tx(t()) :: Tx.t()
   def to_tx(%__MODULE__{inputs: inputs, outputs: outputs} = builder) do
     builder = if builder.options.sort == true, do: sort(builder), else: builder
     tx = struct(Tx, lock_time: builder.lock_time)
@@ -151,14 +131,14 @@ defmodule BSV.TxBuilder do
 
   # Appends the changescript if sufficient change after fee
   defp append_change(%{change_script: %Script{} = script} = builder, %Tx{} = tx) do
-    change = output_sum(builder) - input_sum(builder)
+    change = input_sum(builder) - output_sum(builder)
     fee = Tx.calc_required_fee(tx, builder.options.rates)
     txout = %TxOut{script: script}
     extra_fee = ceil(TxOut.size(txout) * builder.options.rates.mine.standard)
     txout = Map.put(txout, :satoshis, change - (fee+extra_fee))
     dust_limit = dust_threshold(txout, builder.options.rates)
 
-    if change >= txout.satoshis + dust_limit do
+    if txout.satoshis >= dust_limit do
       Tx.add_output(tx, txout)
     else
       tx
