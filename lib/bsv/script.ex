@@ -107,6 +107,9 @@ defmodule BSV.Script do
   def push(%__MODULE__{} = script, data) when is_binary(data),
     do: push_chunk(script, data)
 
+  def push(%__MODULE__{} = script, data) when data in 0..16,
+    do: push_chunk(script, String.to_atom("OP_#{ data }"))
+
   def push(%__MODULE__{} = script, data) when is_integer(data),
     do: push_chunk(script, ScriptNum.encode(data))
 

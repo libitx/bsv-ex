@@ -40,7 +40,7 @@ defmodule BSV.Contract.P2PK do
 
   @impl true
   def unlocking_script(ctx, %{privkey: %PrivKey{} = privkey}) do
-    signature(ctx, privkey)
+    sig(ctx, privkey)
   end
 
 end

@@ -49,7 +49,7 @@ defmodule BSV.Contract.P2PKH do
   @impl true
   def unlocking_script(ctx, %{keypair: keypair}) do
     ctx
-    |> signature(keypair.privkey)
+    |> sig(keypair.privkey)
     |> push(PubKey.to_binary(keypair.pubkey))
   end
 
