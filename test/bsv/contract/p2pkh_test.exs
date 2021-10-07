@@ -11,7 +11,7 @@ defmodule BSV.Contract.P2PKHTest do
     test "locks satoshis to an address" do
       contract = P2PKH.lock(1000, %{address: Address.from_pubkey(@keypair.pubkey)})
       assert %TxOut{satoshis: 1000, script: script} = Contract.to_txout(contract)
-      assert %Script{chunks: [:OP_DUP, :OP_HASH160, _pubkeyhash, :OP_EQUALVERIFY, :OP_CHECKSIG]} = script
+      assert %Script{chunks: [:OP_DUP, :OP_HASH160, <<_::binary-20>>, :OP_EQUALVERIFY, :OP_CHECKSIG]} = script
     end
 
     test "raises an error if the arguments are not valid" do
