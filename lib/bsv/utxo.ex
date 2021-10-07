@@ -16,7 +16,7 @@ defmodule BSV.UTXO do
   @doc """
   TODO
   """
-  @spec from_params(map()) :: {:ok, TxOut.t()} | {:error, term()}
+  @spec from_params(map()) :: {:ok, t()} | {:error, term()}
   def from_params(%{"txid" => txid, "script" => script} = params) do
     with {:ok, hash} <- decode(txid, :hex),
          {:ok, vout} <- take_any_param(params, ["vout", "outputIndex"]),
@@ -33,7 +33,7 @@ defmodule BSV.UTXO do
   @doc """
   TODO
   """
-  @spec from_params!(map()) :: TxOut.t()
+  @spec from_params!(map()) :: t()
   def from_params!(%{} = params) do
     case from_params(params) do
       {:ok, utxo} ->
