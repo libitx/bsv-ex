@@ -122,7 +122,7 @@ defmodule BSV.TxBuilder do
     |> Enum.with_index()
     |> Enum.reduce(append_change(builder, tx), fn {contract, vin}, tx ->
       txin = contract
-      |> Contract.put_ctx(tx, vin)
+      |> Contract.put_ctx({tx, vin})
       |> Contract.to_txin()
 
       update_in(tx.inputs, & List.replace_at(&1, vin, txin))

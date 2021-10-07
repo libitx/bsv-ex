@@ -1,6 +1,6 @@
 defmodule BSV.Contract.Helpers do
   @moduledoc """
-  TODO
+  Collection of helpers functions for use in `BSV.Contract` modules.
   """
   alias BSV.{Contract, OpCode, PrivKey, Sig, UTXO}
 
@@ -12,21 +12,29 @@ defmodule BSV.Contract.Helpers do
     |> String.downcase()
     |> String.to_atom()
 
+    @doc "Pushes `#{op}` onto the script."
+    @spec unquote(key)(Contract.t()) :: Contract.t()
     def unquote(key)(%Contract{} = contract) do
       Contract.script_push(contract, unquote(op))
     end
   end)
 
   @doc """
-  TODO
+  Pushes the given data onto the script.
   """
+  @spec push(Contract.t(), binary() | integer()) :: Contract.t()
   def push(%Contract{} = contract, data) do
     Contract.script_push(contract, data)
   end
 
   @doc """
-  TODO
+  Signs the transaction [`context`](`t:BSV.Contract.ctx/0`) and pushes the
+  signature onto the stack.
+
+  If no context is available in the [`contract`](`t:BSV.Contract.t/0`), then
+  71 bytes of zeros are pushed onto the stack instead.
   """
+  @spec signature(Contract.t(), PrivKey.t()) :: Contract.t()
   def signature(
     %Contract{ctx: {tx, index}, opts: opts, subject: %UTXO{txout: txout}} = contract,
     %PrivKey{} = privkey

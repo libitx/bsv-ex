@@ -2,8 +2,9 @@ defmodule BSV.Contract.P2PKH do
   @moduledoc """
   Pay to Public Key Hash contract.
 
-  P2PKH scripts are used to lock Bitcoin to an address. The Bitcoin can later be
-  unlocked using the private key corresponding to the address.
+  P2PKH scripts are used to lock Bitcoin to an [`address`](`t:BSV.Address.t/0`).
+  The Bitcoin can later be unlocked using the private key corresponding to the
+  address.
 
   ## Lock parameters
 
