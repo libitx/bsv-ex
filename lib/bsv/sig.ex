@@ -43,6 +43,17 @@ defmodule BSV.Sig do
   @doc """
   TODO
   """
+  @spec sighash_type(atom()) :: sighash_type()
+  def sighash_type(:default), do: @default_sighash
+  def sighash_type(:sighash_all), do: @sighash_all
+  def sighash_type(:sighash_none), do: @sighash_none
+  def sighash_type(:sighash_single), do: @sighash_single
+  def sighash_type(:sighash_forkid), do: @sighash_forkid
+  def sighash_type(:sighash_anyonecanpay), do: @sighash_anyonecanpay
+
+  @doc """
+  TODO
+  """
   @spec preimage(Tx.t(), non_neg_integer(), TxOut.t(), sighash_type()) :: preimage()
   def preimage(%Tx{inputs: inputs} = tx, vin, %TxOut{} = txout, sighash_type)
     when sighash_forkid?(sighash_type)
