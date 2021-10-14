@@ -1,7 +1,7 @@
 defmodule BSV.Contract.P2MSTest do
   use ExUnit.Case, async: true
   alias BSV.Contract.P2MS
-  alias BSV.{Contract, ExtKey, Script, TxOut, UTXO}
+  alias BSV.{Contract, ExtKey, Script, TxOut, UTXO, VM}
 
   @test_xprv "xprv9s21ZrQH143K3qcbMJpvTQQQ1zRCPaZjXUD1zPouMDtKY9QQQ9DskzrZ3Cx38GnYXpgY2awCmJfz2QXkpxLN3Pp2PmUddbnrXziFtArpZ5v"
   @master_key ExtKey.from_string!(@test_xprv)
@@ -34,6 +34,13 @@ defmodule BSV.Contract.P2MSTest do
       assert_raise FunctionClauseError, fn ->
         P2MS.unlock(%UTXO{}, %{privkeys: ["not privkey"]}) |> Contract.to_script()
       end
+    end
+  end
+
+  describe "Contract.test_run/3" do
+    test "evaluates as truthy" do
+      assert {:ok, vm} = Contract.test_run(P2MS, %{pubkeys: @pubkeys, threshold: 2}, %{privkeys: @privkeys})
+      assert VM.valid?(vm)
     end
   end
 

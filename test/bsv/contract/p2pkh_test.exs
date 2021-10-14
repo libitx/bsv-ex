@@ -1,7 +1,7 @@
 defmodule BSV.Contract.P2PKHTest do
   use ExUnit.Case, async: true
   alias BSV.Contract.P2PKH
-  alias BSV.{Address, Contract, KeyPair, PrivKey, Script, TxOut, UTXO}
+  alias BSV.{Address, Contract, KeyPair, PrivKey, Script, TxOut, UTXO, VM}
 
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
   @keypair KeyPair.from_privkey(PrivKey.from_wif!(@wif))
@@ -31,6 +31,13 @@ defmodule BSV.Contract.P2PKHTest do
       assert_raise ArgumentError, fn ->
         P2PKH.unlock(%UTXO{}, %{keypair: "not keypair"}) |> Contract.to_script()
       end
+    end
+  end
+
+  describe "Contract.test_run/3" do
+    test "evaluates as truthy" do
+      assert {:ok, vm} = Contract.test_run(P2PKH, %{address: Address.from_pubkey(@keypair.pubkey)}, %{keypair: @keypair})
+      assert VM.valid?(vm)
     end
   end
 

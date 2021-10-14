@@ -94,7 +94,7 @@ defmodule BSV.Contract do
 
   For more information, refer to `BSV.TxBuilder`.
   """
-  alias BSV.{Script, Tx, TxIn, TxOut, UTXO}
+  alias BSV.{OutPoint, Script, Tx, TxBuilder, TxIn, TxOut, UTXO, VM}
 
   defstruct ctx: nil, mfa: nil, opts: [], subject: nil, script: %Script{}
 
@@ -224,6 +224,28 @@ defmodule BSV.Contract do
   do
     script = to_script(contract)
     struct(TxOut, satoshis: satoshis, script: script)
+  end
+
+  @doc """
+  TODO
+  """
+  @spec test_run(module(), map(), map()) :: {:ok, VM.t()} | {:error, VM.t()}
+  def test_run(mod, %{} = lock_params, %{} = unlock_params) when is_atom(mod) do
+    %Tx{outputs: [txout]} = lock_tx = TxBuilder.to_tx(%TxBuilder{
+      outputs: [apply(mod, :lock, [1000, lock_params])]
+    })
+
+    utxo = %UTXO{
+      outpoint: %OutPoint{hash: Tx.get_hash(lock_tx), index: 0},
+      txout: txout
+    }
+
+    %Tx{inputs: [txin]} = tx = TxBuilder.to_tx(%TxBuilder{
+      inputs: [apply(mod, :unlock, [utxo, unlock_params])]
+    })
+
+    %VM{ctx: {tx, 0, txout}}
+    |> VM.eval(%Script{chunks: txin.script.chunks ++  txout.script.chunks})
   end
 
 end
