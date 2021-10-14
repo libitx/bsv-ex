@@ -34,6 +34,10 @@ defmodule BSV.Contract.P2RPH do
   """
   use BSV.Contract
   alias BSV.{Hash, PrivKey, PubKey, Sig, UTXO}
+  alias Curvy.Point
+  import Curvy.Util, only: [mod: 2]
+
+  @crv Curvy.Curve.secp256k1()
 
   @impl true
   def locking_script(ctx, %{r: r}) when is_binary(r) do
@@ -63,6 +67,33 @@ defmodule BSV.Contract.P2RPH do
     |> sig(keypair.privkey)
     |> sig_with_k(keypair.privkey, k)
     |> push(PubKey.to_binary(keypair.pubkey))
+  end
+
+  @doc """
+  TODO
+  """
+  @spec generate_k() :: binary()
+  def generate_k() do
+    :crypto.generate_key(:ecdh, :secp256k1)
+    |> elem(1)
+  end
+
+  @doc """
+  TODO
+  """
+  @spec get_r(binary()) :: binary()
+  def get_r(<<k::big-256>>) do
+    r = @crv[:G]
+    |> Point.mul(k)
+    |> Map.get(:x)
+    |> mod(@crv[:n])
+
+    case <<r::big-256>> do
+      <<r0, _::binary>> = r when r0 > 127 ->
+        <<0, r::binary>>
+      r ->
+        r
+    end
   end
 
   # TODO

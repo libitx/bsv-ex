@@ -35,9 +35,14 @@ defmodule BSV.Contract.P2PKHTest do
   end
 
   describe "Contract.test_run/3" do
-    test "evaluates as truthy" do
+    test "evaluates as valid if signed with correct key" do
       assert {:ok, vm} = Contract.test_run(P2PKH, %{address: Address.from_pubkey(@keypair.pubkey)}, %{keypair: @keypair})
       assert VM.valid?(vm)
+    end
+
+    test "evaluates as invalid if signed with incorrect key" do
+      assert {:error, vm} = Contract.test_run(P2PKH, %{address: Address.from_pubkey(@keypair.pubkey)}, %{keypair: KeyPair.new()})
+      refute VM.valid?(vm)
     end
   end
 

@@ -1,7 +1,7 @@
 defmodule BSV.Contract.P2PKTest do
   use ExUnit.Case, async: true
   alias BSV.Contract.P2PK
-  alias BSV.{Contract, KeyPair, PrivKey, Script, TxOut, UTXO}
+  alias BSV.{Contract, KeyPair, PrivKey, Script, TxOut, UTXO, VM}
 
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
   @keypair KeyPair.from_privkey(PrivKey.from_wif!(@wif))
@@ -31,6 +31,18 @@ defmodule BSV.Contract.P2PKTest do
       assert_raise FunctionClauseError, fn ->
         P2PK.unlock(%UTXO{}, %{privkey: "not privkey"}) |> Contract.to_script()
       end
+    end
+  end
+
+  describe "Contract.test_run/3" do
+    test "evaluates as valid if signed with correct keys" do
+      assert {:ok, vm} = Contract.test_run(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: @keypair.privkey})
+      assert VM.valid?(vm)
+    end
+
+    test "evaluates as invalid if signed with incorrect key" do
+      assert {:ok, vm} = Contract.test_run(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: PrivKey.new()})
+      refute VM.valid?(vm)
     end
   end
 

@@ -38,9 +38,20 @@ defmodule BSV.Contract.P2MSTest do
   end
 
   describe "Contract.test_run/3" do
-    test "evaluates as truthy" do
+    test "evaluates as valid if signed with correct threshold of keys" do
       assert {:ok, vm} = Contract.test_run(P2MS, %{pubkeys: @pubkeys, threshold: 2}, %{privkeys: @privkeys})
       assert VM.valid?(vm)
+    end
+
+    test "evaluates as invalid if signed with insufficient threshold of keys" do
+      assert {:ok, vm} = Contract.test_run(P2MS, %{pubkeys: @pubkeys, threshold: 2}, %{privkeys: Enum.take(@privkeys, 1)})
+      refute VM.valid?(vm)
+    end
+
+    test "evaluates as invalid if signed with incorrect keys" do
+      privkeys = Enum.map(4..5, & ExtKey.derive(@master_key, "m/#{&1}") |> Map.get(:privkey))
+      assert {:ok, vm} = Contract.test_run(P2MS, %{pubkeys: @pubkeys, threshold: 2}, %{privkeys: privkeys})
+      refute VM.valid?(vm)
     end
   end
 
