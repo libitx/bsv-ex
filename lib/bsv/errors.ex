@@ -10,6 +10,9 @@ defmodule BSV.DecodeError do
   def message(%__MODULE__{reason: :invalid_address}),
     do: "Invalid Address"
 
+  def message(%__MODULE__{reason: :invalid_header}),
+    do: "Invalid block header"
+
   def message(%__MODULE__{reason: {:invalid_base58_check, version_byte, network}}),
     do: "Invalid version byte `#{ to_string(version_byte) }` for network: #{ to_string(network) }"
 

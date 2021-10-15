@@ -1,13 +1,19 @@
 defmodule BSV.BlockHeader do
   @moduledoc """
-  TODO
+  A block header is an 80 byte packet of information providing a summary of the
+  block.
+
+  Contained within the block header is a Merkle root - the result of hashing all
+  of the transactions contained in the block together in a tree-like structure
+  known as a Merkle tree. Given a transaction and Merkle proof, we can verify
+  the transaction is contained in a block without downloading the entire block.
   """
   alias BSV.Serializable
   import BSV.Util, only: [decode: 2, encode: 2]
 
   defstruct [:version, :prev_hash, :merkle_root, :time, :bits, :nonce]
 
-  @typedoc "TODO"
+  @typedoc "Block header struct"
   @type t() :: %__MODULE__{
     version: non_neg_integer(),
     prev_hash: <<_::256>>,
@@ -18,7 +24,15 @@ defmodule BSV.BlockHeader do
   }
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.BlockHeader.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
@@ -32,7 +46,9 @@ defmodule BSV.BlockHeader do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.BlockHeader.t/0`.
+
+  As `from_binary/1` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
@@ -46,7 +62,13 @@ defmodule BSV.BlockHeader do
   end
 
   @doc """
-  TODO
+  Serialises the given `t:BSV.BlockHeader.t/0` into a binary.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = header, opts \\ []) do
@@ -56,7 +78,6 @@ defmodule BSV.BlockHeader do
     |> Serializable.serialize()
     |> encode(encoding)
   end
-
 
   defimpl Serializable do
     @impl true
@@ -79,6 +100,9 @@ defmodule BSV.BlockHeader do
           bits: bits,
           nonce: nonce
         ]), rest}
+      else
+        _data ->
+          {:error, :invalid_header}
       end
     end
 

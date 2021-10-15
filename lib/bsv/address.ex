@@ -61,7 +61,7 @@ defmodule BSV.Address do
   @doc """
   Decodes the given `t:BSV.Address.address_str/0` into an `t:BSV.Address.t/0`.
 
-  Returns an `:ok` / `:error` tuple pair.
+  Returns the result in an `:ok` / `:error` tuple pair.
 
   ## Examples
 
