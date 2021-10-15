@@ -1,17 +1,32 @@
 defmodule BSV.Address do
   @moduledoc """
-  TODO
+  A Bitcoin address is a 26-35 character string beginning with the number 1,
+  that represents the hash of a pulic key.
+
+  An address is derived by calculating the RIPEMD hash of a SHA-256 hash of the
+  public key, and then Base58check encoding it.
+
+  Addresses are used in [`P2PKH`](`BSV.Contract.P2PKH`) outputs, a common
+  script template used to send Bitcoin payments.
   """
   alias BSV.{Hash, PubKey}
 
   defstruct pubkey_hash: nil
 
-  @typedoc "TODO"
+  @typedoc """
+  Bitcoin address
+
+  An Elixir struct containing the public key hash.
+  """
   @type t() :: %__MODULE__{
     pubkey_hash: <<_::160>>
   }
 
-  @typedoc "TODO"
+  @typedoc """
+  Bitcoin address string
+
+  Base58Check encoded public key hash.
+  """
   @type address_str() :: String.t()
 
   @version_bytes %{
@@ -20,7 +35,14 @@ defmodule BSV.Address do
   }
 
   @doc """
-  TODO
+  Converts the given `t:BSV.PubKey.t/0` into an `t:BSV.Address.t/0`.
+
+  ## Examples
+
+      iex> Address.from_pubkey(@pubkey)
+      %Address{
+        pubkey_hash: <<83, 143, 209, 121, 200, 190, 15, 40, 156, 115, 14, 51, 181, 246, 163, 84, 27, 233, 102, 143>>
+      }
   """
   @spec from_pubkey(PubKey.t() | PubKey.pubkey_bin()) :: t()
   def from_pubkey(%PubKey{} = pubkey) do
@@ -37,7 +59,16 @@ defmodule BSV.Address do
   end
 
   @doc """
-  TODO
+  Decodes the given `t:BSV.Address.address_str/0` into an `t:BSV.Address.t/0`.
+
+  Returns an `:ok` / `:error` tuple pair.
+
+  ## Examples
+
+      iex> Address.from_string("18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5")
+      {:ok, %Address{
+        pubkey_hash: <<83, 143, 209, 121, 200, 190, 15, 40, 156, 115, 14, 51, 181, 246, 163, 84, 27, 233, 102, 143>>
+      }}
   """
   @spec from_string(address_str()) :: {:ok, t()} | {:error, term()}
   def from_string(address) when is_binary(address) do
@@ -55,7 +86,9 @@ defmodule BSV.Address do
   end
 
   @doc """
-  TODO
+  Decodes the given `t:BSV.Address.address_str/0` into an `t:BSV.Address.t/0`.
+
+  As `from_string/1` but returns the result or raises an exception.
   """
   @spec from_string!(address_str()) :: t()
   def from_string!(address) when is_binary(address) do
@@ -68,7 +101,13 @@ defmodule BSV.Address do
   end
 
   @doc """
-  TODO
+  Encodes the given `t:BSV.Address.t/0` as a Base58Check encoded
+  `t:BSV.Address.address_str/0`.
+
+  ## Example
+
+      iex> Address.to_string(@address)
+      "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
   """
   @spec to_string(t()) :: address_str()
   def to_string(%__MODULE__{pubkey_hash: pubkey_hash}) do
