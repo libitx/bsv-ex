@@ -86,6 +86,7 @@ iex> master = BSV.Mnemonic.to_seed(mnemonic)
 
 iex> child_address = master
 ...> |> BSV.Extended.Children.derive("m/44'/0'/0'/0/0")
+...> |> BSV.Address.from_public_key
 ...> |> BSV.Address.to_string
 "1F6fuP7HrBY8aeUazXZitaAsgpsJQFfUun"
 ```
