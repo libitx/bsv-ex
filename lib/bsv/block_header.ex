@@ -48,7 +48,7 @@ defmodule BSV.BlockHeader do
   @doc """
   Parses the given binary into a `t:BSV.BlockHeader.t/0`.
 
-  As `from_binary/1` but returns the result or raises an exception.
+  As `from_binary/2` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
