@@ -21,7 +21,7 @@ defmodule BSV.BlockTest do
       %BSV.Tx{
         inputs: [
           %BSV.TxIn{
-            prev_out: %BSV.OutPoint{
+            prevout: %BSV.OutPoint{
               hash: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
               index: 4294967295

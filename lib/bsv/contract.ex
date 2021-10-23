@@ -212,7 +212,7 @@ defmodule BSV.Contract do
   def to_txin(%__MODULE__{subject: %UTXO{outpoint: outpoint}} = contract) do
     sequence = Keyword.get(contract.opts, :sequence, 0xFFFFFFFF)
     script = to_script(contract)
-    struct(TxIn, prev_out: outpoint, script: script, sequence: sequence)
+    struct(TxIn, prevout: outpoint, script: script, sequence: sequence)
   end
 
   @doc """

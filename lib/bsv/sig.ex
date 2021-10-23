@@ -65,7 +65,7 @@ defmodule BSV.Sig do
     sequence_hash = hash_sequence(tx.inputs, sighash_type)
 
     # outpoint (32-byte hash + 4-byte little endian)
-    outpoint = OutPoint.to_binary(input.prev_out)
+    outpoint = OutPoint.to_binary(input.prevout)
 
     # subscript
     subscript = txout.script
@@ -133,7 +133,7 @@ defmodule BSV.Sig do
 
   defp hash_prevouts(inputs, _sighash_type) do
     inputs
-    |> Enum.reduce(<<>>, & &2 <> OutPoint.to_binary(&1.prev_out))
+    |> Enum.reduce(<<>>, & &2 <> OutPoint.to_binary(&1.prevout))
     |> Hash.sha256_sha256()
   end
 

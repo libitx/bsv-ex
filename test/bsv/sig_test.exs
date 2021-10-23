@@ -16,7 +16,7 @@ defmodule BSV.SigTest do
   }
   @prev_tx %Tx{outputs: [@prev_txout]}
   @test_txin %TxIn{
-    prev_out: %OutPoint{
+    prevout: %OutPoint{
       hash: Tx.get_hash(@prev_tx),
       index: 0
     },

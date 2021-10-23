@@ -34,6 +34,12 @@ defmodule BSV.PrivKey do
 
   @doc """
   Generates and returns a new `t:BSV.PrivKey.t/0`.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:compressed` - Denotes whether the correspding `t:BSV.PubKey.t/0` is compressed on not. Defaults `true`.
   """
   @spec new(keyword()) :: t()
   def new(opts \\ []) do
@@ -50,6 +56,7 @@ defmodule BSV.PrivKey do
 
   The accepted options are:
 
+  * `:compressed` - Denotes whether the correspding `t:BSV.PubKey.t/0` is compressed on not. Defaults `true`.
   * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples

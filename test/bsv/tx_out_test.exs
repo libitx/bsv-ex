@@ -2,7 +2,6 @@ defmodule BSV.TxOutTest do
   use ExUnit.Case, async: true
   alias BSV.TxOut
   alias BSV.Script
-  doctest TxOut
 
   @txout_hex "efbee82f000000001976a9145ae866af9de106847de6111e5f1faa168b2be68988ac"
   @txout_script %Script{chunks: [
@@ -12,6 +11,8 @@ defmodule BSV.TxOutTest do
     :OP_EQUALVERIFY,
     :OP_CHECKSIG
   ]}
+
+  doctest TxOut
 
   describe "TxOut.from_binary/2" do
     test "parses hex encoded p2pkh txout" do
@@ -26,6 +27,13 @@ defmodule BSV.TxOutTest do
       assert %TxOut{script: script} = txout = TxOut.from_binary!(@txout_hex, encoding: :hex)
       assert txout.satoshis == 803782383
       assert script == @txout_script
+    end
+  end
+
+  describe "TxOut.size/2" do
+    test "returns byte size of the txout" do
+      txout = %TxOut{satoshis: 803782383, script: @txout_script}
+      assert TxOut.size(txout) == 34
     end
   end
 
