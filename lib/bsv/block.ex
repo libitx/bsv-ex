@@ -1,5 +1,8 @@
 defmodule BSV.Block do
   @moduledoc """
+  A block is a data structure consisting of a `t:BSV.BlockHeader.t/0` and a list
+  of [`transactions`](`t:BSV.Tx.t/0`).
+
   TODO
   """
   alias BSV.{BlockHeader, Hash, Serializable, Tx, VarInt}
@@ -7,17 +10,21 @@ defmodule BSV.Block do
 
   defstruct header: nil, txns: []
 
-  @typedoc "TODO"
+  @typedoc "Block struct"
   @type t() :: %__MODULE__{
     header: BlockHeader.t(),
     txns: list(Tx.t())
   }
 
-  @typedoc "TODO"
+  @typedoc """
+  Merkle root - the result of hashing all of the transactions contained in the
+  block into a tree-like structure known as a Merkle tree.
+  """
   @type merkle_root() :: <<_::256>>
 
   @doc """
-  TODO
+  Calculates and returns the result of hashing all of the transactions contained
+  in the block into a tree-like structure known as a Merkle tree.
   """
   @spec calc_merkle_root(t()) :: merkle_root()
   def calc_merkle_root(%__MODULE__{txns: txns}) do
@@ -26,7 +33,8 @@ defmodule BSV.Block do
     |> hash_nodes()
   end
 
-  # TODO
+  # Iterates over the list of tx hashes and further hashes them together until
+  # the merkle root is calvulated
   defp hash_nodes([hash]), do: hash
 
   defp hash_nodes(nodes) when rem(length(nodes), 2) == 1,
@@ -39,9 +47,16 @@ defmodule BSV.Block do
     |> hash_nodes()
   end
 
-
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Block.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
@@ -55,7 +70,9 @@ defmodule BSV.Block do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Block.t/0`.
+
+  As `from_binary/1` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
@@ -69,7 +86,13 @@ defmodule BSV.Block do
   end
 
   @doc """
-  TODO
+  Serialises the given `t:BSV.Block.t/0` into a binary.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = block, opts \\ []) do
@@ -81,7 +104,8 @@ defmodule BSV.Block do
   end
 
   @doc """
-  TODO
+  Calculates the `t:BSV.Block.merkle_root/0` of the given block and compares the
+  result to the value contained the `t:BSV.BlockHeader.t/0`.
   """
   @spec validate_merkle_root(t()) :: boolean()
   def validate_merkle_root(%__MODULE__{header: header} = block),

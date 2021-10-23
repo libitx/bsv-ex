@@ -1,14 +1,14 @@
 defmodule BSV.BlockHeader do
   @moduledoc """
   A block header is an 80 byte packet of information providing a summary of the
-  block.
+  `t:BSV.Block/0`.
 
   Contained within the block header is a Merkle root - the result of hashing all
-  of the transactions contained in the block together in a tree-like structure
-  known as a Merkle tree. Given a transaction and Merkle proof, we can verify
+  of the transactions contained in the block into a tree-like structure known as
+  a Merkle tree. Given a transaction and `t:BSV.MerkleProof.t/0`, we can verify
   the transaction is contained in a block without downloading the entire block.
   """
-  alias BSV.Serializable
+  alias BSV.{Block, Serializable}
   import BSV.Util, only: [decode: 2, encode: 2]
 
   defstruct [:version, :prev_hash, :merkle_root, :time, :bits, :nonce]
@@ -17,7 +17,7 @@ defmodule BSV.BlockHeader do
   @type t() :: %__MODULE__{
     version: non_neg_integer(),
     prev_hash: <<_::256>>,
-    merkle_root: <<_::256>>,
+    merkle_root: Block.merkle_root(),
     time: non_neg_integer(),
     bits: non_neg_integer(),
     nonce: non_neg_integer()
@@ -78,6 +78,7 @@ defmodule BSV.BlockHeader do
     |> Serializable.serialize()
     |> encode(encoding)
   end
+
 
   defimpl Serializable do
     @impl true

@@ -31,7 +31,7 @@ defmodule BSV.BlockHeaderTest do
       assert header == @block_header
     end
 
-    test "raises error with invalid ASM" do
+    test "raises error with invalid binary" do
       assert_raise BSV.DecodeError, ~r/invalid block header/i, fn ->
         BlockHeader.from_binary!("010000000505050505050505050505050505", encoding: :hex)
       end
