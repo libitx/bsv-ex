@@ -2,12 +2,32 @@ defmodule BSV.ExtKeyTest do
   use ExUnit.Case, async: true
   alias BSV.ExtKey
   alias BSV.Mnemonic
-  doctest ExtKey
 
   @test_words "decorate autumn pulp gas emerge just clay initial toss raccoon festival series"
   @test_seed "5bd995f07cbaeeb8c1fb4d52db5884471ae80b82f7c07094bfc77b2f4742a76a1d72d25ad58d011ecff16b1b9b0ae225e2fc084cad91a176527b4bca50047025"
   @test_xprv "xprv9s21ZrQH143K3qcbMJpvTQQQ1zRCPaZjXUD1zPouMDtKY9QQQ9DskzrZ3Cx38GnYXpgY2awCmJfz2QXkpxLN3Pp2PmUddbnrXziFtArpZ5v"
   @test_xpub "xpub661MyMwAqRbcGKh4TLMvpYM8a2Fgo3Hath8cnnDWuZRJQwjYwgY8JoB2tTgiTDdwf4rdGvgUpGhGNH54Ycb8vegrhHVVpdfYCdBBii94CLF"
+  @extkey %BSV.ExtKey{
+    chain_code: <<178, 208, 232, 46, 183, 65, 27, 66, 14, 172, 46, 66, 222, 84, 220, 98, 70, 249, 25, 3, 50, 209, 218, 236, 96, 142, 211, 79, 59, 166, 41, 106>>,
+    child_index: 0,
+    depth: 0,
+    fingerprint: <<0, 0, 0, 0>>,
+    privkey: %BSV.PrivKey{
+      compressed: true,
+      d: <<219, 231, 28, 56, 5, 76, 224, 63, 77, 224, 151, 38, 251, 136, 26, 87, 11, 186, 248, 245, 84, 56, 152, 11, 115, 35, 148, 32, 239, 241, 174, 90>>
+    },
+    pubkey: %BSV.PubKey{
+      compressed: true,
+      point: %Curvy.Point{
+        x: 81914731537127506607736443451065612706836400740211682375254444777841949022440,
+        y: 84194918502426421393864928067925727177552578328971362502574621746528696729690
+      }
+    },
+    version: <<4, 136, 173, 228>>
+  }
+  @vectors File.read!("test/vectors/bip39.json") |> Jason.decode!()
+
+  doctest ExtKey
 
   describe "ExtKey.from_seed/2" do
     test "creates extkey from binary seed" do
@@ -90,6 +110,13 @@ defmodule BSV.ExtKeyTest do
 
       assert_raise BSV.DecodeError, ~r/invalid xpub/i, fn ->
         ExtKey.from_string!("xpubNotAnXpub")
+      end
+    end
+
+    test "bip39 english test vectors" do
+      for v <- @vectors["english"] do
+        assert {:ok, extkey} = ExtKey.from_seed(v["seed"], encoding: :hex)
+        assert ExtKey.to_string(extkey) == v["bip32_xprv"]
       end
     end
   end

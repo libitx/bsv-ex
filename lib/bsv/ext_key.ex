@@ -1,6 +1,21 @@
 defmodule BSV.ExtKey do
   @moduledoc """
-  TODO
+  An ExtKey is a data structure representing a Bitcoin extended key.
+
+  An extended key is a private or public key that you can derive new keys from
+  in a hierarchical deterministic wallet. This implements [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki).
+
+  A master extended key is usually created by passing a `t:BSV.Mnemonic.seed/0`
+  to `from_seed/2`. From there, child keys can be derived by passing a
+  `t:BSV.ExtKey.derivation_path/0` to `derive/2`.
+
+  Extended private keys can be converted to extended public keys. Using a common
+  derivation path, an extended public key can derive the same child public key
+  corresponding to the child private key derived from the corresponding parent
+  extended private key.
+
+  Extended keys can be serialised using `to_string/1`, to make the key easier to
+  store or share.
   """
   alias BSV.{Hash, PrivKey, PubKey}
   alias Curvy.Point
@@ -14,7 +29,7 @@ defmodule BSV.ExtKey do
             privkey: nil,
             pubkey: nil
 
-  @typedoc "TODO"
+  @typedoc "Extended key struct"
   @type t() :: %__MODULE__{
     version: binary(),
     depth: integer(),
@@ -25,13 +40,36 @@ defmodule BSV.ExtKey do
     pubkey: PubKey.t()
   }
 
-  @typedoc "TODO"
+  @typedoc "Serialised extended private key (xprv)"
   @type xprv() :: String.t
 
-  @typedoc "TODO"
+  @typedoc "Serialised extended public key (xpub)"
   @type xpub() :: String.t
 
-  @typedoc "TODO"
+  @typedoc """
+  Derivation path
+
+  Derivation paths are used to derive a tree of keys from a common parent known
+  as the master extended key. Paths are of the format:
+
+      m/child_index[/child_index...]
+
+      # or
+
+      m/0/1/2'
+
+  The first character `m` represents the master key. A lowercase `m` derives
+  a private extended key, an uppercase `M` derives a public extended key.
+
+  The slashes seperate levels in the heirachy and each integer represents the
+  child index in that level. A derivation path can be any number of levels deep
+  meaning a practically limitless structure of private keys can be derived from
+  a single master key.
+
+  When a child index is followed by a `'` character, this denotes a hardened
+  child extended private key. It is not possible to derive a hardened child
+  extended public key from the same master key.
+  """
   @type derivation_path() :: String.t
 
   @privkey_version_bytes %{
@@ -49,9 +87,22 @@ defmodule BSV.ExtKey do
   defguardp normal?(index) when index >= 0 and index <= @mersenne_prime
   defguardp hardened?(index) when index > @mersenne_prime
 
+  @doc """
+  Generates and returns a new random `t:BSV.ExtKey.t/0`.
+  """
+  @spec new() :: t()
+  def new(), do: from_seed!(:crypto.strong_rand_bytes(64))
 
   @doc """
-  TODO
+  Generates and returns a new `t:BSV.ExtKey.t/0` from the given binary seed.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec from_seed(Mnemonic.seed(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_seed(seed, opts \\ []) when is_binary(seed) do
@@ -79,7 +130,9 @@ defmodule BSV.ExtKey do
   end
 
   @doc """
-  TODO
+  Generates and returns a new `t:BSV.ExtKey.t/0` from the given binary seed.
+
+  As `from_seed/2` but returns the result or raises an exception.
   """
   @spec from_seed!(Mnemonic.seed(), keyword()) :: t()
   def from_seed!(seed, opts \\ []) when is_binary(seed) do
@@ -92,7 +145,49 @@ defmodule BSV.ExtKey do
   end
 
   @doc """
-  TODO
+  Decodes the given `t:BSV.ExtKey.xprv/0` or `t:BSV.ExtKey.xpub/0` into a
+  `t:BSV.ExtKey.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Examples
+
+      iex> ExtKey.from_string("xprv9s21ZrQH143K3qcbMJpvTQQQ1zRCPaZjXUD1zPouMDtKY9QQQ9DskzrZ3Cx38GnYXpgY2awCmJfz2QXkpxLN3Pp2PmUddbnrXziFtArpZ5v")
+      {:ok, %BSV.ExtKey{
+        chain_code: <<178, 208, 232, 46, 183, 65, 27, 66, 14, 172, 46, 66, 222, 84, 220, 98, 70, 249, 25, 3, 50, 209, 218, 236, 96, 142, 211, 79, 59, 166, 41, 106>>,
+        child_index: 0,
+        depth: 0,
+        fingerprint: <<0, 0, 0, 0>>,
+        privkey: %BSV.PrivKey{
+          compressed: true,
+          d: <<219, 231, 28, 56, 5, 76, 224, 63, 77, 224, 151, 38, 251, 136, 26, 87, 11, 186, 248, 245, 84, 56, 152, 11, 115, 35, 148, 32, 239, 241, 174, 90>>
+        },
+        pubkey: %BSV.PubKey{
+          compressed: true,
+          point: %Curvy.Point{
+            x: 81914731537127506607736443451065612706836400740211682375254444777841949022440,
+            y: 84194918502426421393864928067925727177552578328971362502574621746528696729690
+          }
+        },
+        version: <<4, 136, 173, 228>>
+      }}
+
+      iex> ExtKey.from_string("xpub661MyMwAqRbcGKh4TLMvpYM8a2Fgo3Hath8cnnDWuZRJQwjYwgY8JoB2tTgiTDdwf4rdGvgUpGhGNH54Ycb8vegrhHVVpdfYCdBBii94CLF")
+      {:ok, %BSV.ExtKey{
+        chain_code: <<178, 208, 232, 46, 183, 65, 27, 66, 14, 172, 46, 66, 222, 84, 220, 98, 70, 249, 25, 3, 50, 209, 218, 236, 96, 142, 211, 79, 59, 166, 41, 106>>,
+        child_index: 0,
+        depth: 0,
+        fingerprint: <<0, 0, 0, 0>>,
+        privkey: nil,
+        pubkey: %BSV.PubKey{
+          compressed: true,
+          point: %Curvy.Point{
+            x: 81914731537127506607736443451065612706836400740211682375254444777841949022440,
+            y: 84194918502426421393864928067925727177552578328971362502574621746528696729690
+          }
+        },
+        version: <<4, 136, 178, 30>>
+      }}
   """
   @spec from_string(xprv() | xpub()) :: {:ok, t()} | {:error, term()}
   def from_string(<<"xprv", _::binary>> = xprv) do
@@ -157,7 +252,10 @@ defmodule BSV.ExtKey do
   end
 
   @doc """
-  TODO
+  Decodes the given `t:BSV.ExtKey.xprv/0` or `t:BSV.ExtKey.xpub/0` into a
+  `t:BSV.ExtKey.t/0`.
+
+  As `from_string/1` but returns the result or raises an exception.
   """
   @spec from_string!(xprv() | xpub()) :: t()
   def from_string!(data) when is_binary(data) do
@@ -171,7 +269,8 @@ defmodule BSV.ExtKey do
 
 
   @doc """
-  TODO
+  Converts the given `t:BSV.ExtKey.t/0` into a public extended key by dropping
+  the `t:BSV.PrivKey.t/0` and setting the appropriate version bytes.
   """
   @spec to_public(t()) :: t()
   def to_public(%__MODULE__{} = extkey) do
@@ -180,7 +279,17 @@ defmodule BSV.ExtKey do
   end
 
   @doc """
-  TODO
+  Encodes the given `t:BSV.ExtKey.t/0` into a `t:BSV.ExtKey.xprv/0` or
+  `t:BSV.ExtKey.xpub/0`.
+
+  ## Examples
+
+      iex> ExtKey.to_string(@extkey)
+      "xprv9s21ZrQH143K3qcbMJpvTQQQ1zRCPaZjXUD1zPouMDtKY9QQQ9DskzrZ3Cx38GnYXpgY2awCmJfz2QXkpxLN3Pp2PmUddbnrXziFtArpZ5v"
+
+      iex> ExtKey.to_public(@extkey)
+      ...> |> ExtKey.to_string()
+      "xpub661MyMwAqRbcGKh4TLMvpYM8a2Fgo3Hath8cnnDWuZRJQwjYwgY8JoB2tTgiTDdwf4rdGvgUpGhGNH54Ycb8vegrhHVVpdfYCdBBii94CLF"
   """
   @spec to_string(t()) :: xprv() | xpub()
   def to_string(%__MODULE__{privkey: %PrivKey{}} = extkey) do
@@ -213,7 +322,30 @@ defmodule BSV.ExtKey do
   end
 
   @doc """
-  TODO
+  Derives a new `t:BSV.ExtKey.t/0` from the given extended key and
+  `t:BSV.ExtKey.derivation_path/0`.
+
+  ## Example
+
+      iex> ExtKey.derive(@extkey, "m/44'/0'/0'/0/99")
+      %BSV.ExtKey{
+        chain_code: <<72, 111, 223, 181, 41, 141, 163, 217, 66, 98, 70, 93, 27, 235, 244, 143, 117, 254, 208, 161, 245, 132, 121, 135, 47, 56, 192, 127, 164, 121, 211, 197>>,
+        child_index: 99,
+        depth: 5,
+        fingerprint: <<235, 254, 153, 73>>,
+        privkey: %BSV.PrivKey{
+          compressed: true,
+          d: <<66, 22, 68, 9, 137, 109, 47, 233, 148, 194, 17, 198, 13, 207, 48, 235, 180, 185, 175, 29, 71, 244, 194, 128, 71, 231, 242, 49, 202, 226, 172, 105>>
+        },
+        pubkey: %BSV.PubKey{
+          compressed: true,
+          point: %Curvy.Point{
+            x: 48097579158919705714136072738459690665844860244952534154601241870317938609256,
+            y: 19116837737882717027311822027213492368729037447422592302419792121787000376066
+          }
+        },
+        version: <<4, 136, 173, 228>>
+      }
   """
   @spec derive(t(), derivation_path()) :: t()
   def derive(%__MODULE__{} = extkey, path) when is_binary(path) do
@@ -239,9 +371,8 @@ defmodule BSV.ExtKey do
     case Regex.run(~r/(\d+)(')?$/, chunk) do
       [_, chunk, "'"] ->
         chunk
-        |> String.to_integer
-        |> Kernel.+(1)
-        |> Kernel.+(@mersenne_prime)
+        |> String.to_integer()
+        |> Kernel.+(@mersenne_prime + 1)
 
       [_, chunk] ->
         String.to_integer(chunk)

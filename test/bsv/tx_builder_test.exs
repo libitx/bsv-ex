@@ -8,6 +8,7 @@ defmodule BSV.TxBuilderTest do
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
   @keypair KeyPair.from_privkey(PrivKey.from_wif!(@wif))
   @address Address.from_pubkey(@keypair.pubkey)
+  @vectors File.read!("test/vectors/bip69.json") |> Jason.decode!()
 
   describe "add_input/2" do
     test "appends an input contract" do
@@ -66,13 +67,8 @@ defmodule BSV.TxBuilderTest do
   end
 
   describe "sort/1" do
-    setup do
-      vectors = File.read!("test/vectors/bip69.json") |> Jason.decode!()
-      {:ok, vectors: vectors}
-    end
-
-    test "bip69 input test vectors", %{vectors: vectors} do
-      for v <- vectors["inputs"] do
+    test "bip69 input test vectors" do
+      for v <- @vectors["inputs"] do
         inputs = Enum.map v["inputs"], fn i ->
           utxo = %UTXO{outpoint: %OutPoint{
             hash: Util.decode!(i["txId"], :hex) |> Util.reverse_bin(),
@@ -90,8 +86,8 @@ defmodule BSV.TxBuilderTest do
       end
     end
 
-    test "bip69 output test vectors", %{vectors: vectors} do
-      for v <- vectors["outputs"] do
+    test "bip69 output test vectors" do
+      for v <- @vectors["outputs"] do
         outputs = Enum.map v["outputs"], fn o ->
           script = Script.from_binary!(o["script"], encoding: :hex)
           Raw.lock(o["value"], %{script: script})
