@@ -89,8 +89,16 @@ defmodule BSV.Sig do
     >>
   end
 
-  def preimage(%Tx{} = _tx, _vin, %TxOut{} = _txout, _sighash_type),
-    do: raise "Legacy Sighash algorithm not implemented yet."
+  def preimage(%Tx{} = tx, vin, %TxOut{} = txout, sighash_type) do
+    %{script: subscript} = update_in(txout.script.chunks, fn chunks ->
+      Enum.reject(chunks, & &1 == :OP_CODESEPARATOR)
+    end)
+
+    tx = update_in(tx.inputs, & update_tx_inputs(&1, vin, subscript, sighash_type))
+    tx = update_in(tx.outputs, & update_tx_outputs(&1, vin, sighash_type))
+
+    Tx.to_binary(tx) <> <<sighash_type::little-32>>
+  end
 
   @doc """
   TODO
@@ -171,5 +179,55 @@ defmodule BSV.Sig do
 
   defp hash_outputs(_outputs, _index, _sighash_type),
     do: :binary.copy(<<0>>, 32)
+
+  # TODO
+  defp update_tx_inputs(inputs, vin, subscript, sighash_type)
+    when sighash_anyone_can_pay?(sighash_type)
+  do
+    txin = Enum.at(inputs, vin)
+    |> Map.put(:script, subscript)
+    [txin]
+  end
+
+  defp update_tx_inputs(inputs, vin, subscript, sighash_type) do
+    inputs
+    |> Enum.with_index()
+    |> Enum.map(fn
+      {txin, ^vin} ->
+        Map.put(txin, :script, subscript)
+
+      {txin, _i} ->
+        if sighash_none?(sighash_type) || sighash_single?(sighash_type),
+          do: Map.merge(txin, %{script: %Script{}, sequence: 0}),
+          else: Map.put(txin, :script, %Script{})
+    end)
+  end
+
+  # TODO
+  defp update_tx_outputs(_outputs, _vin, sighash_type)
+    when sighash_none?(sighash_type),
+    do: []
+
+  defp update_tx_outputs(outputs, vin, sighash_type)
+    when sighash_single?(sighash_type)
+    and length(outputs) <= vin,
+    do: raise ArgumentError, "input out of txout range"
+
+  defp update_tx_outputs(outputs, vin, sighash_type)
+    when sighash_single?(sighash_type)
+  do
+    outputs
+    |> Enum.with_index()
+    |> Enum.map(fn
+      {_txout, i} when i < vin ->
+        %TxOut{satoshis: -1, script: %Script{}}
+
+      {txout, _i} ->
+        txout
+    end)
+    |> Enum.slice(0..vin)
+  end
+
+  defp update_tx_outputs(outputs, _vin, _sighash_type), do: outputs
 
 end
