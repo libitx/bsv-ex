@@ -100,7 +100,7 @@ defmodule BSV.Script do
   """
   @spec push(t(), atom() | integer() | binary()) :: t()
   def push(%__MODULE__{} = script, data) when is_atom(data) do
-    {opcode, _num} = OpCode.get!(data)
+    opcode = OpCode.to_atom!(data)
     push_chunk(script, opcode)
   end
 
@@ -183,7 +183,7 @@ defmodule BSV.Script do
   end
 
   defp parse_bytes(<<op::integer, data::binary>>, chunks) do
-    {opcode, _num} = OpCode.get!(op)
+    opcode = OpCode.to_atom!(op)
     parse_bytes(data, [opcode | chunks])
   end
 
@@ -203,8 +203,8 @@ defmodule BSV.Script do
   defp serialize_chunks([], data), do: data
 
   defp serialize_chunks([chunk | chunks], data) when is_atom(chunk) do
-    {_opcode, opnum} = OpCode.get(chunk)
-    serialize_chunks(chunks, <<data::binary, opnum::integer>>)
+    opcode = OpCode.to_integer(chunk)
+    serialize_chunks(chunks, <<data::binary, opcode::integer>>)
   end
 
   defp serialize_chunks([chunk | chunks], data) when is_binary(chunk) do

@@ -23,7 +23,7 @@ defmodule BSV.DecodeError do
     do: "Invalid Merkle proof"
 
   def message(%__MODULE__{reason: {:invalid_opcode, op}}),
-    do: "Invalid OpCode: #{ to_string(op) }"
+    do: "Invalid Op Code: #{ to_string(op) }"
 
   def message(%__MODULE__{reason: {:invalid_privkey, length}}),
     do: "Invalid PrivKey length: #{ to_string(length) }"

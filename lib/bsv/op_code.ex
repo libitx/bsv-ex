@@ -1,10 +1,20 @@
 defmodule BSV.OpCode do
   @moduledoc """
-  TODO
+  Module for accessing Bitcoin Script Op Codes.
+
+  Bitcoin Script provides a number of operations or commands, known as Op Codes.
+  When the script is evaluated, the Op Codes manipulate the stack in some way.
+
+  Within a script, an Op Code is single byte integer. Op Codes can also be
+  referenced by an atom representing the word or name of the Op Code.
   """
 
-  @typedoc "TODO"
-  @type t() :: {atom(), integer()}
+  @typedoc """
+  Op Code
+
+  Represented as either an `t:atom/0` or an `t:integer/0`.
+  """
+  @type t() :: atom() | integer()
 
   @op_codes %{
     # push value
@@ -143,67 +153,110 @@ defmodule BSV.OpCode do
     OP_NOP10: 185,
 
     # template matching params
+    OP_SMALLDATA: 249,
+    OP_SMALLINTEGER: 250,
+    OP_PUBKEYS: 251,
     OP_PUBKEYHASH: 253,
     OP_PUBKEY: 254,
     OP_INVALIDOPCODE: 255
   }
 
   @doc """
-  Returns a map of all OP codes.
+  Returns a map of all Op Codes.
   """
   @spec all() :: map()
   def all(), do: @op_codes
 
   @doc """
-  TODO
+  Returns an `t:atom/0` Op Code from the given value. Returns nil if the value
+  is not a valid Op Code.
 
   ## Examples
 
-      iex> BSV.OpCode.get :OP_RETURN
-      {:OP_RETURN, 106}
+      iex> BSV.OpCode.to_atom :OP_RETURN
+      :OP_RETURN
 
-      iex> BSV.OpCode.get "op_return"
-      {:OP_RETURN, 106}
+      iex> BSV.OpCode.to_atom "op_return"
+      :OP_RETURN
 
-      iex> BSV.OpCode.get <<106>>
-      {:OP_RETURN, 106}
+      iex> BSV.OpCode.to_atom <<106>>
+      :OP_RETURN
 
-      iex> BSV.OpCode.get 106
-      {:OP_RETURN, 106}
+      iex> BSV.OpCode.to_atom 106
+      :OP_RETURN
 
-      iex> BSV.OpCode.get :UNKNOWN_CODE
+      iex> BSV.OpCode.to_atom :UNKNOWN_CODE
       nil
   """
-  @spec get(atom() | String.t() | binary() | byte()) :: t() | nil
-  def get(op) when is_atom(op) do
-    case @op_codes[op] do
-      nil ->
-        nil
-      num ->
-        {op, num}
+  @spec to_atom(atom() | binary() | String.t() | integer()) :: t() | nil
+  def to_atom(op) when is_atom(op),
+    do: Enum.find_value(@op_codes, fn {k, _v} -> if k == op, do: k end)
+
+  def to_atom(<<op>>) when is_integer(op), do: to_atom(op)
+
+  def to_atom(op) when is_binary(op),
+    do: op |> String.upcase() |> String.to_existing_atom()
+
+  def to_atom(0), do: :OP_FALSE
+
+  def to_atom(op) when is_integer(op) and op in 0..255,
+    do: Enum.find_value(@op_codes, fn {k, v} -> if v == op, do: k end)
+
+  @doc """
+  Returns an `t:atom/0` Op Code from the given value.
+
+  As `to_atom/1` but raises an error if the value is not a valid Op Code.
+  """
+  @spec to_atom!(atom() | String.t() | binary() | integer()) :: t()
+  def to_atom!(op) do
+    case to_atom(op) do
+      nil -> raise BSV.DecodeError, {:invalid_opcode, op}
+      opcode -> opcode
     end
   end
 
-  def get(<<op>>) when is_integer(op), do: get(op)
+  @doc """
+  Returns an `t:integer/0` Op Code from the given value. Returns nil if the
+  value is not a valid Op Code.
 
-  def get(op) when is_binary(op),
-    do: op |> String.upcase() |> String.to_existing_atom() |> get()
+  ## Examples
 
-  def get(0), do: {:OP_FALSE, 0}
+      iex> BSV.OpCode.to_integer :OP_RETURN
+      106
 
-  def get(op) when is_integer(op) and op in 0..255,
-    do: Enum.find(@op_codes, fn {_k, v} -> v == op end)
+      iex> BSV.OpCode.to_integer "op_return"
+      106
+
+      iex> BSV.OpCode.to_integer <<106>>
+      106
+
+      iex> BSV.OpCode.to_integer 106
+      106
+
+      iex> BSV.OpCode.to_integer :UNKNOWN_CODE
+      nil
+  """
+  @spec to_integer(atom() | binary() | String.t()) :: t() | nil
+  def to_integer(op) when is_atom(op), do: @op_codes[op]
+
+  def to_integer(<<op>>) when is_integer(op), do: op
+
+  def to_integer(op) when is_binary(op),
+    do: op |> String.upcase() |> String.to_existing_atom() |> to_integer()
+
+  def to_integer(op) when is_integer(op) and op in 0..255,
+    do: Enum.find_value(@op_codes, fn {_k, v} -> if v == op, do: v end)
 
   @doc """
-  TODO
+  Returns an `t:integer/0` Op Code from the given value.
+
+  As `to_integer/1` but raises an error if the value is not a valid Op Code.
   """
-  @spec get!(atom() | String.t() | binary() | byte()) :: t()
-  def get!(op) do
-    case get(op) do
-      {op, num} ->
-        {op, num}
-      nil ->
-        raise BSV.DecodeError, {:invalid_opcode, op}
+  @spec to_integer!(atom() | binary() | String.t()) :: t()
+  def to_integer!(op) do
+    case to_integer(op) do
+      nil -> raise BSV.DecodeError, {:invalid_opcode, op}
+      opcode -> opcode
     end
   end
 

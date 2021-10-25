@@ -237,7 +237,10 @@ defmodule BSV.Contract do
 
       iex> alias BSV.Contract.P2PKH
       iex> keypair = BSV.KeyPair.new()
-      iex> {:ok, vm} = Contract.simulate(P2PKH, %{address: BSV.Address.from_pubkey(keypair.pubkey)}, %{keypair: keypair})
+      iex> lock_params = %{address: BSV.Address.from_pubkey(keypair.pubkey)}
+      iex> unlock_params = %{keypair: keypair}
+      iex>
+      iex> {:ok, vm} = Contract.simulate(P2PKH, lock_params, unlock_params)
       iex> BSV.VM.valid?(vm)
       true
   """
