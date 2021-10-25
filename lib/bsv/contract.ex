@@ -227,10 +227,22 @@ defmodule BSV.Contract do
   end
 
   @doc """
-  TODO
+  Simulates the contract with the given locking and unlocking parameters.
+
+  Internally this works by creating a fake transaction containing the locking
+  script, and then attempts to spend that UTXO in a second fake transaction.
+  The entire script is concatenated and passed to `VM.eval/2`.
+
+  ## Example
+
+      iex> alias BSV.Contract.P2PKH
+      iex> keypair = BSV.KeyPair.new()
+      iex> {:ok, vm} = Contract.simulate(P2PKH, %{address: BSV.Address.from_pubkey(keypair.pubkey)}, %{keypair: keypair})
+      iex> BSV.VM.valid?(vm)
+      true
   """
-  @spec test_run(module(), map(), map()) :: {:ok, VM.t()} | {:error, VM.t()}
-  def test_run(mod, %{} = lock_params, %{} = unlock_params) when is_atom(mod) do
+  @spec simulate(module(), map(), map()) :: {:ok, VM.t()} | {:error, VM.t()}
+  def simulate(mod, %{} = lock_params, %{} = unlock_params) when is_atom(mod) do
     %Tx{outputs: [txout]} = lock_tx = TxBuilder.to_tx(%TxBuilder{
       outputs: [apply(mod, :lock, [1000, lock_params])]
     })
