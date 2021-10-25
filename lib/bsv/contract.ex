@@ -244,8 +244,7 @@ defmodule BSV.Contract do
       inputs: [apply(mod, :unlock, [utxo, unlock_params])]
     })
 
-    %VM{ctx: {tx, 0, txout}}
-    |> VM.eval(%Script{chunks: txin.script.chunks ++  txout.script.chunks})
+    VM.eval(%VM{ctx: {tx, 0, txout}}, txin.script.chunks ++ txout.script.chunks)
   end
 
 end

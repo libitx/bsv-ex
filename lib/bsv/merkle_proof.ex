@@ -1,19 +1,29 @@
 defmodule BSV.MerkleProof do
   @moduledoc """
-  TODO
+  The MerkleProof module implements the [BSV TCS Merkle proof standard](https://tsc.bitcoinassociation.net/standards/merkle-proof-standardised-format/).
+
+  Merkle proofs are fundamental to the Simplified Payment Verification (SPV)
+  model that underpins bitcoin scaling. Assuming we have stored block headers
+  from the blockchain, given a transaction and `t:BSV.MerkleProof.t/0`, we can
+  verify the transaction is contained in a block without downloading the entire
+  block.
+
+  The TSC Merkle proof standard describes a way of serialising a Merkle proof
+  in a binary or json format, so network participants can share the proofs in
+  a standardised format.
   """
   use Bitwise
-  alias BSV.{Hash, Serializable, Tx, VarInt}
-  import BSV.Util, only: [decode: 2]
+  alias BSV.{BlockHeader, Hash, Serializable, Tx, VarInt}
+  import BSV.Util, only: [decode: 2, encode: 2]
 
-  defstruct flags: 0, index: nil, tx_hash: nil, target: nil, nodes: []
+  defstruct flags: 0, index: nil, subject: nil, target: nil, nodes: []
 
-  @typedoc "TODO"
+  @typedoc "Merkle proof struct"
   @type t() :: %__MODULE__{
     flags: integer(),
     index: non_neg_integer(),
-    tx_hash: Tx.hash(),
-    target: binary(),
+    subject: Tx.t() | Tx.hash(),
+    target: BlockHeader.t() | binary(),
     nodes: list(Tx.hash())
   }
 
@@ -21,10 +31,18 @@ defmodule BSV.MerkleProof do
   defguard is_tx?(flags) when (flags &&& 0x01) == 1
   defguard targets_block_hash?(flags) when (flags &&& (0x04 ||| 0x02)) == 0
   defguard targets_block_header?(flags) when (flags &&& (0x04 ||| 0x02)) == 2
-  defguard targets_merkle_root?(flags) when (flags &&& (0x04 ||| 0x02)) == 2
+  defguard targets_merkle_root?(flags) when (flags &&& (0x04 ||| 0x02)) == 4
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.MerkleProof.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
@@ -38,7 +56,9 @@ defmodule BSV.MerkleProof do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.MerkleProof.t/0`.
+
+  As `from_binary/2` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
@@ -52,13 +72,18 @@ defmodule BSV.MerkleProof do
   end
 
   @doc """
-  TODO
+  Calculates and returns the result of hashing all of the transaction hashes
+  contained in the Merkle proof into a tree-like structure known as a Merkle tree.
   """
   @spec calc_merkle_root(t()) :: binary()
-  def calc_merkle_root(%__MODULE__{index: index, tx_hash: tx_hash, nodes: nodes}),
+  def calc_merkle_root(%__MODULE__{index: index, subject: %Tx{} = tx, nodes: nodes}),
+    do: hash_nodes(Tx.get_hash(tx), index, nodes)
+
+  def calc_merkle_root(%__MODULE__{index: index, subject: tx_hash, nodes: nodes})
+    when is_binary(tx_hash),
     do: hash_nodes(tx_hash, index, nodes)
 
-  # TODO
+  # Iterates over and hashes the tx hashes
   defp hash_nodes(hash, _index, []), do: hash
 
   defp hash_nodes(hash, index, ["*" | rest]) when rem(index, 2) == 0,
@@ -77,6 +102,23 @@ defmodule BSV.MerkleProof do
     |> hash_nodes(floor(index / 2), rest)
   end
 
+  @doc """
+  Serialises the given `t:BSV.MerkleProof.t/0` into a binary.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
+  """
+  @spec to_binary(t()) :: binary()
+  def to_binary(%__MODULE__{} = merkle_proof, opts \\ []) do
+    encoding = Keyword.get(opts, :encoding)
+
+    merkle_proof
+    |> Serializable.serialize()
+    |> encode(encoding)
+  end
 
 
   defimpl Serializable do
@@ -84,51 +126,69 @@ defmodule BSV.MerkleProof do
     defguard is_tx?(flags) when (flags &&& 0x01) == 1
     defguard targets_block_hash?(flags) when (flags &&& (0x04 ||| 0x02)) == 0
     defguard targets_block_header?(flags) when (flags &&& (0x04 ||| 0x02)) == 2
-    defguard targets_merkle_root?(flags) when (flags &&& (0x04 ||| 0x02)) == 2
+    defguard targets_merkle_root?(flags) when (flags &&& (0x04 ||| 0x02)) == 4
 
     @impl true
     def parse(merkle_proof, data) do
       with <<flags::integer, data::binary>> <- data,
            {:ok, index, data} <- VarInt.parse_int(data),
-           {:ok, tx_hash, data} <- parse_tx_or_txid(data, flags),
+           {:ok, subject, data} <- parse_subject(data, flags),
            {:ok, target, data} <- parse_target(data, flags),
            {:ok, nodes_num, data} <- VarInt.parse_int(data),
-           {:ok, nodes} <- parse_nodes(data, nodes_num)
+           {:ok, nodes, rest} <- parse_nodes(data, nodes_num)
       do
         {:ok, struct(merkle_proof, [
           flags: flags,
           index: index,
-          tx_hash: tx_hash,
+          subject: subject,
           target: target,
           nodes: nodes
-        ]), <<>>}
+        ]), rest}
+      else
+        {:error, error} ->
+          {:error, error}
+
+        _data ->
+          {:error, :invalid_merkle_proof}
       end
     end
 
     @impl true
-    # TODO
-    def serialize(%{flags: flags} = _merkle_proof) do
+    def serialize(%{flags: flags, nodes: nodes} = merkle_proof) do
+      index = VarInt.encode(merkle_proof.index)
+      tx_or_id = serialize_subject(merkle_proof.subject)
+      target = serialize_target(merkle_proof.target)
+      nodes_data = Enum.reduce(nodes, VarInt.encode(length(nodes)), &serialize_node/2)
+
       <<
-        flags::integer
+        flags::integer,
+        index::binary,
+        tx_or_id::binary,
+        target::binary,
+        nodes_data::binary
       >>
     end
 
-    # TODO
-    defp parse_tx_or_txid(data, flags) when is_txid?(flags) do
-      <<txid::binary-size(32), data::binary>> = data
-      {:ok, txid, data}
-    end
-
-    defp parse_tx_or_txid(data, flags) when is_tx?(flags) do
-      with {:ok, rawtx, data} <- VarInt.parse_data(data) do
-        {:ok, Hash.sha256_sha256(rawtx), data}
+    # Parses the tx or tx hash as per the given flags
+    defp parse_subject(data, flags) when is_tx?(flags) do
+      with {:ok, rawtx, data} <- VarInt.parse_data(data),
+           {:ok, tx} <- Tx.from_binary(rawtx)
+      do
+        {:ok, tx, data}
       end
     end
 
-    # TODO
+    defp parse_subject(data, flags) when is_txid?(flags) do
+      with <<txid::binary-size(32), data::binary>> <- data do
+        {:ok, txid, data}
+      end
+    end
+
+    # # Parses the target as per the given flags
     defp parse_target(data, flags) when targets_block_header?(flags) do
-      <<block_header::binary-size(80), data::binary>> = data
-      {:ok, block_header, data}
+      with {:ok, block_header, data} <- Serializable.parse(%BlockHeader{}, data) do
+        {:ok, block_header, data}
+      end
     end
 
     defp parse_target(data, _flags) do
@@ -136,20 +196,37 @@ defmodule BSV.MerkleProof do
       {:ok, hash, data}
     end
 
-    # TODO
+    # Parses the list of nodes
     defp parse_nodes(data, num, nodes \\ [])
 
-    defp parse_nodes(_data, num, nodes) when length(nodes) == num,
-      do: {:ok, Enum.reverse(nodes)}
+    defp parse_nodes(data, num, nodes) when length(nodes) == num,
+      do: {:ok, Enum.reverse(nodes), data}
 
-    defp parse_nodes(<<0, hash::binary-size(32), data::binary>>, num, nodes) do
-      parse_nodes(data, num, [hash | nodes])
+    defp parse_nodes(<<0, hash::binary-size(32), data::binary>>, num, nodes),
+      do: parse_nodes(data, num, [hash | nodes])
+
+    defp parse_nodes(<<1, data::binary>>, num, nodes),
+      do: parse_nodes(data, num, ["*" | nodes])
+
+    # Serialised the tx or tx hash
+    defp serialize_subject(%Tx{} = tx) do
+      tx
+      |> Tx.to_binary()
+      |> VarInt.encode_binary()
     end
 
-    defp parse_nodes(<<1, data::binary>>, num, nodes) do
-      parse_nodes(data, num, ["*" | nodes])
-    end
+    defp serialize_subject(tx_hash), do: tx_hash
 
+    # Serialise the target header or hash
+    defp serialize_target(%BlockHeader{} = header),
+      do: BlockHeader.to_binary(header)
+
+    defp serialize_target(target), do: target
+
+    # Serialises the lists of nodes
+    defp serialize_node("*", data), do: data <> <<1>>
+    defp serialize_node(<<hash::binary-size(32)>>, data),
+      do: data <> <<0, hash::binary>>
   end
 
 end

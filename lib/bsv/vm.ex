@@ -16,7 +16,7 @@ defmodule BSV.VM do
             error: nil
 
   @typedoc "TODO"
-  @type t :: %__MODULE__{
+  @type t() :: %__MODULE__{
     ctx: ctx() | nil,
     stack: list(),
     alt_stack: list(),
