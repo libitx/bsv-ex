@@ -413,7 +413,7 @@ defmodule BSV.VMTest do
       })
 
       utxo = %UTXO{
-        outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), index: 0},
+        outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), vout: 0},
         txout: List.first(prev_tx.outputs)
       }
 
@@ -452,7 +452,7 @@ defmodule BSV.VMTest do
       })
 
       utxo = %UTXO{
-        outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), index: 0},
+        outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), vout: 0},
         txout: List.first(prev_tx.outputs)
       }
 

@@ -251,7 +251,7 @@ defmodule BSV.Contract do
     })
 
     utxo = %UTXO{
-      outpoint: %OutPoint{hash: Tx.get_hash(lock_tx), index: 0},
+      outpoint: %OutPoint{hash: Tx.get_hash(lock_tx), vout: 0},
       txout: txout
     }
 

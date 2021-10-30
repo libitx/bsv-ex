@@ -24,7 +24,7 @@ defmodule BSV.UTXO do
          {:ok, script} <- Script.from_binary(script, encoding: :hex)
 
     do
-      outpoint = struct(OutPoint, hash: reverse_bin(hash), index: vout)
+      outpoint = struct(OutPoint, hash: reverse_bin(hash), vout: vout)
       txout = struct(TxOut, satoshis: satoshis, script: script)
       {:ok, struct(__MODULE__, outpoint: outpoint, txout: txout)}
     end
@@ -50,7 +50,7 @@ defmodule BSV.UTXO do
   @spec from_tx(Tx.t(), non_neg_integer()) :: TxOut.t() | nil
   def from_tx(%Tx{outputs: outputs} = tx, vout) do
     with %TxOut{} = txout <- Enum.at(outputs, vout) do
-      outpoint = %OutPoint{hash: Tx.get_hash(tx), index: vout}
+      outpoint = %OutPoint{hash: Tx.get_hash(tx), vout: vout}
       %__MODULE__{outpoint: outpoint, txout: txout}
     end
   end

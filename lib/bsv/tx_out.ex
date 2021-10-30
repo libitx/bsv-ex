@@ -8,7 +8,7 @@ defmodule BSV.TxOut do
   unlocking script.
 
   The index of the output within it's containing `t:BSV.Tx.t/0`, denotes it's
-  `t:BSV.OutPoint.vout/0`.
+  `t:BSV.TxOut.vout/0`.
   """
   alias BSV.{Script, Serializable, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2]
@@ -20,6 +20,13 @@ defmodule BSV.TxOut do
     satoshis: non_neg_integer(),
     script: Script.t()
   }
+
+  @typedoc """
+  Vout - Vector of an output in a Bitcoin transaction
+
+  In integer representing the index of a TxOut.
+  """
+  @type vout() :: non_neg_integer()
 
   @doc """
   Parses the given binary into a `t:BSV.TxOut.t/0`.

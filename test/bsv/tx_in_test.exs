@@ -19,7 +19,7 @@ defmodule BSV.TxInTest do
     prevout: %BSV.OutPoint{
       hash: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
-      index: 4294967295
+      vout: 4294967295
     },
     script: %BSV.Script{
       chunks: [],
@@ -33,7 +33,7 @@ defmodule BSV.TxInTest do
   describe "TxIn.coinbase?/1" do
     test "returns false if not coinbase" do
       txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, index: 2},
+        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
       refute TxIn.coinbase?(txin)
@@ -48,7 +48,7 @@ defmodule BSV.TxInTest do
     test "parses hex encoded p2pkh txin" do
       assert {:ok, %TxIn{script: script} = txin} = TxIn.from_binary(@txin_hex, encoding: :hex)
       assert txin.prevout.hash == @outpoint_hash
-      assert txin.prevout.index == 2
+      assert txin.prevout.vout == 2
       assert script == @txin_script
     end
   end
@@ -57,7 +57,7 @@ defmodule BSV.TxInTest do
     test "parses hex encoded p2pkh txin" do
       assert %TxIn{script: script} = txin = TxIn.from_binary!(@txin_hex, encoding: :hex)
       assert txin.prevout.hash == @outpoint_hash
-      assert txin.prevout.index == 2
+      assert txin.prevout.vout == 2
       assert script == @txin_script
     end
   end
@@ -65,7 +65,7 @@ defmodule BSV.TxInTest do
   describe "TxIn.size/2" do
     test "returns byte size of the txout" do
       txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, index: 2},
+        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
       assert TxIn.size(txin) == 148
@@ -75,7 +75,7 @@ defmodule BSV.TxInTest do
   describe "TxIn.to_binary/2" do
     test "serialises p2pkh txin as hex string" do
       txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, index: 2},
+        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
       assert TxIn.to_binary(txin, encoding: :hex) == @txin_hex

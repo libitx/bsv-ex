@@ -169,7 +169,7 @@ defmodule BSV.Sig do
     |> Hash.sha256_sha256()
   end
 
-  defp hash_outputs(outputs, _index, sighash_type)
+  defp hash_outputs(outputs, _vin, sighash_type)
     when not sighash_none?(sighash_type)
   do
     outputs
@@ -177,7 +177,7 @@ defmodule BSV.Sig do
     |> Hash.sha256_sha256()
   end
 
-  defp hash_outputs(_outputs, _index, _sighash_type),
+  defp hash_outputs(_outputs, _vin, _sighash_type),
     do: :binary.copy(<<0>>, 32)
 
   # TODO

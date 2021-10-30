@@ -87,7 +87,7 @@ defmodule BSV.TxBuilder do
     builder
     |> Map.update!(:inputs, fn inputs ->
       Enum.sort(inputs, fn %{subject: %UTXO{outpoint: a}}, %{subject: %UTXO{outpoint: b}} ->
-        {reverse_bin(a.hash), a.index} < {reverse_bin(b.hash), b.index}
+        {reverse_bin(a.hash), a.vout} < {reverse_bin(b.hash), b.vout}
       end)
     end)
     |> Map.update!(:outputs, fn outputs ->

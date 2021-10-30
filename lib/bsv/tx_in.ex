@@ -37,7 +37,7 @@ defmodule BSV.TxIn do
   input in a block, containing the miner block reward).
   """
   @spec coinbase?(t()) :: boolean()
-  def coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.null?(outpoint)
+  def coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.is_null?(outpoint)
 
   @doc """
   Parses the given binary into a `t:BSV.TxIn.t/0`.
@@ -110,7 +110,7 @@ defmodule BSV.TxIn do
            {:ok, script, data} <- VarInt.parse_data(data),
            <<sequence::little-32, rest::binary>> = data
       do
-        script = case OutPoint.null?(outpoint) do
+        script = case OutPoint.is_null?(outpoint) do
           false -> Script.from_binary!(script)
           true -> %Script{coinbase: script}
         end
