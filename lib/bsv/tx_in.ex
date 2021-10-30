@@ -32,6 +32,13 @@ defmodule BSV.TxIn do
     sequence: non_neg_integer()
   }
 
+  @typedoc """
+  Vin - Vector of an input in a Bitcoin transaction
+
+  In integer representing the index of a TxIn.
+  """
+  @type vin() :: non_neg_integer()
+
   @doc """
   Returns true if the given `t:BSV.TxIn.t/0` is a coinbase input (the first
   input in a block, containing the miner block reward).

@@ -1,13 +1,23 @@
 defmodule BSV.Util do
   @moduledoc """
-  TODO
+  Collection of shared helper functions, used frequently throughout the library.
   """
 
-  @typedoc "TODO"
+  @typedoc "Binary encoding format"
   @type encoding() :: :base64 | :hex
 
   @doc """
-  TODO
+  Decodes the given binary data using the specified `t:BSV.Util.encoding/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Examples
+
+      iex> BSV.Util.decode("aGVsbG8gd29ybGQ=", :base64)
+      {:ok, "hello world"}
+
+      iex> BSV.Util.decode("68656c6c6f20776f726c64", :hex)
+      {:ok, "hello world"}
   """
   @spec decode(binary(), encoding()) :: {:ok, binary()} | {:error, term()}
   def decode(data, encoding) do
@@ -19,13 +29,15 @@ defmodule BSV.Util do
     end
   end
 
-  # TODO
+  # Decodes the binary
   defp do_decode(data, :base64), do: Base.decode64(data)
   defp do_decode(data, :hex), do: Base.decode16(data, case: :mixed)
   defp do_decode(data, _), do: {:ok, data}
 
   @doc """
-  TODO
+  Decodes the given binary data using the specified `t:BSV.Util.encoding/0`.
+
+  As `decode/2` but returns the result or raises an exception.
   """
   @spec decode!(binary(), encoding()) :: binary()
   def decode!(data, encoding) do
@@ -38,7 +50,15 @@ defmodule BSV.Util do
   end
 
   @doc """
-  TODO
+  Encodes the given binary data using the specified `t:BSV.Util.encoding/0`.
+
+  ## Examples
+
+      iex> BSV.Util.encode("hello world", :base64)
+      "aGVsbG8gd29ybGQ="
+
+      iex> BSV.Util.encode("hello world", :hex)
+      "68656c6c6f20776f726c64"
   """
   @spec encode(binary(), encoding()) :: binary()
   def encode(data, :base64), do: Base.encode64(data)
@@ -46,14 +66,22 @@ defmodule BSV.Util do
   def encode(data, _), do: data
 
   @doc """
-  TODO
+  Returns a binary containing the specified number of random bytes.
   """
   @spec rand_bytes(integer()) :: binary()
   def rand_bytes(bytes) when is_integer(bytes),
     do: :crypto.strong_rand_bytes(bytes)
 
   @doc """
-  TODO
+  Reverses the bytes of the given binary data.
+
+  ## Examples
+
+      iex> BSV.Util.reverse_bin("abcdefg")
+      "gfedcba"
+
+      iex> BSV.Util.reverse_bin(<<1, 2, 3, 0>>)
+      <<0, 3, 2, 1>>
   """
   @spec reverse_bin(binary()) :: binary()
   def reverse_bin(data) when is_binary(data) do
