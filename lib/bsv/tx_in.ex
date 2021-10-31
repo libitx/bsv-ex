@@ -5,7 +5,7 @@ defmodule BSV.TxIn do
   A TxIn consists of the `t:BSV.OutPoint.t/0` of the output which is being
   spent, a Script known as the unlocking script, and a sequence number.
 
-  A TxIn spends a previous output by concatenation the unlocking script with the
+  A TxIn spends a previous output by concatenating the unlocking script with the
   locking script in the order:
 
 		  unlocking_script <> locking_script
