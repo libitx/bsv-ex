@@ -182,11 +182,11 @@ defmodule BSV.Script do
 
   ## Examples
 
-      iex> Script.size(@p2pkh_script)
+      iex> Script.get_size(@p2pkh_script)
       25
   """
-  @spec size(t()) :: non_neg_integer()
-  def size(%__MODULE__{} = script),
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = script),
     do: to_binary(script) |> byte_size()
 
   @doc """

@@ -67,9 +67,9 @@ defmodule BSV.ScriptTest do
     end
   end
 
-  describe "Script.size/1" do
+  describe "Script.get_size/1" do
     test "returns the size of the given script" do
-      assert Script.size(@p2pkh_script) == 25
+      assert Script.get_size(@p2pkh_script) == 25
     end
   end
 

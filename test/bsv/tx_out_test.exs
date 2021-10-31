@@ -30,10 +30,10 @@ defmodule BSV.TxOutTest do
     end
   end
 
-  describe "TxOut.size/2" do
+  describe "TxOut.get_size/2" do
     test "returns byte size of the txout" do
       txout = %TxOut{satoshis: 803782383, script: @txout_script}
-      assert TxOut.size(txout) == 34
+      assert TxOut.get_size(txout) == 34
     end
   end
 

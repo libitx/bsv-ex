@@ -69,8 +69,8 @@ defmodule BSV.TxOut do
   @doc """
   Returns the number of bytes of the given `t:BSV.TxOut.t/0`.
   """
-  @spec size(t()) :: non_neg_integer()
-  def size(%__MODULE__{} = txout),
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = txout),
     do: to_binary(txout) |> byte_size()
 
   @doc """

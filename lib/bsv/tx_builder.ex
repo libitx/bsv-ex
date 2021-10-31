@@ -134,7 +134,7 @@ defmodule BSV.TxBuilder do
     change = input_sum(builder) - output_sum(builder)
     fee = Tx.calc_required_fee(tx, builder.options.rates)
     txout = %TxOut{script: script}
-    extra_fee = ceil(TxOut.size(txout) * builder.options.rates.mine.standard)
+    extra_fee = ceil(TxOut.get_size(txout) * builder.options.rates.mine.standard)
     txout = Map.put(txout, :satoshis, change - (fee+extra_fee))
     dust_limit = dust_threshold(txout, builder.options.rates)
 
@@ -150,6 +150,6 @@ defmodule BSV.TxBuilder do
   # TODO
   # See: https://github.com/bitcoin-sv/bitcoin-sv/blob/master/src/primitives/transaction.h#L188-L208
   defp dust_threshold(%TxOut{} = txout, %{relay: rates}),
-    do: 3 * floor((TxOut.size(txout) + 148) * rates.standard)
+    do: 3 * floor((TxOut.get_size(txout) + 148) * rates.standard)
 
 end

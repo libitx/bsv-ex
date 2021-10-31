@@ -43,8 +43,8 @@ defmodule BSV.TxIn do
   Returns true if the given `t:BSV.TxIn.t/0` is a coinbase input (the first
   input in a block, containing the miner block reward).
   """
-  @spec coinbase?(t()) :: boolean()
-  def coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.is_null?(outpoint)
+  @spec is_coinbase?(t()) :: boolean()
+  def is_coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.is_null?(outpoint)
 
   @doc """
   Parses the given binary into a `t:BSV.TxIn.t/0`.
@@ -87,8 +87,8 @@ defmodule BSV.TxIn do
   @doc """
   Returns the number of bytes of the given `t:BSV.TxIn.t/0`.
   """
-  @spec size(t()) :: non_neg_integer()
-  def size(%__MODULE__{} = txin),
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = txin),
     do: to_binary(txin) |> byte_size()
 
   @doc """

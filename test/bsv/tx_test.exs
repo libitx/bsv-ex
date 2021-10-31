@@ -11,14 +11,14 @@ defmodule BSV.TxTest do
       assert {:ok, tx} = Tx.from_binary(@tx1_hex, encoding: :hex)
       assert length(tx.inputs) == 1
       assert length(tx.outputs) == 1
-      refute Tx.coinbase?(tx)
+      refute Tx.is_coinbase?(tx)
     end
 
     test "parses hex encoded coinbase tx" do
       assert {:ok, tx} = Tx.from_binary(@tx2_hex, encoding: :hex)
       assert length(tx.inputs) == 1
       assert length(tx.outputs) == 1
-      assert Tx.coinbase?(tx)
+      assert Tx.is_coinbase?(tx)
     end
   end
 

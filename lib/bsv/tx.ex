@@ -75,9 +75,9 @@ defmodule BSV.Tx do
   @doc """
   TODO
   """
-  @spec coinbase?(t()) :: boolean()
-  def coinbase?(%__MODULE__{inputs: [txin]}), do: TxIn.coinbase?(txin)
-  def coinbase?(%__MODULE__{}), do: false
+  @spec is_coinbase?(t()) :: boolean()
+  def is_coinbase?(%__MODULE__{inputs: [txin]}), do: TxIn.is_coinbase?(txin)
+  def is_coinbase?(%__MODULE__{}), do: false
 
   @doc """
   TODO
@@ -142,16 +142,16 @@ defmodule BSV.Tx do
 
   # TODO
   defp calc_fee_part(%TxIn{} = txin) do
-    {:standard, TxIn.size(txin)}
+    {:standard, TxIn.get_size(txin)}
   end
 
   # TODO
   defp calc_fee_part(%TxOut{script: script} = txout) do
     case script.chunks do
       [:OP_FALSE, :OP_RETURN | _chunks] ->
-        {:data, TxOut.size(txout)}
+        {:data, TxOut.get_size(txout)}
       _ ->
-        {:standard, TxOut.size(txout)}
+        {:standard, TxOut.get_size(txout)}
     end
   end
 

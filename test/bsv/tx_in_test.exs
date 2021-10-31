@@ -30,17 +30,17 @@ defmodule BSV.TxInTest do
 
   doctest TxIn
 
-  describe "TxIn.coinbase?/1" do
+  describe "TxIn.is_coinbase?/1" do
     test "returns false if not coinbase" do
       txin = %TxIn{
         prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
-      refute TxIn.coinbase?(txin)
+      refute TxIn.is_coinbase?(txin)
     end
 
     test "returns true if coinbase" do
-      assert TxIn.coinbase?(@coinbase_txin)
+      assert TxIn.is_coinbase?(@coinbase_txin)
     end
   end
 
@@ -62,13 +62,13 @@ defmodule BSV.TxInTest do
     end
   end
 
-  describe "TxIn.size/2" do
+  describe "TxIn.get_size/2" do
     test "returns byte size of the txout" do
       txin = %TxIn{
         prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
-      assert TxIn.size(txin) == 148
+      assert TxIn.get_size(txin) == 148
     end
   end
 
