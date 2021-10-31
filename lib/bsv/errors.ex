@@ -46,4 +46,7 @@ defmodule BSV.DecodeError do
   def message(%__MODULE__{reason: :invalid_xpub}),
     do: "Invalid xpub string"
 
+  def message(%__MODULE__{reason: {:param_not_found, params}}),
+    do: "Param not found: #{ inspect params }"
+
 end
