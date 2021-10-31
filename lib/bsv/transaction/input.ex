@@ -39,7 +39,7 @@ defmodule BSV.Transaction.Input do
   ## Examples
 
       BSV.Transaction.Input.parse(data)
-      {%BSV.Trasaction.Input{}, ""}
+      {%BSV.Transaction.Input{}, ""}
   """
   @spec parse(binary, keyword) :: {__MODULE__.t, binary}
   def parse(data, options \\ []) do

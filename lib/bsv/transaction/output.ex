@@ -30,7 +30,7 @@ defmodule BSV.Transaction.Output do
   ## Examples
 
       BSV.Transaction.Output.parse(data)
-      {%BSV.Trasaction.Output{}, ""}
+      {%BSV.Transaction.Output{}, ""}
   """
   @spec parse(binary, keyword) :: {__MODULE__.t, binary}
   def parse(data, options \\ []) do
@@ -54,7 +54,7 @@ defmodule BSV.Transaction.Output do
 
   The accepted options are:
 
-  * `:encode` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
+  * `:encoding` - Optionally encode the returned binary with either the `:base64` or `:hex` encoding scheme.
 
   ## Examples
 

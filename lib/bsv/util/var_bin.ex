@@ -80,7 +80,7 @@ defmodule BSV.Util.VarBin do
 
   @doc """
   Parses the given binary into a list of parsed structs, using the first byte(s)
-  to determing the number of items, and calling the given callback to parse each
+  to determine the number of items, and calling the given callback to parse each
   repsective chunk of data.
 
   Returns a tuple containing a list of parsed items and any remaining binary data.
@@ -89,8 +89,8 @@ defmodule BSV.Util.VarBin do
 
       BSV.Util.VarBin.parse_items(data, &BSV.Transaction.Input.parse/1)
       {[
-        %BSV.Trasaction.Input{},
-        %BSV.Trasaction.Input{}
+        %BSV.Transaction.Input{},
+        %BSV.Transaction.Input{}
       ], ""}
   """
   @spec parse_items(binary, function) :: {list, binary}
@@ -106,7 +106,7 @@ defmodule BSV.Util.VarBin do
     parse_items(data, size-1, [item | items], cb)
   end
 
-  
+
   @doc """
   Serializes the given list of items into a binary, first by prefixing the
   binary with a variable length integer to indicate the number of items, and
@@ -115,8 +115,8 @@ defmodule BSV.Util.VarBin do
   ## Examples
 
       [
-        %BSV.Trasaction.Input{},
-        %BSV.Trasaction.Input{}
+        %BSV.Transaction.Input{},
+        %BSV.Transaction.Input{}
       ]
       |> BSV.Util.VarBin.serialize_items(data, &BSV.Transaction.Input.serialize/1)
       << data >>

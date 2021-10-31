@@ -47,7 +47,7 @@ defmodule BSV.Transaction do
   ## Examples
 
       BSV.Transaction.parse(data)
-      {%BSV.Trasaction{}, ""}
+      {%BSV.Transaction{}, ""}
   """
   @spec parse(binary, keyword) :: {__MODULE__.t, binary}
   def parse(data, options \\ []) do
@@ -340,7 +340,7 @@ defmodule BSV.Transaction do
 
   @doc """
   Signs the transaction using the given private key or list of keys. Each input
-  is iterrated over verifying that the key can sign the input.
+  is iterated over verifying that the key can sign the input.
   """
   @spec sign(
     __MODULE__.t,
