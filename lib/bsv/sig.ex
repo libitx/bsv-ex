@@ -1,20 +1,41 @@
 defmodule BSV.Sig do
   @moduledoc """
-  TODO
+  Module for signing and verifying Bitcoin transactions.
+
+  Signing a transaction in Bitcoin first involves computing a transaction
+  preimage. A `t:BSV.Sig.sighash_flag/0` is used to indicate which parts of the
+  transaction are included in the preimage.
+
+  | Flag                            | Value with SIGHASH_FORKID | Value without SIGHASH_FORKID | Description                         |
+  | ------------------------------- | ------------------------- | ---------------------------- | ----------------------------------- |
+  | `SIGHASH_ALL`                   | `0x41` / `0100 0001`      | `0x01` / `0000 0001`         | Sign all inputs and outputs         |
+  | `SIGHASH_NONE`                  | `0x42` / `0100 0010`      | `0x02` / `0000 0010`         | Sign all inputs and no outputs      |
+  | `SIGHASH_SINGLE`                | `0x43` / `0100 0011`      | `0x03` / `0000 0011`         | Sign all inputs and single output   |
+  | `SIGHASH_ALL | ANYONECANPAY`    | `0xC1` / `1100 0001`      | `0x81` / `1000 0001`         | Sign single input and all outputs   |
+  | `SIGHASH_NONE | ANYONECANPAY`   | `0xC2` / `1100 0010`      | `0x82` / `1000 0010`         | Sign single input and no outputs    |
+  | `SIGHASH_SINGLE | ANYONECANPAY` | `0xC3` / `1100 0011`      | `0x83` / `1000 0011`         | Sign single input and single output |
+
+  Once the preimage is constructed, it is double hashed using the `SHA-256`
+  algorithm and then used to calculate the ECDSA signature. The resulting
+  DER-encoded signature is appended with the sighash flag.
   """
   use Bitwise
-  alias BSV.{Hash, OutPoint, PrivKey, PubKey, Script, Tx, TxOut, VarInt}
+  alias BSV.{Hash, OutPoint, PrivKey, PubKey, Script, Tx, TxIn, TxOut, VarInt}
 
-  @typedoc "TODO"
+  @typedoc "Sighash preimage"
   @type preimage() :: binary()
 
-  @typedoc "TODO"
+  @typedoc "Sighash"
   @type sighash() :: <<_::256>>
 
-  @typedoc "TODO"
-  @type sighash_type() :: integer()
+  @typedoc "Sighash flag"
+  @type sighash_flag() :: integer()
 
-  @typedoc "TODO"
+  @typedoc """
+  Signature
+
+  DER-encoded signature with the sighash flag appended.
+  """
   @type signature() :: binary()
 
   @sighash_all 0x01
@@ -25,36 +46,42 @@ defmodule BSV.Sig do
 
   @default_sighash @sighash_all ||| @sighash_forkid
 
-  defguard sighash_all?(sighash_type)
-    when (sighash_type &&& 31) == @sighash_all
+  defguard sighash_all?(sighash_flag)
+    when (sighash_flag &&& 31) == @sighash_all
 
-  defguard sighash_none?(sighash_type)
-    when (sighash_type &&& 31) == @sighash_none
+  defguard sighash_none?(sighash_flag)
+    when (sighash_flag &&& 31) == @sighash_none
 
-  defguard sighash_single?(sighash_type)
-    when (sighash_type &&& 31) == @sighash_single
+  defguard sighash_single?(sighash_flag)
+    when (sighash_flag &&& 31) == @sighash_single
 
-  defguard sighash_forkid?(sighash_type)
-    when (sighash_type &&& @sighash_forkid) != 0
+  defguard sighash_forkid?(sighash_flag)
+    when (sighash_flag &&& @sighash_forkid) != 0
 
-  defguard sighash_anyone_can_pay?(sighash_type)
-    when (sighash_type &&& @sighash_anyonecanpay) != 0
-
-  @doc """
-  TODO
-  """
-  @spec sighash_type(atom()) :: sighash_type()
-  def sighash_type(:default), do: @default_sighash
-  def sighash_type(:sighash_all), do: @sighash_all
-  def sighash_type(:sighash_none), do: @sighash_none
-  def sighash_type(:sighash_single), do: @sighash_single
-  def sighash_type(:sighash_forkid), do: @sighash_forkid
-  def sighash_type(:sighash_anyonecanpay), do: @sighash_anyonecanpay
+  defguard sighash_anyone_can_pay?(sighash_flag)
+    when (sighash_flag &&& @sighash_anyonecanpay) != 0
 
   @doc """
   TODO
   """
-  @spec preimage(Tx.t(), non_neg_integer(), TxOut.t(), sighash_type()) :: preimage()
+  @spec sighash_flag(atom()) :: sighash_flag()
+  def sighash_flag(:default), do: @default_sighash
+  def sighash_flag(:sighash_all), do: @sighash_all
+  def sighash_flag(:sighash_none), do: @sighash_none
+  def sighash_flag(:sighash_single), do: @sighash_single
+  def sighash_flag(:sighash_forkid), do: @sighash_forkid
+  def sighash_flag(:sighash_anyonecanpay), do: @sighash_anyonecanpay
+
+  @doc """
+  Returns the preimage for the given transaction. Must also specify the
+  `t:BSV.TxIn.vin/0` of the context input, the `t:BSV.TxOut.t/0` that is being
+  spent, and the `t:BSV.Sig.sighash_flag/0`.
+
+  BSV transactions require the `SIGHASH_FORKID` flag which results in a preimage
+  according the algorithm proposed in [BIP-143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki).
+  The legacy preimage algorithm is supported by this library.
+  """
+  @spec preimage(Tx.t(), TxIn.vin(), TxOut.t(), sighash_flag()) :: preimage()
   def preimage(%Tx{inputs: inputs} = tx, vin, %TxOut{} = txout, sighash_type)
     when sighash_forkid?(sighash_type)
   do
@@ -101,9 +128,11 @@ defmodule BSV.Sig do
   end
 
   @doc """
-  TODO
+  Computes a double SHA256 hash of the preimage of the given transaction. Must
+  also specify the `t:BSV.TxIn.vin/0` of the context input, the `t:BSV.TxOut.t/0`
+  that is being spent, and the `t:BSV.Sig.sighash_flag/0`.
   """
-  @spec sighash(Tx.t(), non_neg_integer(), TxOut.t(), sighash_type()) :: sighash()
+  @spec sighash(Tx.t(), TxIn.vin(), TxOut.t(), sighash_flag()) :: sighash()
   def sighash(%Tx{} = tx, vin, %TxOut{} = txout, sighash_type \\ @default_sighash) do
     tx
     |> preimage(vin, txout, sighash_type)
@@ -111,9 +140,13 @@ defmodule BSV.Sig do
   end
 
   @doc """
-  TODO
+  Signs the sighash of the given transaction using the given PrivKey. Must also
+  specify the `t:BSV.TxIn.vin/0` of the context input, the `t:BSV.TxOut.t/0`
+  that is being spent, and the `t:BSV.Sig.sighash_flag/0`.
+
+  The returned DER-encoded signature is appended with the sighash flag.
   """
-  @spec sign(Tx.t(), non_neg_integer(), TxOut.t(), PrivKey.t(), keyword()) :: signature()
+  @spec sign(Tx.t(), TxIn.vin(), TxOut.t(), PrivKey.t(), keyword()) :: signature()
   def sign(%Tx{} = tx, vin, %TxOut{} = txout, %PrivKey{d: privkey}, opts \\ []) do
     sighash_type = Keyword.get(opts, :sighash_type, @default_sighash)
 
@@ -124,9 +157,11 @@ defmodule BSV.Sig do
   end
 
   @doc """
-  TODO
+  Verifies the signature against the sighash of the given transaction using the
+  specified PubKey. Must also specify the `t:BSV.TxIn.vin/0` of the context
+  input, the `t:BSV.TxOut.t/0` that is being spent.
   """
-  @spec verify(signature(), Tx.t(), non_neg_integer(), TxOut.t(), PubKey.t()) :: boolean() | :error
+  @spec verify(signature(), Tx.t(), TxIn.vin(), TxOut.t(), PubKey.t()) :: boolean() | :error
   def verify(signature, %Tx{} = tx, vin, %TxOut{} = txout, %PubKey{} = pubkey) do
     sig_length = byte_size(signature) - 1
     <<sig::binary-size(sig_length), sighash_type>> = signature
@@ -134,7 +169,7 @@ defmodule BSV.Sig do
     Curvy.verify(sig, message, PubKey.to_binary(pubkey), hash: false)
   end
 
-  # TODO
+  # Double hashes the outpoints of the transaction inputs
   defp hash_prevouts(_inputs, sighash_type)
     when sighash_anyone_can_pay?(sighash_type),
     do: <<0::256>>
@@ -145,7 +180,7 @@ defmodule BSV.Sig do
     |> Hash.sha256_sha256()
   end
 
-  # TODO
+  # Double hashes the sequence values of the transaction inputs
   defp hash_sequence(_inputs, sighash_type)
     when sighash_anyone_can_pay?(sighash_type)
     or sighash_single?(sighash_type)
@@ -158,7 +193,7 @@ defmodule BSV.Sig do
     |> Hash.sha256_sha256()
   end
 
-  # TODO
+  # Double hashes the transaction outputs
   defp hash_outputs(outputs, vin, sighash_type)
     when sighash_single?(sighash_type)
     and vin < length(outputs)
@@ -180,7 +215,7 @@ defmodule BSV.Sig do
   defp hash_outputs(_outputs, _vin, _sighash_type),
     do: :binary.copy(<<0>>, 32)
 
-  # TODO
+  # Replaces the transaction input scripts with the subscript
   defp update_tx_inputs(inputs, vin, subscript, sighash_type)
     when sighash_anyone_can_pay?(sighash_type)
   do
@@ -203,7 +238,7 @@ defmodule BSV.Sig do
     end)
   end
 
-  # TODO
+  # Prepares the transaction outputs for the legacy preimage algorithm
   defp update_tx_outputs(_outputs, _vin, sighash_type)
     when sighash_none?(sighash_type),
     do: []

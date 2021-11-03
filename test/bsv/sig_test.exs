@@ -73,7 +73,12 @@ defmodule BSV.SigTest do
       signature = Sig.sign(@test_tx, 0, @prev_txout, @test_privkey)
       assert is_binary(signature)
       assert Base.encode64(signature) == @test_signature
-      assert Sig.verify(signature, @test_tx, 0, @prev_txout, PubKey.from_privkey(@test_privkey))
+    end
+  end
+
+  describe "Sig.verify/5" do
+    test "must verify the signature" do
+      assert Sig.verify(@test_signature, @test_tx, 0, @prev_txout, PubKey.from_privkey(@test_privkey))
     end
   end
 
