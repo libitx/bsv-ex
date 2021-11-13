@@ -11,6 +11,8 @@ defmodule BSV.VarInt do
   @doc """
   Decodes the given VarInt binary into an integer.
 
+  Returns the result in an `:ok` / `:error` tuple pair.
+
   ## Examples
 
       iex> BSV.VarInt.decode(<<253, 4, 1>>)
@@ -25,7 +27,9 @@ defmodule BSV.VarInt do
   end
 
   @doc """
-  TODO
+  Decodes the given VarInt binary into an integer.
+
+  As `decode/1` but returns the result or raises an exception.
   """
   @spec decode!(binary()) :: integer()
   def decode!(data) when is_binary(data) do
@@ -38,11 +42,14 @@ defmodule BSV.VarInt do
   end
 
   @doc """
-  TODO
+  Returns a binary of the length specified by the VarInt in the first bytes of
+  the binary. Any remaining bytes are ignored.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
 
   ## Examples
 
-      iex> BSV.VarInt.decode_binary(<<5, 104, 101, 108, 108, 111>>)
+      iex> BSV.VarInt.decode_binary(<<5, 104, 101, 108, 108, 111, 99, 99>>)
       {:ok, "hello"}
   """
   @spec decode_binary(binary()) :: {:ok, binary()} | {:error, term()}
@@ -51,7 +58,10 @@ defmodule BSV.VarInt do
   end
 
   @doc """
-  TODO
+  Returns a binary of the length specified by the VarInt in the first bytes of
+  the binary.
+
+  As `decode_binary/1` but returns the result or raises an exception.
   """
   @spec decode_binary!(binary()) :: binary()
   def decode_binary!(data) when is_binary(data) do
@@ -92,7 +102,12 @@ defmodule BSV.VarInt do
   end
 
   @doc """
-  TODO
+  Prepends the given binary with a VarInt representing the length of the binary.
+
+  ## Examples
+
+      iex> BSV.VarInt.encode_binary("hello")
+      <<5, 104, 101, 108, 108, 111>>
   """
   @spec encode_binary(binary()) :: binary()
   def encode_binary(data)
@@ -104,7 +119,9 @@ defmodule BSV.VarInt do
   end
 
   @doc """
-  TODO
+  Parses the given binary, returning a tuple with a binary of the length
+  specified by the VarInt in the first bytes of the binary, and a binary of any
+  remaining bytes.
 
   ## Examples
 
@@ -124,7 +141,8 @@ defmodule BSV.VarInt do
     do: {:error, :invalid_varint}
 
   @doc """
-  TODO
+  Parses the given binary, returning a tuple with an integer decoded from the
+  VarInt in the first bytes of the binary, and a binary of any remaining bytes.
 
   ## Examples
 
@@ -140,7 +158,9 @@ defmodule BSV.VarInt do
     do: {:error, :invalid_varint}
 
   @doc """
-  TODO
+  Parses the given binary into a list of the length specified by the VarInt in
+  the first bytes of the binary. Each item is parsed according to the specified
+  `Serializable.t/0`.
   """
   @spec parse_items(binary(), Serializable.t()) ::
     {:ok, list(Serializable.t()), binary()} |
@@ -151,7 +171,7 @@ defmodule BSV.VarInt do
     end
   end
 
-  # TODO
+  # Parses items from the data binary until the correct number have been parsed
   defp parse_items(data, num, mod, result \\ [])
 
   defp parse_items(data, num, _mod, result) when length(result) == num,
