@@ -2,6 +2,10 @@ defmodule BSV.MessageTest do
   use ExUnit.Case, async: true
   alias BSV.Message
   alias BSV.{Address, KeyPair, PrivKey}
+
+  @alice_keypair KeyPair.new()
+  @bob_keypair KeyPair.new()
+
   doctest Message
 
   setup_all do

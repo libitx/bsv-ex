@@ -1,12 +1,43 @@
 defmodule BSV.Message do
   @moduledoc """
-  TODO
+  The Message module provides functions for encrypting, decrypting, signing and
+  verifying arbitrary messages using Bitcoin keys.
+
+  Message encryption uses the Electrum-compatible BIE1 ECIES algorithm. Message
+  signing uses the Bitcoin Signed Message algorithm. Both alorithms are broadly
+  supported by popular BSV libraries in other languages.
+
+  ## Encryption
+
+  A sender encrypts the message using the recipient's PubKey. The recipient
+  decrypts the message with their PrivKey.
+
+      iex> msg = "Secret test message"
+      iex> encrypted = Message.encrypt(msg, @bob_keypair.pubkey)
+      iex> Message.decrypt(encrypted, @bob_keypair.privkey)
+      {:ok, "Secret test message"}
+
+  ## Signing
+
+  A sender signs a message with their PrivKey. The recipient verifies the
+  message using the sender's PubKey.
+
+      iex> msg = "Secret test message"
+      iex> sig = Message.sign(msg, @alice_keypair.privkey)
+      iex> Message.verify(sig, msg, @alice_keypair.pubkey)
+      true
   """
   alias BSV.{Address, Hash, KeyPair, PrivKey, PubKey, VarInt}
   import BSV.Util, only: [decode: 2, decode!: 2, encode: 2]
 
   @doc """
-  TODO
+  Decrypts the given message with the private key.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec decrypt(binary(), PrivKey.t(), keyword()) ::
     {:ok, binary()} |
@@ -45,7 +76,13 @@ defmodule BSV.Message do
   end
 
   @doc """
-  TODO
+  Encrypts the given message with the public key.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec encrypt(binary(), PubKey.t(), keyword()) :: binary()
   def encrypt(message, %PubKey{} = pubkey, opts \\ []) do
@@ -71,7 +108,16 @@ defmodule BSV.Message do
   end
 
   @doc """
-  TODO
+  Signs the given message with the PrivKey.
+
+  By default signatures are returned `base64` encoded. Use the `encoding: :raw`
+  option to return a raw binary signature.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Encode the binary with either the `:base64`, `:hex` or `:raw` encoding scheme.
   """
   @spec sign(binary(), PrivKey.t(), keyword()) :: binary()
   def sign(message, %PrivKey{} = privkey, opts \\ []) do
@@ -89,7 +135,16 @@ defmodule BSV.Message do
   end
 
   @doc """
-  TODO
+  Verifies the given signature against the given message using the PubKey.
+
+  By default signatures are assumed to be `base64` encoded. Use the `:encoding`
+  option to specify a different signature encoding.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Decode the signature with either the `:base64`, `:hex` or `:raw` encoding scheme.
   """
   @spec verify(binary(), binary(), PubKey.t() | Address.t(), keyword()) ::
     boolean() |
