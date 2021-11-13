@@ -8,6 +8,9 @@ defmodule BSV.VarInt do
 
   @max_int64 18_446_744_073_709_551_615
 
+  @typedoc "VarInt binary"
+  @type t() :: binary()
+
   @doc """
   Decodes the given VarInt binary into an integer.
 

@@ -8,6 +8,9 @@ defmodule BSV.ScriptNum do
   use Bitwise
   import BSV.Util, only: [reverse_bin: 1]
 
+  @typedoc "ScriptNum binary"
+  @type t() :: binary()
+
   @doc """
   Decodes the given ScriptNum binary into an integer.
 

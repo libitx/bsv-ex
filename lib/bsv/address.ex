@@ -44,7 +44,7 @@ defmodule BSV.Address do
         pubkey_hash: <<83, 143, 209, 121, 200, 190, 15, 40, 156, 115, 14, 51, 181, 246, 163, 84, 27, 233, 102, 143>>
       }
   """
-  @spec from_pubkey(PubKey.t() | PubKey.pubkey_bin()) :: t()
+  @spec from_pubkey(PubKey.t() | binary()) :: t()
   def from_pubkey(%PubKey{} = pubkey) do
     pubkey
     |> PubKey.to_binary()

@@ -1,7 +1,7 @@
 defmodule BSV.BlockHeader do
   @moduledoc """
   A block header is an 80 byte packet of information providing a summary of the
-  `t:BSV.Block/0`.
+  `t:BSV.Block.t/0`.
 
   Contained within the block header is a Merkle root - the result of hashing all
   of the transactions contained in the block into a tree-like structure known as
