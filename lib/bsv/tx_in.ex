@@ -23,11 +23,11 @@ defmodule BSV.TxIn do
 
   @max_sequence 0xFFFFFFFF
 
-  defstruct prevout: %OutPoint{}, script: %Script{}, sequence: @max_sequence
+  defstruct outpoint: %OutPoint{}, script: %Script{}, sequence: @max_sequence
 
   @typedoc "TxIn struct"
   @type t() :: %__MODULE__{
-    prevout: OutPoint.t(),
+    outpoint: OutPoint.t(),
     script: Script.t(),
     sequence: non_neg_integer()
   }
@@ -38,13 +38,6 @@ defmodule BSV.TxIn do
   In integer representing the index of a TxIn.
   """
   @type vin() :: non_neg_integer()
-
-  @doc """
-  Returns true if the given `t:BSV.TxIn.t/0` is a coinbase input (the first
-  input in a block, containing the miner block reward).
-  """
-  @spec is_coinbase?(t()) :: boolean()
-  def is_coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.is_null?(outpoint)
 
   @doc """
   Parses the given binary into a `t:BSV.TxIn.t/0`.
@@ -123,7 +116,7 @@ defmodule BSV.TxIn do
         end
 
         {:ok, struct(txin, [
-          prevout: outpoint,
+          outpoint: outpoint,
           script: script,
           sequence: sequence
         ]), rest}
@@ -131,7 +124,7 @@ defmodule BSV.TxIn do
     end
 
     @impl true
-    def serialize(%{prevout: outpoint, script: script, sequence: sequence}) do
+    def serialize(%{outpoint: outpoint, script: script, sequence: sequence}) do
       outpoint_data = Serializable.serialize(outpoint)
       script_data = script
       |> Script.to_binary()

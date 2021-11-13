@@ -15,40 +15,14 @@ defmodule BSV.TxInTest do
   ]}
   @outpoint_hash <<94, 27, 177, 168, 195, 168, 13, 203, 237, 27, 8, 189, 85, 231,
     30, 76, 58, 78, 0, 69, 187, 162, 218, 189, 139, 22, 16, 62, 255, 43, 176, 98>>
-  @coinbase_txin %BSV.TxIn{
-    prevout: %BSV.OutPoint{
-      hash: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
-      vout: 4294967295
-    },
-    script: %BSV.Script{
-      chunks: [],
-      coinbase: <<4, 255, 255, 0, 29, 1, 4>>
-    },
-    sequence: 4294967295
-  }
 
   doctest TxIn
-
-  describe "TxIn.is_coinbase?/1" do
-    test "returns false if not coinbase" do
-      txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
-        script: @txin_script
-      }
-      refute TxIn.is_coinbase?(txin)
-    end
-
-    test "returns true if coinbase" do
-      assert TxIn.is_coinbase?(@coinbase_txin)
-    end
-  end
 
   describe "TxIn.from_binary/2" do
     test "parses hex encoded p2pkh txin" do
       assert {:ok, %TxIn{script: script} = txin} = TxIn.from_binary(@txin_hex, encoding: :hex)
-      assert txin.prevout.hash == @outpoint_hash
-      assert txin.prevout.vout == 2
+      assert txin.outpoint.hash == @outpoint_hash
+      assert txin.outpoint.vout == 2
       assert script == @txin_script
     end
   end
@@ -56,8 +30,8 @@ defmodule BSV.TxInTest do
   describe "TxIn.from_binary!/2" do
     test "parses hex encoded p2pkh txin" do
       assert %TxIn{script: script} = txin = TxIn.from_binary!(@txin_hex, encoding: :hex)
-      assert txin.prevout.hash == @outpoint_hash
-      assert txin.prevout.vout == 2
+      assert txin.outpoint.hash == @outpoint_hash
+      assert txin.outpoint.vout == 2
       assert script == @txin_script
     end
   end
@@ -65,7 +39,7 @@ defmodule BSV.TxInTest do
   describe "TxIn.get_size/2" do
     test "returns byte size of the txout" do
       txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
+        outpoint: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
       assert TxIn.get_size(txin) == 148
@@ -75,7 +49,7 @@ defmodule BSV.TxInTest do
   describe "TxIn.to_binary/2" do
     test "serialises p2pkh txin as hex string" do
       txin = %TxIn{
-        prevout: %OutPoint{hash: @outpoint_hash, vout: 2},
+        outpoint: %OutPoint{hash: @outpoint_hash, vout: 2},
         script: @txin_script
       }
       assert TxIn.to_binary(txin, encoding: :hex) == @txin_hex
