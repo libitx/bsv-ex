@@ -3,7 +3,8 @@ defmodule BSV.Block do
   A block is a data structure consisting of a `t:BSV.BlockHeader.t/0` and a list
   of [`transactions`](`t:BSV.Tx.t/0`).
 
-  TODO
+  Transaction data is permanently recorded into blocks. Because each block
+  contains a reference to the previous block, over time blocks form a chain.
   """
   alias BSV.{BlockHeader, Hash, Serializable, Tx, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2]

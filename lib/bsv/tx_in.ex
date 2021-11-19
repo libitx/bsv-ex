@@ -5,7 +5,7 @@ defmodule BSV.TxIn do
   A TxIn consists of the `t:BSV.OutPoint.t/0` of the output which is being
   spent, a Script known as the unlocking script, and a sequence number.
 
-  A TxIn spends a previous output by concatenation the unlocking script with the
+  A TxIn spends a previous output by concatenating the unlocking script with the
   locking script in the order:
 
 		  unlocking_script <> locking_script
@@ -23,21 +23,21 @@ defmodule BSV.TxIn do
 
   @max_sequence 0xFFFFFFFF
 
-  defstruct prevout: %OutPoint{}, script: %Script{}, sequence: @max_sequence
+  defstruct outpoint: %OutPoint{}, script: %Script{}, sequence: @max_sequence
 
   @typedoc "TxIn struct"
   @type t() :: %__MODULE__{
-    prevout: OutPoint.t(),
+    outpoint: OutPoint.t(),
     script: Script.t(),
     sequence: non_neg_integer()
   }
 
-  @doc """
-  Returns true if the given `t:BSV.TxIn.t/0` is a coinbase input (the first
-  input in a block, containing the miner block reward).
+  @typedoc """
+  Vin - Vector of an input in a Bitcoin transaction
+
+  In integer representing the index of a TxIn.
   """
-  @spec coinbase?(t()) :: boolean()
-  def coinbase?(%__MODULE__{prevout: outpoint}), do: OutPoint.null?(outpoint)
+  @type vin() :: non_neg_integer()
 
   @doc """
   Parses the given binary into a `t:BSV.TxIn.t/0`.
@@ -80,8 +80,8 @@ defmodule BSV.TxIn do
   @doc """
   Returns the number of bytes of the given `t:BSV.TxIn.t/0`.
   """
-  @spec size(t()) :: non_neg_integer()
-  def size(%__MODULE__{} = txin),
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = txin),
     do: to_binary(txin) |> byte_size()
 
   @doc """
@@ -110,13 +110,13 @@ defmodule BSV.TxIn do
            {:ok, script, data} <- VarInt.parse_data(data),
            <<sequence::little-32, rest::binary>> = data
       do
-        script = case OutPoint.null?(outpoint) do
+        script = case OutPoint.is_null?(outpoint) do
           false -> Script.from_binary!(script)
           true -> %Script{coinbase: script}
         end
 
         {:ok, struct(txin, [
-          prevout: outpoint,
+          outpoint: outpoint,
           script: script,
           sequence: sequence
         ]), rest}
@@ -124,7 +124,7 @@ defmodule BSV.TxIn do
     end
 
     @impl true
-    def serialize(%{prevout: outpoint, script: script, sequence: sequence}) do
+    def serialize(%{outpoint: outpoint, script: script, sequence: sequence}) do
       outpoint_data = Serializable.serialize(outpoint)
       script_data = script
       |> Script.to_binary()

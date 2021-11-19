@@ -58,7 +58,12 @@ defmodule BSV.Contract.Helpers do
     do: Contract.script_push(contract, <<0::568>>)
 
   @doc """
-  TODO
+  Iterates over the given list of private keys and for each signs the
+  transaction [`context`](`t:BSV.Contract.ctx/0`) and pushes each signature onto
+  the stack.
+
+  If no context is available in the [`contract`](`t:BSV.Contract.t/0`), then for
+  each private key 71 bytes of zeros are pushed onto the stack instead.
   """
   @spec multi_sig(Contract.t(), list(PrivKey.t())) :: Contract.t()
   def multi_sig(ctx, []), do: ctx

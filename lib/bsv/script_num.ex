@@ -1,12 +1,20 @@
 defmodule BSV.ScriptNum do
   @moduledoc """
-  TODO
+  A ScriptNum is an integer encoded as little-endian variable-length integers
+  with the most significant bit determining the sign of the integer.
+
+  Used in Bitcoin Script for arithmetic operations.
   """
   use Bitwise
   import BSV.Util, only: [reverse_bin: 1]
 
+  @typedoc "ScriptNum binary"
+  @type t() :: binary()
+
   @doc """
-  TODO
+  Decodes the given ScriptNum binary into an integer.
+
+  ## Examples
 
       iex> BSV.ScriptNum.decode(<<100>>)
       100
@@ -16,9 +24,6 @@ defmodule BSV.ScriptNum do
 
       iex> BSV.ScriptNum.decode(<<0, 232, 118, 72, 23>>)
       100_000_000_000
-
-      iex> BSV.ScriptNum.decode(<<65, 65, 54, 208, 140, 94, 210, 191, 59, 160, 72, 175, 230, 220, 174, 186, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0>>)
-      0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
   """
   @spec decode(binary()) :: integer()
   def decode(<<>>), do: 0
@@ -28,7 +33,7 @@ defmodule BSV.ScriptNum do
     |> decode_num()
   end
 
-  # TODO
+  # Decodes the number
   defp decode_num(<<n, bin::binary >>)
     when (n &&& 0x80) != 0,
     do: -1 * decode_num(<<bxor(n, 0x80)>> <> bin)
@@ -37,7 +42,7 @@ defmodule BSV.ScriptNum do
     do: :binary.decode_unsigned(bin, :big)
 
   @doc """
-  TODO
+  Encodes the given integer into a ScriptNum binary.
 
   ## Examples
 
@@ -49,9 +54,6 @@ defmodule BSV.ScriptNum do
 
       iex> BSV.ScriptNum.encode(100_000_000_000)
       <<0, 232, 118, 72, 23>>
-
-      iex> BSV.ScriptNum.encode(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141)
-      <<65, 65, 54, 208, 140, 94, 210, 191, 59, 160, 72, 175, 230, 220, 174, 186, 254, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0>>
   """
   @spec encode(number()) :: binary()
   def encode(0), do: <<>>

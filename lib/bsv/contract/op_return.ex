@@ -38,7 +38,7 @@ defmodule BSV.Contract.OpReturn do
     |> push_data(data)
   end
 
-  # TODO
+  # Pushes the binary or list of binaries onto the stack
   defp push_data(ctx, data) when is_list(data),
     do: Enum.reduce(data, ctx, & push(&2, &1))
 

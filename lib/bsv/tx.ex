@@ -1,13 +1,22 @@
 defmodule BSV.Tx do
   @moduledoc """
+  A Tx is a data structure representing a Bitcoin transaction.
+
+  A Tx consists of a version number, a list of inputs, list of outputs, and a
+  locktime value.
+
+  A Bitcoin transaction is used to transfer custody of Bitcoins. It can also be
+  used for smart contracts, recording and timestamping data, and many other
+  functionalities.
+
   TODO
   """
-  alias BSV.{Hash, Serializable, TxIn, TxOut, VarInt}
+  alias BSV.{Hash, OutPoint, Serializable, TxIn, TxOut, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
 
   defstruct version: 1, inputs: [], outputs: [], lock_time: 0
 
-  @typedoc "TODO"
+  @typedoc "Tx struct"
   @type t() :: %__MODULE__{
     version: non_neg_integer(),
     inputs: list(TxIn.t()),
@@ -15,10 +24,18 @@ defmodule BSV.Tx do
     lock_time: non_neg_integer()
   }
 
-  @typedoc "TODO"
+  @typedoc """
+  Tx hash
+
+  Result of hashing the transaction data through the SHA-256 algorithm twice.
+  """
   @type hash() :: <<_::256>>
 
-  @typedoc "TODO"
+  @typedoc """
+  TXID
+
+  Result of reversing and hex-encoding the `t:BSV.Tx.hash/0`.
+  """
   @type txid() :: String.t()
 
   @typedoc "TODO"
@@ -37,14 +54,14 @@ defmodule BSV.Tx do
   } | non_neg_integer()
 
   @doc """
-  TODO
+  Adds the given `t:BSV.TxIn.t/0` to the transaction.
   """
   @spec add_input(t(), TxIn.t()) :: t()
   def add_input(%__MODULE__{} = tx, %TxIn{} = txin),
     do: update_in(tx.inputs, & &1 ++ [txin])
 
   @doc """
-  TODO
+  Adds the given `t:BSV.TxOut.t/0` to the transaction.
   """
   @spec add_output(t(), TxOut.t()) :: t()
   def add_output(%__MODULE__{} = tx, %TxOut{} = txout),
@@ -73,14 +90,25 @@ defmodule BSV.Tx do
   end
 
   @doc """
-  TODO
+  Returns true if the given `t:BSV.Tx.t/0` is a coinbase transaction (the first
+  transaction in a block, containing the miner block reward).
   """
-  @spec coinbase?(t()) :: boolean()
-  def coinbase?(%__MODULE__{inputs: [txin]}), do: TxIn.coinbase?(txin)
-  def coinbase?(%__MODULE__{}), do: false
+  @spec is_coinbase?(t()) :: boolean()
+  def is_coinbase?(%__MODULE__{inputs: [txin]}),
+    do: OutPoint.is_null?(txin.outpoint)
+
+  def is_coinbase?(%__MODULE__{}), do: false
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Tx.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
@@ -94,7 +122,9 @@ defmodule BSV.Tx do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Tx.t/0`.
+
+  As `from_binary/2` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
@@ -108,7 +138,7 @@ defmodule BSV.Tx do
   end
 
   @doc """
-  TODO
+  Returns the `t:BSV.Tx.hash/0` of the given transaction.
   """
   @spec get_hash(t()) :: hash()
   def get_hash(%__MODULE__{} = tx) do
@@ -118,7 +148,14 @@ defmodule BSV.Tx do
   end
 
   @doc """
-  TODO
+  Returns the number of bytes of the given `t:BSV.Tx.t/0`.
+  """
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = tx),
+    do: to_binary(tx) |> byte_size()
+
+  @doc """
+  Returns the `t:BSV.Tx.txid/0` of the given transaction.
   """
   @spec get_txid(t()) :: txid()
   def get_txid(%__MODULE__{} = tx) do
@@ -129,7 +166,13 @@ defmodule BSV.Tx do
   end
 
   @doc """
-  TODO
+  Serialises the given `t:BSV.TxIn.t/0` into a binary.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec to_binary(t()) :: binary()
   def to_binary(%__MODULE__{} = tx, opts \\ []) do
@@ -142,16 +185,16 @@ defmodule BSV.Tx do
 
   # TODO
   defp calc_fee_part(%TxIn{} = txin) do
-    {:standard, TxIn.size(txin)}
+    {:standard, TxIn.get_size(txin)}
   end
 
   # TODO
   defp calc_fee_part(%TxOut{script: script} = txout) do
     case script.chunks do
       [:OP_FALSE, :OP_RETURN | _chunks] ->
-        {:data, TxOut.size(txout)}
+        {:data, TxOut.get_size(txout)}
       _ ->
-        {:standard, TxOut.size(txout)}
+        {:standard, TxOut.get_size(txout)}
     end
   end
 

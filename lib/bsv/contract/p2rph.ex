@@ -102,7 +102,7 @@ defmodule BSV.Contract.P2RPH do
     %PrivKey{d: privkey},
     k
   ) do
-    sighash_type = Keyword.get(opts, :sighash_type, Sig.sighash_type(:default))
+    sighash_type = Keyword.get(opts, :sighash_type, Sig.sighash_flag(:default))
 
     signature = tx
     |> Sig.sighash(vin, txout, sighash_type)

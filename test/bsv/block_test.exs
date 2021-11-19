@@ -21,10 +21,10 @@ defmodule BSV.BlockTest do
       %BSV.Tx{
         inputs: [
           %BSV.TxIn{
-            prevout: %BSV.OutPoint{
+            outpoint: %BSV.OutPoint{
               hash: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
-              index: 4294967295
+              vout: 4294967295
             },
             script: %BSV.Script{
               chunks: [],

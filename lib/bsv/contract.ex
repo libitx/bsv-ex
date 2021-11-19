@@ -94,7 +94,7 @@ defmodule BSV.Contract do
 
   For more information, refer to `BSV.TxBuilder`.
   """
-  alias BSV.{OutPoint, Script, Tx, TxBuilder, TxIn, TxOut, UTXO, VM}
+  alias BSV.{Script, Tx, TxBuilder, TxIn, TxOut, UTXO, VM}
 
   defstruct ctx: nil, mfa: nil, opts: [], subject: nil, script: %Script{}
 
@@ -212,7 +212,7 @@ defmodule BSV.Contract do
   def to_txin(%__MODULE__{subject: %UTXO{outpoint: outpoint}} = contract) do
     sequence = Keyword.get(contract.opts, :sequence, 0xFFFFFFFF)
     script = to_script(contract)
-    struct(TxIn, prevout: outpoint, script: script, sequence: sequence)
+    struct(TxIn, outpoint: outpoint, script: script, sequence: sequence)
   end
 
   @doc """
@@ -250,10 +250,7 @@ defmodule BSV.Contract do
       outputs: [apply(mod, :lock, [1000, lock_params])]
     })
 
-    utxo = %UTXO{
-      outpoint: %OutPoint{hash: Tx.get_hash(lock_tx), index: 0},
-      txout: txout
-    }
+    utxo = UTXO.from_tx(lock_tx, 0)
 
     %Tx{inputs: [txin]} = tx = TxBuilder.to_tx(%TxBuilder{
       inputs: [apply(mod, :unlock, [utxo, unlock_params])]

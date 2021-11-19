@@ -72,7 +72,7 @@ defmodule BSV.TxBuilderTest do
         inputs = Enum.map v["inputs"], fn i ->
           utxo = %UTXO{outpoint: %OutPoint{
             hash: Util.decode!(i["txId"], :hex) |> Util.reverse_bin(),
-            index: i["vout"]
+            vout: i["vout"]
           }}
           P2PKH.unlock(utxo, %{})
         end

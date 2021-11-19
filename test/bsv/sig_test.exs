@@ -15,9 +15,9 @@ defmodule BSV.SigTest do
   }
   @prev_tx %Tx{outputs: [@prev_txout]}
   @test_txin %TxIn{
-    prevout: %OutPoint{
+    outpoint: %OutPoint{
       hash: Tx.get_hash(@prev_tx),
-      index: 0
+      vout: 0
     },
     script: %Script{}
   }
@@ -73,7 +73,12 @@ defmodule BSV.SigTest do
       signature = Sig.sign(@test_tx, 0, @prev_txout, @test_privkey)
       assert is_binary(signature)
       assert Base.encode64(signature) == @test_signature
-      assert Sig.verify(signature, @test_tx, 0, @prev_txout, PubKey.from_privkey(@test_privkey))
+    end
+  end
+
+  describe "Sig.verify/5" do
+    test "must verify the signature" do
+      assert Sig.verify(@test_signature, @test_tx, 0, @prev_txout, PubKey.from_privkey(@test_privkey))
     end
   end
 

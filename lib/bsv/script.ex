@@ -1,22 +1,33 @@
 defmodule BSV.Script do
   @moduledoc """
-  TODO
+  Module for parsing, serialising and building Scripts.
+
+  Script is the scripting language built into Bitcoin. Transaction outputs each
+  contain a "locking script" which lock a number of satoshis. Transaction inputs
+  contain an "unlocking script" which unlock the satoshis contained in a
+  previous output. Both the unlocking script and previous locking script are
+  concatenated in the following order:
+
+      unlocking_script <> locking_script
+
+  The entire script is evaluated and if it returns a truthy value, the output is
+  unlocked and spent.
   """
   alias BSV.{OpCode, ScriptNum}
   import BSV.Util, only: [decode: 2, decode!: 2, encode: 2]
 
   defstruct chunks: [], coinbase: nil
 
-  @typedoc "TODO"
+  @typedoc "Script struct"
   @type t() :: %__MODULE__{
     chunks: list(chunk()),
     coinbase: nil | binary()
   }
 
-  @typedoc "TODO"
+  @typedoc "Script chunk"
   @type chunk() :: atom() | binary()
 
-  @typedoc "TODO"
+  @typedoc "Coinbase data"
   @type coinbase_data() :: %{
     height: integer(),
     data: binary(),
@@ -24,7 +35,20 @@ defmodule BSV.Script do
   }
 
   @doc """
-  TODO
+  Parses the given ASM encoded string into a `t:BSV.Script.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Examples
+
+      iex> Script.from_asm("OP_DUP OP_HASH160 5ae866af9de106847de6111e5f1faa168b2be689 OP_EQUALVERIFY OP_CHECKSIG")
+      {:ok, %Script{chunks: [
+        :OP_DUP,
+        :OP_HASH160,
+        <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230, 137>>,
+        :OP_EQUALVERIFY,
+        :OP_CHECKSIG
+      ]}}
   """
   @spec from_asm(binary()) :: {:ok, t()} | {:error, term()}
   def from_asm(data) when is_binary(data) do
@@ -39,7 +63,9 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Parses the given ASM encoded string into a `t:BSV.Script.t/0`.
+
+  As `from_asm/1` but returns the result or raises an exception.
   """
   @spec from_asm!(binary()) :: t()
   def from_asm!(data) when is_binary(data) do
@@ -52,7 +78,26 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Script.t/0`.
+
+  Returns the result in an `:ok` / `:error` tuple pair.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
+
+  ## Examples
+
+      iex> Script.from_binary("76a9145ae866af9de106847de6111e5f1faa168b2be68988ac", encoding: :hex)
+      {:ok, %Script{chunks: [
+        :OP_DUP,
+        :OP_HASH160,
+        <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230, 137>>,
+        :OP_EQUALVERIFY,
+        :OP_CHECKSIG
+      ]}}
   """
   @spec from_binary(binary(), keyword()) :: {:ok, t()} | {:error, term()}
   def from_binary(data, opts \\ []) when is_binary(data) do
@@ -66,7 +111,9 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Parses the given binary into a `t:BSV.Script.t/0`.
+
+  As `from_binary/2` but returns the result or raises an exception.
   """
   @spec from_binary!(binary(), keyword()) :: t()
   def from_binary!(data, opts \\ []) when is_binary(data) do
@@ -79,7 +126,7 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Returns formatted coinbase data from the given Script.
   """
   @spec get_coinbase_data(t()) :: coinbase_data() | binary()
   def get_coinbase_data(%__MODULE__{coinbase: data}) when is_binary(data) do
@@ -96,7 +143,24 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Pushes a chunk into the `t:BSV.Script.t/0`.
+
+  The chunk can be any binary value, `t:BSV.OpCode.t/0` or `t:integer/0`.
+  Integer values will be encoded as a `t:BSV.ScriptNum.t/0`.
+
+  ## Examples
+
+      iex> %Script{}
+      ...> |> Script.push(:OP_FALSE)
+      ...> |> Script.push(:OP_RETURN)
+      ...> |> Script.push("Hello world!")
+      ...> |> Script.push(2021)
+      %Script{chunks: [
+        :OP_FALSE,
+        :OP_RETURN,
+        "Hello world!",
+        <<229, 7>>
+      ]}
   """
   @spec push(t(), atom() | integer() | binary()) :: t()
   def push(%__MODULE__{} = script, data) when is_atom(data) do
@@ -114,14 +178,24 @@ defmodule BSV.Script do
     do: push_chunk(script, ScriptNum.encode(data))
 
   @doc """
-  TODO
+  Returns the size of the Script in bytes.
+
+  ## Examples
+
+      iex> Script.get_size(@p2pkh_script)
+      25
   """
-  @spec size(t()) :: non_neg_integer()
-  def size(%__MODULE__{} = script),
+  @spec get_size(t()) :: non_neg_integer()
+  def get_size(%__MODULE__{} = script),
     do: to_binary(script) |> byte_size()
 
   @doc """
-  TODO
+  Serialises the given `t:BSV.Script.t/0` into an ASM encoded string.
+
+  ## Examples
+
+      iex> Script.to_asm(@p2pkh_script)
+      "OP_DUP OP_HASH160 5ae866af9de106847de6111e5f1faa168b2be689 OP_EQUALVERIFY OP_CHECKSIG"
   """
   @spec to_asm(t()) :: binary()
   def to_asm(%__MODULE__{chunks: chunks}) do
@@ -131,7 +205,18 @@ defmodule BSV.Script do
   end
 
   @doc """
-  TODO
+  Serialises the given `t:BSV.Script.t/0` into a binary.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:encoding` - Optionally encode the binary with either the `:base64` or `:hex` encoding scheme.
+
+  ## Examples
+
+      iex> Script.to_binary(@p2pkh_script, encoding: :hex)
+      "76a9145ae866af9de106847de6111e5f1faa168b2be68988ac"
   """
   @spec to_binary(t(), keyword()) :: binary()
   def to_binary(script, opts \\ [])
@@ -151,7 +236,7 @@ defmodule BSV.Script do
     |> encode(encoding)
   end
 
-  # TODO
+  # Parses the ASM chunk into a Script chunk
   defp parse_asm_chunk(<<"OP_", _::binary>> = chunk),
     do: String.to_existing_atom(chunk)
 
@@ -159,7 +244,7 @@ defmodule BSV.Script do
   defp parse_asm_chunk("0"), do: :OP_0
   defp parse_asm_chunk(chunk), do: decode!(chunk, :hex)
 
-  # TODO
+  # Parses the given binary into a list of Script chunks
   defp parse_bytes(data, chunks \\ [])
 
   defp parse_bytes(<<>>, chunks), do: {:ok, Enum.reverse(chunks)}
@@ -187,17 +272,17 @@ defmodule BSV.Script do
     parse_bytes(data, [opcode | chunks])
   end
 
-  # TODO
+  # Pushes the chunk onto the script
   defp push_chunk(%__MODULE__{} = script, data),
     do: update_in(script.chunks, & Enum.concat(&1, [data]))
 
-  # TODO
+  # Serilises the Script chunk as an ASM chunk
   defp serialize_asm_chunk(:OP_1NEGATE), do: "-1"
   defp serialize_asm_chunk(chunk) when chunk in [:OP_0, :OP_FALSE], do: "0"
   defp serialize_asm_chunk(chunk) when is_atom(chunk), do: Atom.to_string(chunk)
   defp serialize_asm_chunk(chunk) when is_binary(chunk), do: encode(chunk, :hex)
 
-  # TODO
+  # Serilises the list of Script chunks as a binary
   defp serialize_chunks(chunks, data \\ <<>>)
 
   defp serialize_chunks([], data), do: data
