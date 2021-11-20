@@ -1,0 +1,24 @@
+image:
+  file: .gitpod.Dockerfile
+  
+tasks:
+  - name: Nginx
+    command: >
+      nginx &&
+      multitail /var/log/nginx/access.log -I /var/log/nginx/error.log
+  - init: mix do deps.get, deps.compile
+    command: >
+      echo -e "\nBSV-ex - Elixir Bitcoin Library";
+      echo -e "===============================";
+      echo -e "\nRun tests with";
+      echo -e "  $ mix test";
+      echo -e "\nGenerate and view docs";
+      echo -e "  $ mix docs";
+      echo -e "  $ gp preview $(gp url 8002) --external\n\n";
+
+ports:
+  - port: 8002
+
+vscode:
+  extensions:
+    - elixir-lsp.elixir-ls
