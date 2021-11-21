@@ -9,7 +9,8 @@ defmodule BSV.Tx do
   used for smart contracts, recording and timestamping data, and many other
   functionalities.
 
-  TODO
+  The Tx module is used for parsing and serialising transaction data. Use the
+  `BSV.TxBuilder` module for building transactions.
   """
   alias BSV.{Hash, OutPoint, Serializable, TxIn, TxOut, VarInt}
   import BSV.Util, only: [decode: 2, encode: 2, reverse_bin: 1]
@@ -38,21 +39,6 @@ defmodule BSV.Tx do
   """
   @type txid() :: String.t()
 
-  @typedoc "TODO"
-  @type fee_quote() :: %{
-    mine: %{
-      data: non_neg_integer(),
-      standard: non_neg_integer()
-    },
-    relay: %{
-      data: non_neg_integer(),
-      standard: non_neg_integer()
-    },
-  } | %{
-    data: non_neg_integer(),
-    standard: non_neg_integer()
-  } | non_neg_integer()
-
   @doc """
   Adds the given `t:BSV.TxIn.t/0` to the transaction.
   """
@@ -66,28 +52,6 @@ defmodule BSV.Tx do
   @spec add_output(t(), TxOut.t()) :: t()
   def add_output(%__MODULE__{} = tx, %TxOut{} = txout),
     do: update_in(tx.outputs, & &1 ++ [txout])
-
-  @doc """
-  TODO
-  """
-  @spec calc_required_fee(t(), fee_quote()) :: non_neg_integer()
-  def calc_required_fee(%__MODULE__{} = tx, rates) when is_integer(rates),
-    do: calc_required_fee(tx, %{data: rates, standard: rates})
-
-  def calc_required_fee(%__MODULE__{} = tx, %{mine: rates}),
-    do: calc_required_fee(tx, rates)
-
-  def calc_required_fee(%__MODULE__{inputs: inputs, outputs: outputs}, %{data: _, standard: _} = rates) do
-    [
-      {:standard, 4}, # version
-      {:standard, 4}, # locktime
-      {:standard, length(inputs) |> VarInt.encode() |> byte_size()},
-      {:standard, length(outputs) |> VarInt.encode() |> byte_size()}
-    ]
-    |> Kernel.++(Enum.map(inputs, &calc_fee_part/1))
-    |> Kernel.++(Enum.map(outputs, &calc_fee_part/1))
-    |> Enum.reduce(0, fn {type, bytes}, fee -> fee + ceil(rates[type] * bytes) end)
-  end
 
   @doc """
   Returns true if the given `t:BSV.Tx.t/0` is a coinbase transaction (the first
@@ -181,21 +145,6 @@ defmodule BSV.Tx do
     tx
     |> Serializable.serialize()
     |> encode(encoding)
-  end
-
-  # TODO
-  defp calc_fee_part(%TxIn{} = txin) do
-    {:standard, TxIn.get_size(txin)}
-  end
-
-  # TODO
-  defp calc_fee_part(%TxOut{script: script} = txout) do
-    case script.chunks do
-      [:OP_FALSE, :OP_RETURN | _chunks] ->
-        {:data, TxOut.get_size(txout)}
-      _ ->
-        {:standard, TxOut.get_size(txout)}
-    end
   end
 
   defimpl Serializable do

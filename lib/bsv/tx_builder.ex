@@ -2,7 +2,7 @@ defmodule BSV.TxBuilder do
   @moduledoc """
   TODO
   """
-  alias BSV.{Address, Contract, Script, Tx, TxOut, UTXO}
+  alias BSV.{Address, Contract, Script, Tx, TxIn, TxOut, UTXO, VarInt}
   alias BSV.Contract.P2PKH
   import BSV.Util, only: [reverse_bin: 1]
 
@@ -31,6 +31,21 @@ defmodule BSV.TxBuilder do
     options: map()
   }
 
+  @typedoc "TODO"
+  @type fee_quote() :: %{
+    mine: %{
+      data: non_neg_integer(),
+      standard: non_neg_integer()
+    },
+    relay: %{
+      data: non_neg_integer(),
+      standard: non_neg_integer()
+    },
+  } | %{
+    data: non_neg_integer(),
+    standard: non_neg_integer()
+  } | non_neg_integer()
+
   @doc """
   TODO
   """
@@ -44,6 +59,29 @@ defmodule BSV.TxBuilder do
   @spec add_output(t(), Contract.t()) :: t()
   def add_output(%__MODULE__{} = builder, %Contract{mfa: {_, :locking_script, _}} = output),
     do: update_in(builder.outputs, & &1 ++ [output])
+
+  @doc """
+  TODO
+  """
+  @spec calc_required_fee(t(), fee_quote()) :: non_neg_integer()
+  def calc_required_fee(builder, rates \\ @default_rates)
+
+  def calc_required_fee(%__MODULE__{} = builder, rates) when is_integer(rates),
+    do: calc_required_fee(builder, %{data: rates, standard: rates})
+
+  def calc_required_fee(%__MODULE__{} = builder, %{mine: rates}),
+    do: calc_required_fee(builder, rates)
+
+  def calc_required_fee(%__MODULE__{inputs: inputs, outputs: outputs}, %{data: _, standard: _} = rates) do
+    [
+      {:standard, 4 + 4}, # version & locktime
+      {:standard, length(inputs) |> VarInt.encode() |> byte_size()},
+      {:standard, length(outputs) |> VarInt.encode() |> byte_size()}
+    ]
+    |> Kernel.++(Enum.map(inputs, & calc_script_fee(Contract.to_txin(&1))))
+    |> Kernel.++(Enum.map(outputs, & calc_script_fee(Contract.to_txout(&1))))
+    |> Enum.reduce(0, fn {type, bytes}, fee -> fee + ceil(rates[type] * bytes) end)
+  end
 
   @doc """
   TODO
@@ -117,10 +155,16 @@ defmodule BSV.TxBuilder do
       Tx.add_output(tx, Contract.to_txout(contract))
     end)
 
+    # Append change if required
+    tx = case get_change_txout(builder) do
+      %TxOut{} = txout ->
+        Tx.add_output(tx, txout)
+      _ ->
+        tx
+    end
+
     # Second pass on populating inputs with actual sigs
-    inputs
-    |> Enum.with_index()
-    |> Enum.reduce(append_change(builder, tx), fn {contract, vin}, tx ->
+    Enum.reduce(Enum.with_index(inputs), tx, fn {contract, vin}, tx ->
       txin = contract
       |> Contract.put_ctx({tx, vin})
       |> Contract.to_txin()
@@ -129,25 +173,36 @@ defmodule BSV.TxBuilder do
     end)
   end
 
-  # Appends the changescript if sufficient change after fee
-  defp append_change(%{change_script: %Script{} = script} = builder, %Tx{} = tx) do
+  # Returns change txout if script present and amount exceeds dust threshold
+  defp get_change_txout(%{change_script: %Script{} = script} = builder) do
     change = input_sum(builder) - output_sum(builder)
-    fee = Tx.calc_required_fee(tx, builder.options.rates)
+    fee = calc_required_fee(builder, builder.options.rates)
     txout = %TxOut{script: script}
     extra_fee = ceil(TxOut.get_size(txout) * builder.options.rates.mine.standard)
-    txout = Map.put(txout, :satoshis, change - (fee+extra_fee))
-    dust_limit = dust_threshold(txout, builder.options.rates)
+    change = change - (fee + extra_fee)
 
-    if txout.satoshis >= dust_limit do
-      Tx.add_output(tx, txout)
-    else
-      tx
+    if change >= dust_threshold(txout, builder.options.rates) do
+      Map.put(txout, :satoshis, change)
     end
   end
 
-  defp append_change(_, %Tx{} = tx), do: tx
+  defp get_change_txout(_builder), do: nil
 
-  # TODO
+  # Calculates the size of the given TxIn or TxOut
+  defp calc_script_fee(%TxIn{} = txin) do
+    {:standard, TxIn.get_size(txin)}
+  end
+
+  defp calc_script_fee(%TxOut{script: script} = txout) do
+    case script.chunks do
+      [:OP_FALSE, :OP_RETURN | _chunks] ->
+        {:data, TxOut.get_size(txout)}
+      _ ->
+        {:standard, TxOut.get_size(txout)}
+    end
+  end
+
+  # Returns the dust threshold of the given txout
   # See: https://github.com/bitcoin-sv/bitcoin-sv/blob/master/src/primitives/transaction.h#L188-L208
   defp dust_threshold(%TxOut{} = txout, %{relay: rates}),
     do: 3 * floor((TxOut.get_size(txout) + 148) * rates.standard)

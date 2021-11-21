@@ -62,9 +62,15 @@ defmodule BSV.Sig do
     when (sighash_flag &&& @sighash_anyonecanpay) != 0
 
   @doc """
-  TODO
+  Returns the `t:BSV.Sig.sighash_flag/0` of the given sighash type.
+
+  ## Examples
+
+      iex> Sig.sighash_flag(:default)
+      0x41
   """
   @spec sighash_flag(atom()) :: sighash_flag()
+  def sighash_flag(sighash_type \\ :default)
   def sighash_flag(:default), do: @default_sighash
   def sighash_flag(:sighash_all), do: @sighash_all
   def sighash_flag(:sighash_none), do: @sighash_none

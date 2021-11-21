@@ -2,7 +2,7 @@ defmodule BSV.TxBuilderTest do
   use ExUnit.Case, async: true
   alias BSV.TxBuilder
   alias BSV.{Address, Contract, KeyPair, OutPoint, PrivKey, Script, TxOut, Util, UTXO}
-  alias BSV.Contract.{P2PKH, Raw}
+  alias BSV.Contract.{OpReturn, P2PKH, Raw}
   doctest TxBuilder
 
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
@@ -35,6 +35,41 @@ defmodule BSV.TxBuilderTest do
     test "set P2PKH change script from address string" do
       builder = TxBuilder.change_to(%TxBuilder{}, Address.to_string(@address))
       assert %Script{chunks: [:OP_DUP, :OP_HASH160, _pubkeyhash, :OP_EQUALVERIFY, :OP_CHECKSIG]} = builder.change_script
+    end
+  end
+
+  describe "calc_required_fee/2" do
+    setup do
+      utxo = %UTXO{
+        outpoint: %OutPoint{
+          hash: <<18, 26, 154, 193, 224, 130, 65, 92, 195, 184, 190, 125, 14, 68, 184, 150, 77, 158, 53, 133, 220, 238, 5, 240, 121, 240, 56, 35, 55, 20, 48, 94>>,
+          vout: 0
+        },
+        txout: %TxOut{satoshis: 1000}
+      }
+      builder = %TxBuilder{
+        inputs: [
+          P2PKH.unlock(utxo, %{keypair: @keypair})
+        ],
+        outputs: [
+          P2PKH.lock(1000, %{address: @address}),
+          OpReturn.lock(0, %{data: ["foo", "bar"]})
+        ]
+      }
+      {:ok, builder: builder}
+    end
+
+    test "calculates correct fee from a basic sat/byte integer", %{builder: builder} do
+      assert TxBuilder.calc_required_fee(builder, 1) == 210
+      assert TxBuilder.to_tx(builder) |> BSV.Tx.get_size() == 210
+    end
+
+    test "calculates correct fee from default hardcoded rates", %{builder: builder} do
+      assert TxBuilder.calc_required_fee(builder) == 107
+    end
+
+    test "calculates correct fee with given shorthand rates", %{builder: builder} do
+      assert TxBuilder.calc_required_fee(builder, %{data: 0.1, standard: 0.2}) == 43
     end
   end
 

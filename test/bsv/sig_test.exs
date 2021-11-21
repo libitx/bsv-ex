@@ -51,7 +51,7 @@ defmodule BSV.SigTest do
       end
     end
 
-    # TODO - need to implement Flags SCRIPT_ENABLE_SIGHASH_FORKID so can force legacy sighash
+    # need to implement Flags SCRIPT_ENABLE_SIGHASH_FORKID so can force legacy sighash
     @tag :pending
     test "Bitcoin Core test vectors" do
       [_ | vectors] = @vectors_btc
