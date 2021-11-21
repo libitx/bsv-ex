@@ -34,17 +34,17 @@ defmodule BSV.TxBuilder do
   @typedoc "TODO"
   @type fee_quote() :: %{
     mine: %{
-      data: non_neg_integer(),
-      standard: non_neg_integer()
+      data: number(),
+      standard: number()
     },
     relay: %{
-      data: non_neg_integer(),
-      standard: non_neg_integer()
+      data: number(),
+      standard: number()
     },
   } | %{
-    data: non_neg_integer(),
-    standard: non_neg_integer()
-  } | non_neg_integer()
+    data: number(),
+    standard: number()
+  } | number()
 
   @doc """
   TODO
@@ -66,7 +66,7 @@ defmodule BSV.TxBuilder do
   @spec calc_required_fee(t(), fee_quote()) :: non_neg_integer()
   def calc_required_fee(builder, rates \\ @default_rates)
 
-  def calc_required_fee(%__MODULE__{} = builder, rates) when is_integer(rates),
+  def calc_required_fee(%__MODULE__{} = builder, rates) when is_number(rates),
     do: calc_required_fee(builder, %{data: rates, standard: rates})
 
   def calc_required_fee(%__MODULE__{} = builder, %{mine: rates}),
