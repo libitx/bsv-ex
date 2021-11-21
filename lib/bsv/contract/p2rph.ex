@@ -1,6 +1,14 @@
 defmodule BSV.Contract.P2RPH do
   @moduledoc """
-  TODO
+  Pay to R Puzzle Hash contract.
+
+  P2RPH scripts are used to lock Bitcoin to a hash puzzle based on the R value
+  of an ECDSA signature. The Bitcoin can later be unlocked using the
+  corresponding K value.
+
+  The technique allows for the spending party to sign the unlocking script using
+  any private key. This makes R Puzzles well suited for signing Metanet nodes,
+  token protocols and other novel use cases.
 
   ## Examples
 
@@ -70,7 +78,7 @@ defmodule BSV.Contract.P2RPH do
   end
 
   @doc """
-  TODO
+  Generates a new random K value.
   """
   @spec generate_k() :: binary()
   def generate_k() do
@@ -79,7 +87,7 @@ defmodule BSV.Contract.P2RPH do
   end
 
   @doc """
-  TODO
+  Returns the corresponding R value of the given K value.
   """
   @spec get_r(binary()) :: binary()
   def get_r(<<k::big-256>>) do
@@ -96,7 +104,8 @@ defmodule BSV.Contract.P2RPH do
     end
   end
 
-  # TODO
+  # Signs the transaction context and pushes the signature onto the stack.
+  # The given K value is used to generate the signature
   defp sig_with_k(
     %Contract{ctx: {tx, vin}, opts: opts, subject: %UTXO{txout: txout}} = ctx,
     %PrivKey{d: privkey},
