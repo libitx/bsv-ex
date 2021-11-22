@@ -1,5 +1,7 @@
 defprotocol BSV.Serializable do
-  @moduledoc false
+  @moduledoc """
+  TODO
+  """
 
   @doc """
   Parses the binary value into the specified type.

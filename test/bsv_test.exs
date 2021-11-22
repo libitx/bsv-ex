@@ -1,6 +1,6 @@
 defmodule BSVTest do
   use ExUnit.Case
-  doctest BSV
+  alias BSV
 
   #test "greets the world" do
   #  assert BSV.hello() == :world

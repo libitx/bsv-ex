@@ -1,6 +1,20 @@
 defmodule BSV.VM do
   @moduledoc """
   Pure Elixir Bitcoin Script VM.
+
+  Bitcoin Script is a Forth-like scripting language used to define the locking
+  mechanism for a transaction output.
+
+  Transaction outputs each contain a "locking script" which lock a number of
+  satoshis. Transaction inputs contain an "unlocking script" which unlock the
+  satoshis contained in a previous output. Both the unlocking script and
+  previous locking script are concatenated in the following order:
+
+      unlocking_script <> locking_script
+
+  The entire script is evaluated and when if the end result contains a truthy
+  value on the top of the stack, it is a valid script. Otherwise it is invalid.
+  This is known as a predicate - an equation that evaluates to true or false.
   """
   use Bitwise
   alias BSV.{PubKey, Script, ScriptNum, Sig, Tx, TxOut, Util}
@@ -15,7 +29,7 @@ defmodule BSV.VM do
             opts: @default_opts,
             error: nil
 
-  @typedoc "TODO"
+  @typedoc "VM struct"
   @type t() :: %__MODULE__{
     ctx: ctx() | nil,
     stack: list(),
@@ -26,7 +40,13 @@ defmodule BSV.VM do
     error: nil | String.t
   }
 
-  @typedoc "TODO"
+  @typedoc """
+  Transaction context.
+
+  A tuple containing a `t:BSV.Tx.t/0`, `t:BSV.TxIn.vin/0` and `t:BSV.TxOut.t/0`.
+  If not present, then `op_checksig/1` and `op_checkmultisig/1` will raise
+  errors and the script will fail.
+  """
   @type ctx() :: {Tx.t(), non_neg_integer(), TxOut.t()}
 
   @doc """

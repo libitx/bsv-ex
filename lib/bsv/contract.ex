@@ -110,7 +110,7 @@ defmodule BSV.Contract do
   @typedoc """
   Transaction context.
 
-  A tuple containing a `t:BSV.Tx.t/0` and [`vin`](`t:non_neg_integer/0`). When
+  A tuple containing a `t:BSV.Tx.t/0` and [`vin`](`t:BSV.TxIn.vin/0`). When
   attached to a contract, the he correct [`sighash`](`t:BSV.Sig.sighash/0`) to
   be calculated for any signatures.
   """

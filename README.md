@@ -28,14 +28,24 @@ end
 
 ## Upgrading
 
-TODO
+Version `2.x` of this library is so signifcantly different to version `0.x` that we skipped an entire version. This is a rewrite from top to bottom, with an entirely new API, and makes no attempt to maintain backwards compatibility.
+
+If upgrading from a previous version then be prepared to update your code where it interfaces with this library. If this library is depended on by other third party dependencies, then check each dependency and make sure it has been upgraded to support version `2.x`.
+
+Main changes:
+
+* Many modules have been renamed to follow the conventions established in [Money Button's bsv JavaScript library](https://github.com/moneybutton/bsv).
+* `from_binary/2` and `to_binary/2` functions replace the old `parse/2` and `serialize/2` functions.
+* The old `Crypto` namespace and modules have been removed. Crypto code unrelated to Bitcoin is no longer maintained. Hash functions can be found in the `BSV.Hash` module, and ECDSA functions are provided by `Curvy`.
+* An entirely new script and smart contract building API has been created.
 
 ## Configuration
 
-Optionally, BSV can be configured to run on the test network by configuring your application's environment in `config/config.exs`:
+Optionally, BSV can be configured for testnet network by editing your application's configuration:
 
 ```elixir
-config :bsv, :network, :test # defaults to :main
+config :bsv,
+  network: :test  # defaults to :main
 ```
 
 ## Usage
@@ -126,7 +136,7 @@ iex> rawtx = BSV.Tx.to_binary(tx, encoding: :hex)
 
 ### Creating custom contracts
 
-TODO...
+The `BSV.Contract` module provides a way to define a locking script and unlocking script in a pure Elixir function.
 
 ```elixir
 # Define a module that implements the `Contract` behaviour
@@ -150,10 +160,9 @@ defmodule P2PKH do
 end
 ```
 
-TODO...
+Contracts can be tested using the built-in simulator.
 
 ```elixir
-# testing
 iex> keypair = BSV.KeyPair.new()
 iex> lock_params = %{address: BSV.Address.from_pubkey(keypair.pubkey)}
 iex> unlock_params = %{keypair: keypair}
