@@ -5,7 +5,7 @@ defmodule BSV.MixProject do
     [
       app: :bsv,
       version: "2.0.0-alpha.0",
-      elixir: "~> 1.10",
+      elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "BSV",
