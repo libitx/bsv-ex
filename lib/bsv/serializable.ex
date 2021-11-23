@@ -1,6 +1,7 @@
 defprotocol BSV.Serializable do
   @moduledoc """
-  TODO
+  A protocol module specifying an API for parsing and serializing Binary data
+  into Bitcoin objects.
   """
 
   @doc """

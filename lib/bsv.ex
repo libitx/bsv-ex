@@ -146,7 +146,7 @@ defmodule BSV do
 
   iex> tx = BSV.TxBuilder.to_tx(builder)
   iex> rawtx = BSV.Tx.to_binary(tx, encoding: :hex)
-  "02000000011f4e5a628f..."
+  "0100000001121a9ac1e0..."
   ```
 
   ### Creating custom contracts

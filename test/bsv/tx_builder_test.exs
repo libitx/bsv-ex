@@ -1,14 +1,15 @@
 defmodule BSV.TxBuilderTest do
   use ExUnit.Case, async: true
   alias BSV.TxBuilder
-  alias BSV.{Address, Contract, KeyPair, OutPoint, PrivKey, Script, TxOut, Util, UTXO}
+  alias BSV.{Address, Contract, KeyPair, OutPoint, PrivKey, Script, Tx, TxOut, Util, UTXO}
   alias BSV.Contract.{OpReturn, P2PKH, Raw}
-  doctest TxBuilder
 
   @wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
   @keypair KeyPair.from_privkey(PrivKey.from_wif!(@wif))
   @address Address.from_pubkey(@keypair.pubkey)
   @vectors File.read!("test/vectors/bip69.json") |> Jason.decode!()
+
+  doctest TxBuilder
 
   describe "add_input/2" do
     test "appends an input contract" do

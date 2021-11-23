@@ -1,6 +1,39 @@
 defmodule BSV.TxBuilder do
   @moduledoc """
-  TODO
+  A flexible and powerful transaction building module and API.
+
+  The TxBuilder accepts inputs and outputs that are modules implementing the
+  `BSV.Contract` behaviour. This abstraction makes for a succinct and elegant
+  approach to building transactions. The `BSV.Contract` behaviour is flexible
+  and can be used to define any kind of locking and unlocking script, not
+  limited to a handful of standard transactions.
+
+  ## Examples
+
+  Because each input and output is prepared with all the information it needs,
+  calling `to_tx/1` is all that is needed to build and sign the transaction.
+
+      iex> utxo = UTXO.from_params!(%{
+      ...>   "txid" => "5e3014372338f079f005eedc85359e4d96b8440e7dbeb8c35c4182e0c19a1a12",
+      ...>   "vout" => 0,
+      ...>   "satoshis" => 11000,
+      ...>   "script" => "76a914538fd179c8be0f289c730e33b5f6a3541be9668f88ac"
+      ...> })
+      iex>
+      iex> builder = %TxBuilder{
+      ...>   inputs: [
+      ...>     P2PKH.unlock(utxo, %{keypair: @keypair})
+      ...>   ],
+      ...>   outputs: [
+      ...>     P2PKH.lock(10000, %{address: @address}),
+      ...>     OpReturn.lock(0, %{data: ["hello", "world"]})
+      ...>   ]
+      ...> }
+      iex>
+      iex> tx = TxBuilder.to_tx(builder)
+      iex> Tx.to_binary(tx, encoding: :hex)
+      "0100000001121a9ac1e082415cc3b8be7d0e44b8964d9e3585dcee05f079f038233714305e000000006a47304402200f674ba40b14b8f85b751ad854244a4199008c5b491b076df2eb6c3efd0be4bf022004b48ef0e656ee1873d07cb3b06858970de702f63935df2fbe8816f1a5f15e1e412103f81f8c8b90f5ec06ee4245eab166e8af903fc73a6dd73636687ef027870abe39ffffffff0210270000000000001976a914538fd179c8be0f289c730e33b5f6a3541be9668f88ac00000000000000000e006a0568656c6c6f05776f726c6400000000"
+
   """
   alias BSV.{Address, Contract, Script, Tx, TxIn, TxOut, UTXO, VarInt}
   alias BSV.Contract.P2PKH
@@ -22,7 +55,7 @@ defmodule BSV.TxBuilder do
             lock_time: 0,
             options: @default_opts
 
-  @typedoc "TODO"
+  @typedoc "TxBuilder struct"
   @type t() :: %__MODULE__{
     inputs: list(Contract.t()),
     outputs: list(Contract.t()),
@@ -31,7 +64,13 @@ defmodule BSV.TxBuilder do
     options: map()
   }
 
-  @typedoc "TODO"
+  @typedoc """
+  Fee quote
+
+  A fee quote is a data structure representing miner fees. It can be either a
+  single number representing satoshis per bytes, or a map with keys for both
+  `:data` and `:standard` miner rates.
+  """
   @type fee_quote() :: %{
     mine: %{
       data: number(),
@@ -47,21 +86,26 @@ defmodule BSV.TxBuilder do
   } | number()
 
   @doc """
-  TODO
+  Adds the given unlocking script contract to the builder.
   """
   @spec add_input(t(), Contract.t()) :: t()
   def add_input(%__MODULE__{} = builder, %Contract{mfa: {_, :unlocking_script, _}} = input),
     do: update_in(builder.inputs, & &1 ++ [input])
 
   @doc """
-  TODO
+  Adds the given locking script contract to the builder.
   """
   @spec add_output(t(), Contract.t()) :: t()
   def add_output(%__MODULE__{} = builder, %Contract{mfa: {_, :locking_script, _}} = output),
     do: update_in(builder.outputs, & &1 ++ [output])
 
   @doc """
-  TODO
+  Calculates the required fee for the builder's transaction, optionally using
+  the given `t:fee_quote/0`.
+
+  When different `:data` and `:standard` rates are given, data outputs
+  (identified by locking scripts beginning with `OP_FALSE OP_RETURN`) are
+  calculated using the appropriate rate.
   """
   @spec calc_required_fee(t(), fee_quote()) :: non_neg_integer()
   def calc_required_fee(builder, rates \\ @default_rates)
@@ -84,7 +128,8 @@ defmodule BSV.TxBuilder do
   end
 
   @doc """
-  TODO
+  Sets the change script on the builder as a P2PKH locking script to the given
+  address.
   """
   @spec change_to(t(), Address.t() | Address.address_str()) :: t()
   def change_to(%__MODULE__{} = builder, %Address{} = address) do
@@ -98,7 +143,7 @@ defmodule BSV.TxBuilder do
     do: change_to(builder, Address.from_string!(address))
 
   @doc """
-  TODO
+  Returns the sum of all inputs defined in the builder.
   """
   @spec input_sum(t()) :: integer()
   def input_sum(%__MODULE__{inputs: inputs}) do
@@ -108,7 +153,7 @@ defmodule BSV.TxBuilder do
   end
 
   @doc """
-  TODO
+  Returns the sum of all outputs defined in the builder.
   """
   @spec output_sum(t()) :: integer()
   def output_sum(%__MODULE__{outputs: outputs}) do
@@ -118,7 +163,10 @@ defmodule BSV.TxBuilder do
   end
 
   @doc """
-  TODO
+  Sorts the TxBuilder inputs and outputs according to [BIP-69](https://github.com/bitcoin/bips/blob/master/bip-0069.mediawiki).
+
+  BIP-69 defines deterministic lexographical indexing of transaction inputs and
+  outputs.
   """
   @spec sort(t()) :: t()
   def sort(%__MODULE__{} = builder) do
@@ -138,7 +186,7 @@ defmodule BSV.TxBuilder do
   end
 
   @doc """
-  TODO
+  Builds and returns the signed transaction.
   """
   @spec to_tx(t()) :: Tx.t()
   def to_tx(%__MODULE__{inputs: inputs, outputs: outputs} = builder) do
