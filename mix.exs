@@ -4,7 +4,7 @@ defmodule BSV.MixProject do
   def project do
     [
       app: :bsv,
-      version: "2.0.0-alpha.0",
+      version: "2.0.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -29,7 +29,7 @@ defmodule BSV.MixProject do
       {:basefiftyeight, "~> 0.1"},
       {:curvy, "~> 0.3"},
       {:ex_doc, "~> 0.25", only: :dev, runtime: false},
-      {:jason, "~> 1.2", only: :test}
+      {:jason, "~> 1.2", only: :test, runtime: false}
     ]
   end
 
