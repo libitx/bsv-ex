@@ -9,7 +9,7 @@ defmodule BSV.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "BSV",
-      description: "Library for building Bitcoin applications with Elixir",
+      description: "Elixir toolsset for building Bitcoin applications",
       source_url: "https://github.com/libitx/bsv-ex",
       docs: docs(),
       package: package()

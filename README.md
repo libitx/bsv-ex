@@ -1,5 +1,11 @@
 # BSV
 
+![BSV-ex](https://github.com/libitx/bsv-ex/raw/master/media/poster.png)
+
+![Hex.pm](https://img.shields.io/hexpm/v/bsv?color=informational)
+![License](https://img.shields.io/github/license/libitx/bsv-ex?color=informational)
+![Build](https://img.shields.io/github/workflow/status/libitx/bsv-ex/Elixir%20CI)
+
 BSV-ex is a general purpose library for building Bitcoin SV applications in Elixir. Under the hood, [Curvy](https://hexdocs.pm/curvy) is used for all `secp256k1` flavoured crypto, making BSV-ex the only pure Elixir Bitcoin library.
 
 ## Features
@@ -28,7 +34,7 @@ end
 
 ## Upgrading
 
-Version `2.x` of this library is so signifcantly different to version `0.x` that we skipped an entire version. This is a rewrite from top to bottom, with an entirely new API, and makes no attempt to maintain backwards compatibility.
+Version `2.x` of this library is so significantly different to version `0.x` that we skipped an entire version. This is a rewrite from top to bottom, with an entirely new API, and makes no attempt to maintain backwards compatibility.
 
 If upgrading from a previous version then be prepared to update your code where it interfaces with this library. If this library is depended on by other third party dependencies, then check each dependency and make sure it has been upgraded to support version `2.x`.
 

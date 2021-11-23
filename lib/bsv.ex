@@ -1,5 +1,9 @@
 defmodule BSV do
   @moduledoc """
+  ![BSV-ex](https://github.com/libitx/bsv-ex/raw/master/media/poster.png)
+
+  ![License](https://img.shields.io/github/license/libitx/bsv-ex?color=informational)
+
   BSV-ex is a general purpose library for building Bitcoin SV applications in
   Elixir. Under the hood, [Curvy](https://hexdocs.pm/curvy) is used for all
   `secp256k1` flavoured crypto, making BSV-ex the first pure Elixir Bitcoin
