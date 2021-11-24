@@ -20,32 +20,87 @@ defmodule BSV.Contract.Helpers do
   end)
 
   @doc """
-  Pushes the given data onto the script.
+  Pushes the given data onto the script. If a list of data elements is given,
+  each will be pushed to the script as seperate pushdata elements.
   """
-  @spec push(Contract.t(), atom() | binary() | integer()) :: Contract.t()
+  @spec push(
+      Contract.t(),
+      atom() | binary() | integer() |
+      list(atom() | binary() | integer())
+    ) ::Contract.t()
+  def push(%Contract{} = contract, []), do: contract
+  def push(%Contract{} = contract, [data | rest]) do
+    contract
+    |> push(data)
+    |> push(rest)
+  end
+
   def push(%Contract{} = contract, data) do
     Contract.script_push(contract, data)
   end
 
   @doc """
-  Pushes the given list of data onto the script in seperate pushes.
+  Reverses the top item on the stack.
+
+  This helper function pushes op codes on to the script that will reverse a
+  binary of the given length.
   """
-  @spec push_all(Contract.t(), list(atom() | binary() | integer())) :: Contract.t()
-  def push_all(%Contract{} = contract, []), do: contract
-  def push_all(%Contract{} = contract, [data | rest]) do
+  @spec reverse_bin(Contract.t(), integer()) :: Contract.t()
+  def reverse_bin(%Contract{} = contract, length)
+    when is_integer(length) and length > 1
+  do
+    loops = div(length-1, 16)
+    bytes = rem(length-1, 16)
+
+    rev_loops(contract, loops, bytes)
+  end
+
+  defp rev_loops(contract, 0, 0), do: contract
+
+  defp rev_loops(contract, 0, bytes) do
+    rev_bytes(contract, bytes)
+  end
+
+  defp rev_loops(contract, loops, bytes) do
     contract
-    |> push(data)
-    |> push_all(rest)
+    |> op_16()
+    |> op_split()
+    |> op_swap()
+    |> rev_bytes(15)
+    |> op_swap()
+    |> rev_loops(loops-1, bytes)
+    |> op_swap()
+    |> op_cat()
+  end
+
+  defp rev_bytes(contract, 0), do: contract
+  defp rev_bytes(contract, n) when n <= 16 do
+    contract
+    |> Contract.script_push(:"OP_#{n}")
+    |> op_split()
+    |> op_swap()
+    |> rev_bytes(n-1)
+    |> op_cat()
   end
 
   @doc """
   Signs the transaction [`context`](`t:BSV.Contract.ctx/0`) and pushes the
-  signature onto the stack.
+  signature onto the script.
+
+  A list of private keys can be given, in which case each is used to sign and
+  multiple signatures are added.
 
   If no context is available in the [`contract`](`t:BSV.Contract.t/0`), then
-  71 bytes of zeros are pushed onto the stack instead.
+  71 bytes of zeros are pushed onto the script for each private key.
   """
-  @spec sig(Contract.t(), PrivKey.t()) :: Contract.t()
+  @spec sig(Contract.t(), PrivKey.t() | list(PrivKey.t())) :: Contract.t()
+  def sig(%Contract{} = contract, []), do: contract
+  def sig(%Contract{} = contract, [privkey | rest]) do
+    contract
+    |> sig(privkey)
+    |> sig(rest)
+  end
+
   def sig(
     %Contract{ctx: {tx, index}, opts: opts, subject: %UTXO{txout: txout}} = contract,
     %PrivKey{} = privkey
@@ -56,21 +111,5 @@ defmodule BSV.Contract.Helpers do
 
   def sig(%Contract{ctx: nil} = contract, %PrivKey{} = _privkey),
     do: Contract.script_push(contract, <<0::568>>)
-
-  @doc """
-  Iterates over the given list of private keys and for each signs the
-  transaction [`context`](`t:BSV.Contract.ctx/0`) and pushes each signature onto
-  the stack.
-
-  If no context is available in the [`contract`](`t:BSV.Contract.t/0`), then for
-  each private key 71 bytes of zeros are pushed onto the stack instead.
-  """
-  @spec multi_sig(Contract.t(), list(PrivKey.t())) :: Contract.t()
-  def multi_sig(ctx, []), do: ctx
-  def multi_sig(ctx, [privkey | privkeys]) do
-    ctx
-    |> sig(privkey)
-    |> multi_sig(privkeys)
-  end
 
 end

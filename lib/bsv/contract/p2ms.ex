@@ -45,7 +45,7 @@ defmodule BSV.Contract.P2MS do
   do
     ctx
     |> push(threshold)
-    |> push_all(Enum.map(pubkeys, &PubKey.to_binary/1))
+    |> push(Enum.map(pubkeys, &PubKey.to_binary/1))
     |> push(length(pubkeys))
     |> op_checkmultisig
   end
@@ -54,7 +54,7 @@ defmodule BSV.Contract.P2MS do
   def unlocking_script(ctx, %{privkeys: privkeys}) when is_list(privkeys) do
     ctx
     |> op_0
-    |> multi_sig(privkeys)
+    |> sig(privkeys)
   end
 
 end
