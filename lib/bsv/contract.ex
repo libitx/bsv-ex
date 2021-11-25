@@ -72,7 +72,7 @@ defmodule BSV.Contract do
       contract = Contract.put_ctx(contract, {tx, vin})
 
       # returns the signed txin
-      txout = Contract.to_txin(contract)
+      txin = Contract.to_txin(contract)
 
   ## Building transactions
 
