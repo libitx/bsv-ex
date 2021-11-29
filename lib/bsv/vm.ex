@@ -76,11 +76,11 @@ defmodule BSV.VM do
     do: {:ok, vm}
 
   def eval(%__MODULE__{if_stack: [{:IF, false} | _]} = vm, [op | rest])
-    when op != :OP_ELSE and op != :OP_ENDIF,
+    when op not in [:OP_IF, :OP_ELSE, :OP_ENDIF],
     do: eval(vm, rest)
 
   def eval(%__MODULE__{if_stack: [{:ELSE, false} | _]} = vm, [op | rest])
-    when op != :OP_ENDIF,
+    when op not in [:OP_IF, :OP_ENDIF],
     do: eval(vm, rest)
 
   def eval(%__MODULE__{} = vm, [chunk | rest]) do
@@ -263,6 +263,10 @@ defmodule BSV.VM do
   """
   @spec op_if(t()) :: t()
   def op_if(%__MODULE__{stack: []} = vm), do: err(vm, "OP_IF stack empty")
+
+  def op_if(%__MODULE__{if_stack: [{_, false} | _]} = vm),
+    do: Map.update(vm, :if_stack, [], & [{:IF, false} | &1])
+
   def op_if(%__MODULE__{stack: [top | _stack]} = vm) do
     vm
     |> op_drop()
@@ -276,6 +280,10 @@ defmodule BSV.VM do
   """
   @spec op_notif(t()) :: t()
   def op_notif(%__MODULE__{stack: []} = vm), do: err(vm, "OP_NOTIF stack empty")
+
+  def op_notif(%__MODULE__{if_stack: [{_, false} | _]} = vm),
+    do: Map.update(vm, :if_stack, [], & [{:IF, false} | &1])
+
   def op_notif(%__MODULE__{stack: [top | _stack]} = vm) do
     vm
     |> op_drop()
@@ -309,7 +317,10 @@ defmodule BSV.VM do
   def op_else(%__MODULE__{if_stack: []} = vm),
     do: err(vm, "OP_ELSE used outside of IF block")
 
-  def op_else(%__MODULE__{if_stack: [{_, bool} | if_stack]} = vm),
+  def op_else(%__MODULE__{if_stack: [{:IF, _}, {_, false} | _]} = vm),
+    do: update_in(vm.if_stack, fn [_ | if_stack] -> [{:ELSE, false} | if_stack] end)
+
+  def op_else(%__MODULE__{if_stack: [{:IF, bool} | if_stack]} = vm),
     do: put_in(vm.if_stack, [{:ELSE, !bool} | if_stack])
 
   @doc """

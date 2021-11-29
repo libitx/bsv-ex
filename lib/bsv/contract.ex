@@ -119,7 +119,7 @@ defmodule BSV.Contract do
   defmacro __using__(_) do
     quote do
       alias BSV.Contract
-      import Contract.Helpers
+      use Contract.Helpers
 
       @behaviour Contract
 

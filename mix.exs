@@ -45,8 +45,13 @@ defmodule BSV.MixProject do
           BSV.Contract.P2MS,
           BSV.Contract.P2RPH,
           BSV.Contract.OpReturn,
-          BSV.Contract.Raw,
-          BSV.Contract.Helpers
+          BSV.Contract.Raw
+        ],
+        "Contract Helpers": [
+          BSV.Contract.Helpers,
+          BSV.Contract.OpCodeHelpers,
+          BSV.Contract.PushTxHelpers,
+          BSV.Contract.VarIntHelpers
         ]
       ]
     ]
