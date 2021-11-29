@@ -27,7 +27,7 @@ The package can be installed by adding `bsv` to your list of dependencies in `mi
 ```elixir
 def deps do
   [
-    {:bsv, "~> 2.0"}
+    {:bsv, "~> 2.1"}
   ]
 end
 ```
